@@ -103,13 +103,13 @@
   <header class="top">
     <div>
       <h1>HiFi Player · Panel de revisión</h1>
-      <div class="sub">rama main · commit e18a20e · 3 de octubre de 2026</div>
+      <div class="sub">rama main · commit f73e89d · 3 de octubre de 2026</div>
     </div>
     <div class="chips">
-      <span class="chip ok">CI verde · 37119762346</span>
+      <span class="chip ok">CI verde · 37129300839</span>
       <span class="chip gold">APK debug · 22,3 MB</span>
       <span class="chip">22 módulos</span>
-      <span class="chip">fases 1-4 de 17</span>
+      <span class="chip">fases 1-5 de 17</span>
     </div>
   </header>
 
@@ -126,8 +126,8 @@
     <div class="ph done"><span class="num">2</span><span class="txt">Biblioteca y escáner<span class="st">hecha · CI</span></span></div>
     <div class="ph done"><span class="num">3</span><span class="txt">Motor de audio<span class="st">hecha · CI</span></span></div>
     <div class="ph done"><span class="num">4</span><span class="txt">Now Playing<span class="st">hecha · CI</span></span></div>
-    <div class="ph next"><span class="num">5</span><span class="txt">Cola y Up Next<span class="st">siguiente</span></span></div>
-    <div class="ph todo"><span class="num">6</span><span class="txt">Listas de reproducción<span class="st">pendiente</span></span></div>
+    <div class="ph done"><span class="num">5</span><span class="txt">Cola y Up Next<span class="st">hecha · CI</span></span></div>
+    <div class="ph next"><span class="num">6</span><span class="txt">Listas de reproducción<span class="st">siguiente</span></span></div>
     <div class="ph todo"><span class="num">7</span><span class="txt">Metadatos y portadas<span class="st">pendiente</span></span></div>
     <div class="ph part"><span class="num">8</span><span class="txt">Información de audio<span class="st">parcial · tarjeta en el reproductor</span></span></div>
     <div class="ph todo"><span class="num">9</span><span class="txt">USB DAC<span class="st">pendiente</span></span></div>
@@ -154,6 +154,8 @@
       <tr><td>Motor de reproducción Media3 + puente DSP + sink con salida float</td><td class="m">compileDebugKotlin</td></tr>
       <tr><td>Repositorio de reproducción + servicio en primer plano con MediaSession</td><td class="m">compileDebugKotlin</td></tr>
       <tr><td>Tema Dark Hi-Fi, pantalla Now Playing, mini reproductor, navegación</td><td class="m">compileDebugKotlin</td></tr>
+      <tr><td>Cola: reproducir por índice, quitar, vaciar, guardar y restaurar sobre el motor real</td><td class="m">compileDebugKotlin</td></tr>
+      <tr><td>Reordenación de Up Next por arrastre (posiciones traducidas a índices absolutos)</td><td class="m">compileDebugKotlin</td></tr>
       <tr><td>Aplicación completa ensamblada</td><td class="m">:app:assembleDebug en CI → APK</td></tr>
     </tbody>
   </table>
@@ -247,6 +249,20 @@
       <div class="row"><span class="k">Cadena</span><span class="v">Source → Decode → Output</span></div>
     </div>
     <div class="phone" style="width:340px">
+      <div class="cap">Cola — pantalla real, en maqueta</div>
+      <p class="t2" style="margin:0 0 8px">Pulsa larga sobre una fila de «A continuación» y arrastra: el orden se aplica al motor al soltar.</p>
+      <div class="row"><span class="k">Ahora</span><span class="v">Sonata para piano nº 14 · 14:07</span></div>
+      <div style="border-top:1px solid var(--line);margin:10px 0 6px"></div>
+      <div class="row"><span class="k">A continuación (3)</span><span class="v miss">Vaciar cola</span></div>
+      <div class="row"><span class="k">⠿ &nbsp;Nocturno op. 9 nº 2</span><span class="v">4:31</span></div>
+      <div class="row"><span class="k">⠿ &nbsp;Preludio en do sostenido menor</span><span class="v">5:12</span></div>
+      <div class="row"><span class="k">⠿ &nbsp;Balada nº 1 en sol menor</span><span class="v">9:48</span></div>
+      <div style="border-top:1px solid var(--line);margin:10px 0 6px"></div>
+      <div class="row"><span class="k">Guardar</span><span class="v">Restaurar (guardada hace 4 min)</span></div>
+      <div class="note gold" style="font-size:12.5px">Las flechas de reproducible/borrar de cada fila son
+      acciones reales; «Vaciar cola» pide confirmación en línea, sin diálogos.</div>
+    </div>
+    <div class="phone" style="width:340px">
       <div class="cap">Mini reproductor + navegación</div>
       <p class="t2" style="margin:0 0 10px">Aparece por encima de las pestañas cuando hay algo cargado.</p>
       <div class="mini">
@@ -270,7 +286,7 @@
       <h3>APK de depuración</h3>
       <p style="margin:6px 0 0">Lo empaqueta CI en cada push y queda como artefacto descargable:</p>
       <ul class="mono">
-        <li>Actions → run 37119762346 → hifi-player-debug-apk</li>
+        <li>Actions → run 37129300839 → hifi-player-debug-apk</li>
         <li>app/build/outputs/apk/debug/app-debug.apk</li>
       </ul>
       <p style="margin:8px 0 0;color:var(--on-var);font-size:13.5px">Al abrirlo funciona el arranque real:
@@ -289,7 +305,7 @@
     </div>
   </div>
 
-  <footer>HiFi Player · e18a20e · generado el 3 de octubre de 2026 · ninguna cifra de esta página es estimada</footer>
+  <footer>HiFi Player · f73e89d · generado el 3 de octubre de 2026 · ninguna cifra de esta página es estimada</footer>
 </div>
 </body>
 </html>
