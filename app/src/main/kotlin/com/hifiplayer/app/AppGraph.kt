@@ -50,7 +50,47 @@ import com.hifiplayer.domain.usecase.library.GetRecentlyPlayedUseCase
 import com.hifiplayer.domain.usecase.library.GetTracksUseCase
 import com.hifiplayer.domain.usecase.library.LoadArtworkBytesUseCase
 import com.hifiplayer.domain.usecase.library.PruneMissingTracksUseCase
+import com.hifiplayer.domain.usecase.audio.GetCapabilityReportUseCase
+import com.hifiplayer.domain.usecase.audio.GetDecoderSupportUseCase
+import com.hifiplayer.domain.usecase.audio.ObserveActiveOutputUseCase
+import com.hifiplayer.domain.usecase.audio.ObserveAudioCapabilitiesUseCase
+import com.hifiplayer.domain.usecase.audio.ObserveBitPerfectStateUseCase
+import com.hifiplayer.domain.usecase.audio.ObserveOutputDevicesUseCase
+import com.hifiplayer.domain.usecase.audio.RefreshOutputsUseCase
+import com.hifiplayer.domain.usecase.audio.RequestUsbPermissionUseCase
+import com.hifiplayer.domain.usecase.audio.SelectOutputDeviceUseCase
+import com.hifiplayer.domain.usecase.audio.UseSystemDefaultOutputUseCase
+import com.hifiplayer.domain.usecase.audio.VerifyOutputUseCase
+import com.hifiplayer.domain.usecase.dsp.DeleteEqPresetUseCase
+import com.hifiplayer.domain.usecase.dsp.SaveEqPresetUseCase
+import com.hifiplayer.domain.usecase.dsp.SetAppGainUseCase
+import com.hifiplayer.domain.usecase.dsp.SetBalanceUseCase
+import com.hifiplayer.domain.usecase.dsp.SetCrossfeedUseCase
+import com.hifiplayer.domain.usecase.dsp.SetEqEnabledUseCase
+import com.hifiplayer.domain.usecase.dsp.SetEqPresetUseCase
+import com.hifiplayer.domain.usecase.dsp.SetPreampUseCase
+import com.hifiplayer.domain.usecase.dsp.SetReplayGainModeUseCase
+import com.hifiplayer.domain.usecase.dsp.UpdateEqBandUseCase
+import com.hifiplayer.domain.usecase.dsp.UpdateReplayGainSettingsUseCase
 import com.hifiplayer.domain.usecase.library.RefreshLibraryUseCase
+import com.hifiplayer.domain.usecase.settings.ClearCacheUseCase
+import com.hifiplayer.domain.usecase.settings.GetCacheSizeUseCase
+import com.hifiplayer.domain.usecase.settings.ResetSettingsUseCase
+import com.hifiplayer.domain.usecase.settings.SetAnimationsEnabledUseCase
+import com.hifiplayer.domain.usecase.settings.SetArtworkSizeUseCase
+import com.hifiplayer.domain.usecase.settings.SetAutoPlayOnOpenUseCase
+import com.hifiplayer.domain.usecase.settings.SetAutomaticScanningUseCase
+import com.hifiplayer.domain.usecase.settings.SetBitPerfectUseCase
+import com.hifiplayer.domain.usecase.settings.SetGaplessUseCase
+import com.hifiplayer.domain.usecase.settings.SetPauseOnOutputDisconnectUseCase
+import com.hifiplayer.domain.usecase.settings.SetRepeatSettingUseCase
+import com.hifiplayer.domain.usecase.settings.SetResamplePolicyUseCase
+import com.hifiplayer.domain.usecase.settings.SetResumeOnStartUseCase
+import com.hifiplayer.domain.usecase.settings.SetShuffleSettingUseCase
+import com.hifiplayer.domain.usecase.settings.SetScanOnStartupUseCase
+import com.hifiplayer.domain.usecase.settings.SetShowTechnicalInfoInListsUseCase
+import com.hifiplayer.domain.usecase.settings.SetThemeModeUseCase
+import com.hifiplayer.domain.usecase.settings.SetUsbAutoRouteUseCase
 import com.hifiplayer.domain.usecase.library.SearchLibraryUseCase
 import com.hifiplayer.domain.usecase.playback.PlayTrackUseCase
 import com.hifiplayer.domain.usecase.playback.PlayTracksUseCase
@@ -98,6 +138,11 @@ import com.hifiplayer.presentation.library.playlists.PlaylistDetailViewModel
 import com.hifiplayer.presentation.library.playlists.PlaylistPickerViewModel
 import com.hifiplayer.presentation.library.playlists.PlaylistsViewModel
 import com.hifiplayer.presentation.library.search.SearchViewModel
+import com.hifiplayer.presentation.playback.audio.AudioInfoViewModel
+import com.hifiplayer.presentation.settings.SettingsViewModel
+import com.hifiplayer.presentation.settings.ThemeViewModel
+import com.hifiplayer.presentation.settings.audio.AudioSettingsViewModel
+import com.hifiplayer.presentation.settings.dsp.DspViewModel
 import com.hifiplayer.presentation.navigation.CollectionArgs
 import com.hifiplayer.presentation.navigation.CollectionKind
 import com.hifiplayer.presentation.playback.NowPlayingViewModel
@@ -383,6 +428,89 @@ class AppGraph(context: Context) {
      * It is built here, over the artwork use cases, so no Composables ever hold a repository, and it
      * is a single instance because the decoded-bitmap cache is worth sharing across screens.
      */
+    // ---------------------------------------------------------------- audio y ajustes (fases 8-13)
+
+    /**
+     * Audio Information: the whole path, measured.
+     *
+     * It reads the engine, the device repository and the platform's decoder list, so it can answer
+     * "is this really 24/96 right now" with the numbers the system reported instead of the file name.
+     */
+    fun audioInfoViewModel(): AudioInfoViewModel = AudioInfoViewModel(
+        observePlaybackState = ObservePlaybackStateUseCase(playback),
+        observeSettings = ObserveSettingsUseCase(settings),
+        observeActiveOutput = ObserveActiveOutputUseCase(audioDevices),
+        observeCapabilities = ObserveAudioCapabilitiesUseCase(audioDevices),
+        observeBitPerfectState = ObserveBitPerfectStateUseCase(audioDevices),
+        observeOutputDevices = ObserveOutputDevicesUseCase(audioDevices),
+        refreshOutputs = RefreshOutputsUseCase(audioDevices),
+        getCapabilityReport = GetCapabilityReportUseCase(audioDevices),
+        getDecoderSupport = GetDecoderSupportUseCase(audioDevices),
+        verifyOutput = VerifyOutputUseCase(audioDevices),
+    )
+
+    /** Output devices and bit-perfect (phases 9 and 10). */
+    fun audioSettingsViewModel(): AudioSettingsViewModel = AudioSettingsViewModel(
+        observePlaybackState = ObservePlaybackStateUseCase(playback),
+        observeSettings = ObserveSettingsUseCase(settings),
+        observeOutputDevices = ObserveOutputDevicesUseCase(audioDevices),
+        observeActiveOutput = ObserveActiveOutputUseCase(audioDevices),
+        observeCapabilities = ObserveAudioCapabilitiesUseCase(audioDevices),
+        observeBitPerfectState = ObserveBitPerfectStateUseCase(audioDevices),
+        refreshOutputs = RefreshOutputsUseCase(audioDevices),
+        selectOutput = SelectOutputDeviceUseCase(audioDevices),
+        useSystemDefault = UseSystemDefaultOutputUseCase(audioDevices),
+        requestUsbPermission = RequestUsbPermissionUseCase(audioDevices),
+        setBitPerfect = SetBitPerfectUseCase(settings),
+        setUsbAutoRoute = SetUsbAutoRouteUseCase(settings),
+        setPauseOnDisconnect = SetPauseOnOutputDisconnectUseCase(settings),
+    )
+
+    /** Equalizer, ReplayGain and crossfeed (phases 11, 12 and 13). */
+    fun dspViewModel(): DspViewModel = DspViewModel(
+        observeSettings = ObserveSettingsUseCase(settings),
+        observePlaybackState = ObservePlaybackStateUseCase(playback),
+        setEqEnabled = SetEqEnabledUseCase(settings),
+        updateEqBand = UpdateEqBandUseCase(settings),
+        setEqPreset = SetEqPresetUseCase(settings),
+        saveEqPreset = SaveEqPresetUseCase(settings),
+        deleteEqPreset = DeleteEqPresetUseCase(settings),
+        setPreamp = SetPreampUseCase(settings),
+        setReplayGainMode = SetReplayGainModeUseCase(settings),
+        updateReplayGain = UpdateReplayGainSettingsUseCase(settings),
+        setCrossfeed = SetCrossfeedUseCase(settings),
+        setBalance = SetBalanceUseCase(settings),
+        setAppGain = SetAppGainUseCase(settings),
+    )
+
+    /** The settings screens (requirement 28). */
+    fun settingsViewModel(): SettingsViewModel = SettingsViewModel(
+        musicRepository = music,
+        observeSettings = ObserveSettingsUseCase(settings),
+        getStats = GetLibraryStatsUseCase(music),
+        observeBitPerfectState = ObserveBitPerfectStateUseCase(audioDevices),
+        getCacheSize = GetCacheSizeUseCase(artwork),
+        clearCache = ClearCacheUseCase(artwork),
+        resetSettings = ResetSettingsUseCase(settings),
+        setGapless = SetGaplessUseCase(settings),
+        setResamplePolicy = SetResamplePolicyUseCase(settings),
+        setRepeatSetting = SetRepeatSettingUseCase(settings),
+        setShuffleSetting = SetShuffleSettingUseCase(settings),
+        setUsbAutoRoute = SetUsbAutoRouteUseCase(settings),
+        setPauseOnOutputDisconnect = SetPauseOnOutputDisconnectUseCase(settings),
+        setResumeOnStart = SetResumeOnStartUseCase(settings),
+        setAutoPlayOnOpen = SetAutoPlayOnOpenUseCase(settings),
+        setScanOnStartup = SetScanOnStartupUseCase(settings),
+        setAutomaticScanning = SetAutomaticScanningUseCase(settings),
+        setThemeMode = SetThemeModeUseCase(settings),
+        setArtworkSize = SetArtworkSizeUseCase(settings),
+        setAnimations = SetAnimationsEnabledUseCase(settings),
+        setShowTechnicalInfo = SetShowTechnicalInfoInListsUseCase(settings),
+    )
+
+    /** Only what the app shell needs before it draws: the theme and the list detail level. */
+    fun themeViewModel(): ThemeViewModel = ThemeViewModel(ObserveSettingsUseCase(settings))
+
     val artworkLoader: ArtworkLoader = LocalArtworkLoaderImpl(
         resolveArtwork = ResolveTrackArtworkUseCase(artwork),
         loadArtworkBytes = LoadArtworkBytesUseCase(artwork),

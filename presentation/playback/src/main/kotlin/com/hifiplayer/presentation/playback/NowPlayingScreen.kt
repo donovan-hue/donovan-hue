@@ -38,6 +38,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.hifiplayer.core.common.ext.formatDuration
 import com.hifiplayer.core.designsystem.component.HiFiCard
+import com.hifiplayer.core.designsystem.component.HiFiChip
 import com.hifiplayer.core.designsystem.component.HiFiCardTitle
 import com.hifiplayer.core.designsystem.component.HiFiEmptyState
 import com.hifiplayer.core.designsystem.component.HiFiInfoRow
@@ -70,6 +71,11 @@ fun NowPlayingScreen(
     onScrubFinish: () -> Unit,
     onDismissMessage: () -> Unit,
     onOpenQueue: () -> Unit,
+    onOpenAudioInfo: () -> Unit,
+    onOpenEq: () -> Unit,
+    onOpenReplayGain: () -> Unit,
+    onOpenCrossfeed: () -> Unit,
+    onOpenOutputs: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val dimens = LocalHiFiDimens.current
@@ -179,7 +185,35 @@ fun NowPlayingScreen(
                 HiFiInfoRow(label = "Artwork", value = state.artworkSourceLabel ?: if (state.artworkLoading) "cargando…" else null)
             }
 
-            AudioPendingList()
+            HiFiCard {
+                HiFiCardTitle(text = "Procesamiento y salida")
+                HiFiInfoRow(
+                    label = "ReplayGain",
+                    value = state.audio.replayGainLabel ?: "desactivado",
+                )
+                HiFiInfoRow(
+                    label = "Ecualizador",
+                    value = if (state.audio.eqActive) "activo" else "desactivado",
+                )
+                HiFiInfoRow(
+                    label = "Crossfeed",
+                    value = state.audio.crossfeedLabel ?: "desactivado",
+                )
+                HiFiInfoRow(
+                    label = "Ganancia aplicada",
+                    value = state.audio.appliedGainLabel,
+                )
+                Row(
+                    modifier = Modifier.padding(top = 6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    HiFiChip(label = "Información", selected = false, onClick = onOpenAudioInfo)
+                    HiFiChip(label = "EQ", selected = state.audio.eqActive, onClick = onOpenEq)
+                    HiFiChip(label = "ReplayGain", selected = state.audio.replayGainLabel != null, onClick = onOpenReplayGain)
+                    HiFiChip(label = "Crossfeed", selected = state.audio.crossfeedLabel != null, onClick = onOpenCrossfeed)
+                    HiFiChip(label = "Salida", selected = false, onClick = onOpenOutputs)
+                }
+            }
 
             Box(modifier = Modifier.height(dimens.sectionSpacing))
         }

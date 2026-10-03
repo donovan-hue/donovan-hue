@@ -90,6 +90,9 @@ jobs:
             :presentation:library:compileDebugKotlin \
             :presentation:library:testDebugUnitTest \
             :presentation:playback:compileDebugKotlin \
+            :presentation:playback:testDebugUnitTest \
+            :presentation:settings:compileDebugKotlin \
+            :presentation:settings:testDebugUnitTest \
             :presentation:navigation:compileDebugKotlin \
             :presentation:navigation:testDebugUnitTest \
             :app:assembleDebug \

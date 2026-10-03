@@ -307,10 +307,14 @@ fun HiFiSlider(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     onValueChangeFinished: (() -> Unit)? = null,
+    valueRange: ClosedFloatingPointRange<Float> = 0f..1f,
 ) {
+    // The control works in fractions because that is what a slider is; the range it represents is
+    // decided by the caller, so a negative dB range is expressed in the same units it is displayed.
+    val span = (valueRange.endInclusive - valueRange.start).takeIf { it > 0f } ?: 1f
     Slider(
-        value = value.coerceIn(0f, 1f),
-        onValueChange = onValueChange,
+        value = ((value - valueRange.start) / span).coerceIn(0f, 1f),
+        onValueChange = { fraction -> onValueChange(valueRange.start + fraction * span) },
         enabled = enabled,
         onValueChangeFinished = onValueChangeFinished,
         modifier = modifier.fillMaxWidth(),

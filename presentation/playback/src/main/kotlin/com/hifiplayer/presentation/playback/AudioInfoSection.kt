@@ -123,29 +123,3 @@ fun AudioInfoCard(
         }
     }
 }
-
-/**
- * The "Audio" entry list of the player (requirement 24).
- *
- * Only the entries that really exist today are shown as content; the rest are listed with the phase
- * that will implement them. They are deliberately *not* buttons: a row that looks pressable but
- * does nothing would violate requirement 46.
- */
-@Composable
-fun AudioPendingList(modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(2.dp),
-    ) {
-        HiFiPendingNotice(text = "Pendiente · Ecualizador paramétrico de 10+ bandas (fase 12)")
-        HiFiPendingNotice(text = "Pendiente · ReplayGain OFF/TRACK/ALBUM (fase 11)")
-        HiFiPendingNotice(text = "Pendiente · Crossfeed OFF/BAJO/MEDIO/ALTO (fase 13)")
-        HiFiPendingNotice(text = "Pendiente · Selector de dispositivo de salida y USB DAC (fase 9)")
-        Text(
-            text = "BIT-PERFECT: no verificado en esta configuración de audio",
-            style = TechLabelStyle,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 6.dp),
-        )
-    }
-}

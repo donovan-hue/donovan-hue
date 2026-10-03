@@ -105,6 +105,17 @@ class SetAnimationsEnabledUseCase(private val settings: SettingsRepository) {
         settings.updateAppearance { it.copy(animationsEnabled = enabled) }
 }
 
+/**
+ * Whether the track lists show format, bitrate and sample rate next to each song.
+ *
+ * It is a real preference and not a cosmetic one: it is what tells the listener that a file they
+ * added is a 24/96 FLAC instead of an MP3, so the screens honour it everywhere.
+ */
+class SetShowTechnicalInfoInListsUseCase(private val settings: SettingsRepository) {
+    suspend operator fun invoke(enabled: Boolean): Outcome<Unit> =
+        settings.updateAppearance { it.copy(showTechnicalInfoInLists = enabled) }
+}
+
 class ResetSettingsUseCase(private val settings: SettingsRepository) {
     suspend operator fun invoke(): Outcome<Unit> = settings.resetToDefaults()
 }

@@ -44,6 +44,18 @@ import com.hifiplayer.presentation.library.playlists.PlaylistsViewModel
 import com.hifiplayer.presentation.library.search.SearchScreen
 import com.hifiplayer.presentation.library.search.SearchViewModel
 import com.hifiplayer.presentation.playback.MiniPlayer
+import com.hifiplayer.presentation.playback.audio.AudioInfoScreen
+import com.hifiplayer.presentation.playback.audio.AudioInfoViewModel
+import com.hifiplayer.presentation.settings.AboutInfo
+import com.hifiplayer.presentation.settings.SettingsScreen
+import com.hifiplayer.presentation.settings.SettingsViewModel
+import com.hifiplayer.presentation.settings.audio.AudioSettingsViewModel
+import com.hifiplayer.presentation.settings.audio.BitPerfectScreen
+import com.hifiplayer.presentation.settings.audio.OutputDevicesScreen
+import com.hifiplayer.presentation.settings.dsp.CrossfeedScreen
+import com.hifiplayer.presentation.settings.dsp.DspViewModel
+import com.hifiplayer.presentation.settings.dsp.EqScreen
+import com.hifiplayer.presentation.settings.dsp.ReplayGainScreen
 import com.hifiplayer.presentation.playback.NowPlayingScreen
 import com.hifiplayer.presentation.playback.NowPlayingViewModel
 import com.hifiplayer.presentation.playback.QueueScreen
@@ -70,6 +82,11 @@ fun HiFiApp(
     createCollectionViewModel: (CollectionArgs) -> CollectionViewModel,
     createAdminViewModel: () -> LibraryAdminViewModel,
     createPickerViewModel: () -> PlaylistPickerViewModel,
+    createSettingsViewModel: () -> SettingsViewModel,
+    createAudioSettingsViewModel: () -> AudioSettingsViewModel,
+    createDspViewModel: () -> DspViewModel,
+    createAudioInfoViewModel: () -> AudioInfoViewModel,
+    aboutInfo: AboutInfo,
     artworkLoader: ArtworkLoader?,
     modifier: Modifier = Modifier,
 ) {
@@ -119,6 +136,13 @@ fun HiFiApp(
     val openPlaylist: (String) -> Unit = { playlistId ->
         navController.navigate("playlist/$playlistId") { launchSingleTop = true }
     }
+    val openAudioInfo: () -> Unit = { navController.navigate(HiFiDestination.AudioInfo.route) { launchSingleTop = true } }
+    val openOutputs: () -> Unit = { navController.navigate(HiFiDestination.OutputDevices.route) { launchSingleTop = true } }
+    val openBitPerfect: () -> Unit = { navController.navigate(HiFiDestination.BitPerfect.route) { launchSingleTop = true } }
+    val openEq: () -> Unit = { navController.navigate(HiFiDestination.Eq.route) { launchSingleTop = true } }
+    val openReplayGain: () -> Unit = { navController.navigate(HiFiDestination.ReplayGain.route) { launchSingleTop = true } }
+    val openCrossfeed: () -> Unit = { navController.navigate(HiFiDestination.Crossfeed.route) { launchSingleTop = true } }
+
     val openSearch: () -> Unit = {
         navController.navigate(HiFiDestination.Search.route) { launchSingleTop = true }
     }
@@ -392,11 +416,140 @@ fun HiFiApp(
                 }
 
                 composable(HiFiDestination.Settings.route) {
-                    PendingScreen(
-                        title = "Ajustes",
-                        phase = "fases 9-13 · audio, USB, bit-perfect, ReplayGain, EQ y crossfeed",
-                        willContain = "Los grupos Audio, Reproducción, Biblioteca, Apariencia, Almacenamiento y Acerca de, " +
-                            "conectados a la configuración real.",
+                    val viewModel: SettingsViewModel = viewModel(
+                        factory = viewModelFactory { initializer { createSettingsViewModel() } },
+                    )
+                    val settingsState by viewModel.state.collectAsStateWithLifecycle()
+                    SettingsScreen(
+                        state = settingsState,
+                        about = aboutInfo,
+                        onOpenAudioInfo = openAudioInfo,
+                        onOpenBitPerfect = openBitPerfect,
+                        onOpenOutputDevices = openOutputs,
+                        onOpenEq = openEq,
+                        onOpenReplayGain = openReplayGain,
+                        onOpenCrossfeed = openCrossfeed,
+                        onAddFolder = { pickFolder.launch(null) },
+                        onScanNow = adminViewModel::onRefresh,
+                        onPruneMissing = adminViewModel::onPruneMissing,
+                        onClearCache = viewModel::onClearCache,
+                        onResetSettings = viewModel::onResetSettings,
+                        onResamplePolicyChange = viewModel::onResamplePolicyChange,
+                        onGaplessChange = viewModel::onGaplessChange,
+                        onUsbAutoRouteChange = viewModel::onUsbAutoRouteChange,
+                        onPauseOnDisconnectChange = viewModel::onPauseOnDisconnectChange,
+                        onResumeOnStartChange = viewModel::onResumeOnStartChange,
+                        onAutoPlayOnOpenChange = viewModel::onAutoPlayOnOpenChange,
+                        onRepeatSettingChange = viewModel::onRepeatSettingChange,
+                        onShuffleSettingChange = viewModel::onShuffleSettingChange,
+                        onScanOnStartupChange = viewModel::onScanOnStartupChange,
+                        onAutomaticScanningChange = viewModel::onAutomaticScanningChange,
+                        onThemeModeChange = viewModel::onThemeModeChange,
+                        onArtworkSizeChange = viewModel::onArtworkSizeChange,
+                        onAnimationsChange = viewModel::onAnimationsChange,
+                        onShowTechnicalInfoChange = viewModel::onShowTechnicalInfoChange,
+                        onDismissMessage = viewModel::onDismissMessage,
+                    )
+                }
+
+                composable(HiFiDestination.AudioInfo.route) {
+                    val viewModel: AudioInfoViewModel = viewModel(
+                        factory = viewModelFactory { initializer { createAudioInfoViewModel() } },
+                    )
+                    val audioState by viewModel.state.collectAsStateWithLifecycle()
+                    AudioInfoScreen(
+                        state = audioState,
+                        onBack = { navController.popBackStack() },
+                        onRefresh = viewModel::onRefresh,
+                        onVerifyCurrentTrack = viewModel::onVerifyCurrentTrack,
+                        onOpenOutputDevices = openOutputs,
+                        onOpenBitPerfect = openBitPerfect,
+                        onOpenEq = openEq,
+                        onOpenReplayGain = openReplayGain,
+                        onOpenCrossfeed = openCrossfeed,
+                        onDismissMessage = viewModel::onDismissMessage,
+                    )
+                }
+
+                composable(HiFiDestination.OutputDevices.route) {
+                    val viewModel: AudioSettingsViewModel = viewModel(
+                        factory = viewModelFactory { initializer { createAudioSettingsViewModel() } },
+                    )
+                    val deviceState by viewModel.state.collectAsStateWithLifecycle()
+                    OutputDevicesScreen(
+                        state = deviceState,
+                        onBack = { navController.popBackStack() },
+                        onRefresh = viewModel::onRefresh,
+                        onSelectDevice = viewModel::onSelectDevice,
+                        onUseSystemDefault = viewModel::onUseSystemDefault,
+                        onRequestPermission = viewModel::onRequestUsbPermission,
+                        onUsbAutoRouteChange = viewModel::onUsbAutoRouteChange,
+                        onPauseOnDisconnectChange = viewModel::onPauseOnDisconnectChange,
+                        onDismissMessage = viewModel::onDismissMessage,
+                    )
+                }
+
+                composable(HiFiDestination.BitPerfect.route) {
+                    val viewModel: AudioSettingsViewModel = viewModel(
+                        factory = viewModelFactory { initializer { createAudioSettingsViewModel() } },
+                    )
+                    val deviceState by viewModel.state.collectAsStateWithLifecycle()
+                    BitPerfectScreen(
+                        state = deviceState,
+                        onBack = { navController.popBackStack() },
+                        onBitPerfectChange = viewModel::onBitPerfectChange,
+                        onOpenOutputs = openOutputs,
+                        onDismissMessage = viewModel::onDismissMessage,
+                    )
+                }
+
+                composable(HiFiDestination.Eq.route) {
+                    val viewModel: DspViewModel = viewModel(
+                        factory = viewModelFactory { initializer { createDspViewModel() } },
+                    )
+                    val dspState by viewModel.state.collectAsStateWithLifecycle()
+                    EqScreen(
+                        state = dspState,
+                        onBack = { navController.popBackStack() },
+                        onEnabledChange = viewModel::onEqEnabledChange,
+                        onBandDrag = viewModel::onBandDrag,
+                        onBandCommit = viewModel::onBandCommit,
+                        onSelectPreset = viewModel::onSelectPreset,
+                        onSavePreset = viewModel::onSavePreset,
+                        onDeletePreset = viewModel::onDeletePreset,
+                        onPreampChange = viewModel::onPreampChange,
+                        onDismissMessage = viewModel::onDismissMessage,
+                    )
+                }
+
+                composable(HiFiDestination.ReplayGain.route) {
+                    val viewModel: DspViewModel = viewModel(
+                        factory = viewModelFactory { initializer { createDspViewModel() } },
+                    )
+                    val dspState by viewModel.state.collectAsStateWithLifecycle()
+                    ReplayGainScreen(
+                        state = dspState,
+                        onBack = { navController.popBackStack() },
+                        onModeChange = viewModel::onReplayGainModeChange,
+                        onPreampChange = viewModel::onReplayGainPreampChange,
+                        onPreventClippingChange = viewModel::onPreventClippingChange,
+                        onAlbumGainPreferenceChange = viewModel::onAlbumGainPreferenceChange,
+                        onDismissMessage = viewModel::onDismissMessage,
+                    )
+                }
+
+                composable(HiFiDestination.Crossfeed.route) {
+                    val viewModel: DspViewModel = viewModel(
+                        factory = viewModelFactory { initializer { createDspViewModel() } },
+                    )
+                    val dspState by viewModel.state.collectAsStateWithLifecycle()
+                    CrossfeedScreen(
+                        state = dspState,
+                        onBack = { navController.popBackStack() },
+                        onModeChange = viewModel::onCrossfeedChange,
+                        onBalanceChange = viewModel::onBalanceChange,
+                        onAppGainChange = viewModel::onAppGainChange,
+                        onDismissMessage = viewModel::onDismissMessage,
                     )
                 }
 
@@ -416,6 +569,11 @@ fun HiFiApp(
                         onOpenQueue = {
                             navController.navigate(HiFiDestination.Queue.route) { launchSingleTop = true }
                         },
+                        onOpenAudioInfo = openAudioInfo,
+                        onOpenEq = openEq,
+                        onOpenReplayGain = openReplayGain,
+                        onOpenCrossfeed = openCrossfeed,
+                        onOpenOutputs = openOutputs,
                     )
                 }
 

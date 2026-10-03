@@ -74,11 +74,13 @@ class UpdateReplayGainSettingsUseCase(private val settings: SettingsRepository) 
         preampDb: Double? = null,
         preventClipping: Boolean? = null,
         fallbackGainDb: Double? = null,
+        preferAlbumGainInAlbumQueue: Boolean? = null,
     ): Outcome<Unit> = settings.updateReplayGain { current ->
         current.copy(
             preampDb = preampDb ?: current.preampDb,
             preventClipping = preventClipping ?: current.preventClipping,
             fallbackGainDb = fallbackGainDb ?: current.fallbackGainDb,
+            preferAlbumGainInAlbumQueue = preferAlbumGainInAlbumQueue ?: current.preferAlbumGainInAlbumQueue,
         )
     }
 }
