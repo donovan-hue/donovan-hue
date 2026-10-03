@@ -48,6 +48,16 @@ interface TrackDao {
     @Query("SELECT * FROM tracks WHERE format_analyzed = 0 LIMIT :limit")
     suspend fun pendingAnalysis(limit: Int): List<TrackEntity>
 
+    /** Paged read used to rebuild the album/artist/folder aggregates after a scan. */
+    @Query("SELECT * FROM tracks ORDER BY title COLLATE NOCASE ASC LIMIT :limit OFFSET :offset")
+    suspend fun pageAll(limit: Int, offset: Int): List<TrackEntity>
+
+    @Query("SELECT id, uri FROM tracks LIMIT :limit OFFSET :offset")
+    suspend fun pageIdsAndUris(limit: Int, offset: Int): List<TrackIdUri>
+
+    @Query("SELECT COUNT(*) FROM tracks")
+    suspend fun countNow(): Int
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertAll(tracks: List<TrackEntity>)
 
@@ -148,6 +158,8 @@ interface TrackDao {
 
 data class CodecCount(val codecId: String, val count: Int)
 
+data class TrackIdUri(val id: String, val uri: String)
+
 @Dao
 interface LibraryStructureDao {
 
@@ -180,6 +192,20 @@ interface LibraryStructureDao {
 
     @Query("DELETE FROM folders")
     suspend fun clearFolders()
+
+    /**
+     * Rebuilds the derived aggregates in a single transaction: either the whole structure matches
+     * the tracks table or nothing changes (requirement 16/35: no half-updated library).
+     */
+    @Transaction
+    suspend fun rebuild(albums: List<AlbumEntity>, artists: List<ArtistEntity>, folders: List<FolderEntity>) {
+        clearAlbums()
+        clearArtists()
+        clearFolders()
+        upsertAlbums(albums)
+        upsertArtists(artists)
+        upsertFolders(folders)
+    }
 }
 
 data class GenreRow(val name: String, val trackCount: Int)

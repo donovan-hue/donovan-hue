@@ -50,10 +50,21 @@ presentation/*           Compose: navigation, library, playback, settings
 Verificado con compilador y tests (no por inspección visual):
 
 - ✅ `native:dsp` — 31 tests JUnit/Truth en verde (EQ, ReplayGain, crossfeed, ganancia, pipeline).
-- ✅ `core:database` (KSP + Room), `core:storage`, `core:metadata`, `core:permissions`,
-  `core:usb`, `core:audio`, `domain:*` — compilan.
-- 🚧 Pendiente: escáner/repositorios (`data:*`), motor de reproducción y `PlaybackService`
-  (fase 3), toda la UI Compose, `res/` de la app, tests instrumentados, release.
+- ✅ `domain:*` — modelos, contratos y casos de uso.
+- ✅ `core:database` (Room + KSP), `core:storage`, `core:metadata`, `core:permissions`,
+  `core:usb`, `core:audio` — compilan.
+- ✅ **Fase 2 — datos**: `data:local` (ajustes en DataStore), `data:metadata` (lectura de tags y
+  artwork con caché en disco) y `data:repository` (escáner de biblioteca, biblioteca, playlists,
+  favoritos, cola persistente, búsqueda y dispositivos de audio) — compilan.
+- 🚧 Pendiente: motor de reproducción y `PlaybackService` (fase 3), toda la UI Compose,
+  `res/` de la app, tests instrumentados, release.
+
+Comandos del día a día (el toolchain del sandbox no se conserva entre sesiones):
+
+```bash
+sh scripts/install-toolchain.sh   # JDK 17 + Android SDK (solo si hace falta)
+sh scripts/build.sh --all         # compila núcleo + datos y corre los tests de DSP
+```
 
 Este README no declara nada como terminado si no está compilado o probado.
 

@@ -40,8 +40,10 @@ dependencies {
     api(project(":domain:model"))
     implementation(project(":core:common"))
     implementation(libs.androidx.core.ktx)
-    implementation(libs.room.runtime)
-    implementation(libs.room.ktx)
+    // Room es parte de la API pública del módulo: HiFiDatabase hereda de RoomDatabase y los
+    // consumidores necesitan esos tipos en su classpath de compilación.
+    api(libs.room.runtime)
+    api(libs.room.ktx)
     ksp(libs.room.compiler)
     implementation(libs.kotlinx.coroutines.android)
 

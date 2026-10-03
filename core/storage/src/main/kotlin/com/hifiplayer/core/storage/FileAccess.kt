@@ -68,6 +68,32 @@ class FileAccess(private val context: Context) {
         }
     }
 
+    /** Size in bytes reported by the provider, or 0 when it cannot be queried. */
+    suspend fun sizeOf(uri: Uri): Long = describe(uri).getOrNull()?.sizeBytes ?: 0L
+
+    /**
+     * Reads up to [maxBytes] bytes fully. Unlike [readHead] (headers) this is meant for small
+     * binaries such as embedded artwork, and it never allocates more than the file size.
+     */
+    suspend fun readBytes(uri: Uri, maxBytes: Int = Int.MAX_VALUE): Outcome<ByteArray> = outcomeOf("FileAccess.readBytes") {
+        val size = sizeOf(uri)
+        val cap = when {
+            size <= 0L -> maxBytes
+            size > maxBytes -> maxBytes
+            else -> size.toInt()
+        }
+        openInputStream(uri).getOrElse { throw com.hifiplayer.core.common.error.TypedAppException(it) }.use { stream ->
+            val buffer = ByteArray(cap)
+            var read = 0
+            while (read < cap) {
+                val count = stream.read(buffer, read, cap - read)
+                if (count <= 0) break
+                read += count
+            }
+            if (read == cap) buffer else buffer.copyOf(read)
+        }
+    }
+
     /** Full read used by analysis passes (loudness scanning). Cancellable by coroutine. */
     fun openForAnalysis(uri: Uri): InputStream? = try {
         context.contentResolver.openInputStream(uri)

@@ -22,6 +22,11 @@ data class AudioFileCandidate(
     val mediaStoreId: Long? = null,
     /** Album id from MediaStore, when available: free grouping without parsing tags. */
     val mediaStoreAlbumId: String? = null,
+    /**
+     * Duration reported by the provider. Fallback only: the file header is always preferred, and
+     * this value is used solely when the header could not be parsed.
+     */
+    val providerDurationMs: Long? = null,
 ) {
     val extension: String get() = displayName.substringAfterLast('.', "").lowercase()
 }

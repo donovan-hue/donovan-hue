@@ -1,6 +1,7 @@
 package com.hifiplayer.domain.repository
 
 import com.hifiplayer.core.common.result.Outcome
+import com.hifiplayer.domain.model.audio.AudioFormatSpec
 import com.hifiplayer.domain.model.device.AudioDeviceEvent
 import com.hifiplayer.domain.model.device.BitPerfectState
 import com.hifiplayer.domain.model.device.CapabilityReport
@@ -47,4 +48,21 @@ interface AudioDeviceRepository {
 
     /** Verifies whether the current route can deliver [requestedLabel] untouched. */
     suspend fun verifyOutputFor(sampleRateHz: Int, bitDepth: Int, channels: Int): Outcome<DeviceCapabilities>
+
+    /**
+     * Asks the platform for the non-mixing route for this exact format (Android 14+).
+     *
+     * Returns the verified state: [BitPerfectState.isActive] is true **only** after reading the
+     * configuration back from the system. When it cannot be achieved, [BitPerfectState.blockers]
+     * explains why, so the UI can show "Bit-perfect no disponible" with a real reason.
+     */
+    suspend fun activateBitPerfect(
+        format: AudioFormatSpec,
+        dspActive: Boolean,
+        dspChainDescription: String,
+        volumeAttenuatesSignal: Boolean = false,
+    ): Outcome<BitPerfectState>
+
+    /** Gives control back to the system mixer. */
+    suspend fun deactivateBitPerfect(): Outcome<BitPerfectState>
 }

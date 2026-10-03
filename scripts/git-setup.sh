@@ -5,7 +5,7 @@
 # Uso:
 #   ./scripts/git-setup.sh                 # aplica remoto + llave si existen
 #   ./scripts/git-setup.sh --check         # solo informa
-set -uo pipefail
+set -u
 cd "$(dirname "$0")/.."
 
 REMOTE_URL="git@github.com:donovan-hue/donovan-hue.git"

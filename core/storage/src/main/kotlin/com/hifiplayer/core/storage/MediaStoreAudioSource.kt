@@ -31,6 +31,7 @@ class MediaStoreAudioSource(private val context: Context) {
         add(MediaStore.Audio.Media.DATE_ADDED)
         add(MediaStore.Audio.Media.DATE_MODIFIED)
         add(MediaStore.Audio.Media.MIME_TYPE)
+        add(MediaStore.Audio.Media.DURATION)
         add(MediaStore.Audio.Media.ALBUM_ID)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) add(MediaStore.Audio.Media.RELATIVE_PATH)
     }.toTypedArray()
@@ -60,6 +61,7 @@ class MediaStoreAudioSource(private val context: Context) {
             val modifiedColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_MODIFIED)
             val mimeColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.MIME_TYPE)
             val albumColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID)
+            val durationColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)
             val relativeColumn = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 cursor.getColumnIndex(MediaStore.Audio.Media.RELATIVE_PATH)
             } else {
@@ -88,6 +90,7 @@ class MediaStoreAudioSource(private val context: Context) {
                     dateAddedEpochSec = cursor.getLongOrNull(addedColumn) ?: 0L,
                     mediaStoreId = id,
                     mediaStoreAlbumId = cursor.getLongOrNull(albumColumn)?.toString(),
+                    providerDurationMs = cursor.getLongOrNull(durationColumn)?.takeIf { it > 0L },
                 )
                 if (batch.size >= 256) {
                     onBatch(batch.toList())
