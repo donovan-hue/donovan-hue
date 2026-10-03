@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HiFi Player · Panel de revisión</title>
+<style>
+  :root{
+    --bg:#0A0A0B; --surface:#121316; --surface-c:#1A1C1F; --surface-h:#1F2226; --variant:#23262A;
+    --on:#F2F3F5; --on-var:#B4B9C0; --outline:#3A3E44; --line:#2A2E33;
+    --accent:#D9B36C; --accent-on:#1A1408; --secondary:#8FB6B8;
+    --warning:#E0A458; --error:#E5484D; --unknown:#7A8089; --success:#6FBF73;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--on);font-family:var(--sans);font-size:15px;line-height:1.55;
+       -webkit-font-smoothing:antialiased}
+  a{color:var(--accent)}
+  .wrap{max-width:1080px;margin:0 auto;padding:28px 20px 80px}
+  header.top{display:flex;flex-wrap:wrap;gap:14px;align-items:baseline;border-bottom:1px solid var(--line);padding-bottom:14px}
+  header.top h1{margin:0;font-size:26px;letter-spacing:-.2px}
+  header.top .sub{color:var(--on-var);font-size:13px;font-family:var(--mono)}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-left:auto}
+  .chip{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;
+        padding:4px 9px;border-radius:6px;background:var(--variant);color:var(--on-var);border:1px solid var(--line);white-space:nowrap}
+  .chip.ok{background:rgba(111,191,115,.14);color:var(--success);border-color:rgba(111,191,115,.3)}
+  .chip.gold{background:rgba(217,179,108,.14);color:var(--accent);border-color:rgba(217,179,108,.3)}
+  .chip.warn{background:rgba(224,164,88,.13);color:var(--warning);border-color:rgba(224,164,88,.3)}
+  h2{font-size:19px;margin:38px 0 6px}
+  h2 .n{color:var(--unknown);font-family:var(--mono);font-size:13px;margin-right:8px}
+  p.lead{color:var(--on-var);margin:6px 0 16px}
+  .grid{display:grid;gap:12px}
+  .cols-2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+  .cols-3{grid-template-columns:repeat(auto-fit,minmax(215px,1fr))}
+  .card{background:var(--surface-c);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+  .card h3{margin:0 0 8px;font-size:14px;font-family:var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--on-var)}
+  ul{margin:6px 0 0;padding-left:18px}
+  li{margin:3px 0}
+  code,.mono{font-family:var(--mono);font-size:12.5px}
+  .phases{display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:8px;margin-top:12px}
+  .ph{display:flex;gap:9px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);
+      border-radius:9px;padding:9px 11px}
+  .ph .num{font-family:var(--mono);font-size:12px;color:var(--unknown);min-width:18px;text-align:right}
+  .ph .txt{font-size:13.5px}
+  .ph .st{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;margin-top:2px}
+  .ph.done{border-color:rgba(111,191,115,.28)} .ph.done .st{color:var(--success)}
+  .ph.part{border-color:rgba(224,164,88,.3)} .ph.part .st{color:var(--warning)}
+  .ph.todo .st{color:var(--unknown)}
+  .ph.next{border-color:rgba(217,179,108,.4);background:rgba(217,179,108,.05)} .ph.next .st{color:var(--accent)}
+  table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13.5px}
+  th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-family:var(--mono);font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--on-var);font-weight:500}
+  td.m{font-family:var(--mono);font-size:12.5px;color:var(--on-var)}
+  .flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-family:var(--mono);font-size:12px;margin-top:10px}
+  .flow span{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:5px 9px}
+  .flow i{color:var(--unknown);font-style:normal}
+  .sw{display:grid;grid-template-columns:repeat(auto-fill,minmax(146px,1fr));gap:9px;margin-top:12px}
+  .sw div{border:1px solid var(--line);border-radius:9px;overflow:hidden;background:var(--surface)}
+  .sw .box{height:52px}
+  .sw .meta{padding:7px 9px;font-family:var(--mono);font-size:11px;color:var(--on-var)}
+  .sw .meta b{display:block;color:var(--on);font-weight:500}
+  .demo{background:var(--surface-c);border:1px solid var(--line);border-radius:10px;padding:16px;margin-top:12px}
+  .row{display:flex;justify-content:space-between;gap:14px;padding:4px 0}
+  .row .k{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--on-var)}
+  .row .v{font-family:var(--mono);font-size:13px;text-align:right}
+  .row .v.miss{color:var(--unknown)}
+  .badge{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.09em;text-transform:uppercase;
+         background:rgba(217,179,108,.16);color:var(--accent);border-radius:6px;padding:4px 9px}
+  .badge.off{background:var(--variant);color:var(--on-var)}
+  .phones{display:flex;flex-wrap:wrap;gap:22px;margin-top:14px;align-items:flex-start}
+  .phone{width:340px;background:var(--bg);border:1px solid var(--outline);border-radius:22px;padding:14px;flex:0 0 auto}
+  .phone .cap{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--warning);margin-bottom:8px}
+  .art{aspect-ratio:1;border-radius:12px;background:linear-gradient(160deg,#1F2226,#121316 60%);
+       border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--unknown);
+       font-family:var(--mono);font-size:11px;letter-spacing:.06em;margin-bottom:12px;text-align:center;padding:10px}
+  .t1{font-size:21px;font-weight:600;letter-spacing:-.2px;margin:0}
+  .t2{color:var(--on-var);font-size:14px;margin:2px 0 0}
+  .t3{color:var(--on-var);font-size:12.5px;margin:4px 0 0;font-family:var(--mono)}
+  .bar{height:4px;background:var(--variant);border-radius:2px;margin:14px 0 6px;position:relative}
+  .bar i{position:absolute;left:0;top:0;bottom:0;width:38%;background:var(--accent);border-radius:2px}
+  .times{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--on-var)}
+  .transport{display:flex;justify-content:space-between;align-items:center;margin:14px 0 4px}
+  .tbtn{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--on)}
+  .tbtn.main{width:64px;height:64px;background:var(--accent);color:var(--accent-on)}
+  .tbtn.gold{color:var(--accent)}
+  .tbtn.dim{color:var(--unknown)}
+  .mini{display:flex;gap:10px;align-items:center;background:var(--surface-c);border-radius:10px;padding:8px 10px;margin-top:16px}
+  .mini .sq{width:44px;height:44px;border-radius:6px;background:var(--variant);flex:0 0 auto}
+  .mini .mt{font-size:13.5px;font-weight:500;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mini .ms{font-size:12px;color:var(--on-var);margin:1px 0 0}
+  .tabs{display:flex;justify-content:space-around;border-top:1px solid var(--line);margin-top:10px;padding-top:9px;
+        font-family:var(--mono);font-size:10.5px;color:var(--on-var);text-transform:uppercase;letter-spacing:.05em}
+  .tabs b{color:var(--accent);font-weight:500}
+  .note{border-left:2px solid var(--warning);padding:8px 0 8px 12px;color:var(--on-var);font-size:13.5px;margin-top:14px}
+  .note.gold{border-color:var(--accent)}
+  footer{margin-top:48px;border-top:1px solid var(--line);padding-top:14px;color:var(--unknown);font-size:12.5px;font-family:var(--mono)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div>
+      <h1>HiFi Player · Panel de revisión</h1>
+      <div class="sub">rama main · commit e18a20e · 3 de octubre de 2026</div>
+    </div>
+    <div class="chips">
+      <span class="chip ok">CI verde · 37119762346</span>
+      <span class="chip gold">APK debug · 22,3 MB</span>
+      <span class="chip">22 módulos</span>
+      <span class="chip">fases 1-4 de 17</span>
+    </div>
+  </header>
+
+  <p class="lead">Esto no es la aplicación: es el panel de estado del proyecto. En esta máquina no hay
+  emulador ni dispositivo, y una app Android no se puede previsualizar en el navegador. Lo que sí se puede
+  verificar aquí es <b>qué está construido, qué está comprobado y con qué evidencia</b>, además del diseño
+  real (los mismos tokens del tema) y una maqueta del reproductor.</p>
+
+  <h2><span class="n">01</span>Estado por fases</h2>
+  <p class="lead">Orden del pliego (regla 47). Los estados son deliberadamente literales: «hecha» significa
+  que compila y que CI lo verifica, no que se haya probado en hardware.</p>
+  <div class="phases">
+    <div class="ph done"><span class="num">1</span><span class="txt">Proyecto y arquitectura<span class="st">hecha · CI</span></span></div>
+    <div class="ph done"><span class="num">2</span><span class="txt">Biblioteca y escáner<span class="st">hecha · CI</span></span></div>
+    <div class="ph done"><span class="num">3</span><span class="txt">Motor de audio<span class="st">hecha · CI</span></span></div>
+    <div class="ph done"><span class="num">4</span><span class="txt">Now Playing<span class="st">hecha · CI</span></span></div>
+    <div class="ph next"><span class="num">5</span><span class="txt">Cola y Up Next<span class="st">siguiente</span></span></div>
+    <div class="ph todo"><span class="num">6</span><span class="txt">Listas de reproducción<span class="st">pendiente</span></span></div>
+    <div class="ph todo"><span class="num">7</span><span class="txt">Metadatos y portadas<span class="st">pendiente</span></span></div>
+    <div class="ph part"><span class="num">8</span><span class="txt">Información de audio<span class="st">parcial · tarjeta en el reproductor</span></span></div>
+    <div class="ph todo"><span class="num">9</span><span class="txt">USB DAC<span class="st">pendiente</span></span></div>
+    <div class="ph todo"><span class="num">10</span><span class="txt">Bit-Perfect<span class="st">pendiente · sin verificar en dispositivo</span></span></div>
+    <div class="ph todo"><span class="num">11</span><span class="txt">ReplayGain<span class="st">pendiente</span></span></div>
+    <div class="ph todo"><span class="num">12</span><span class="txt">Ecualizador<span class="st">pendiente</span></span></div>
+    <div class="ph todo"><span class="num">13</span><span class="txt">Crossfeed<span class="st">pendiente</span></span></div>
+    <div class="ph part"><span class="num">14</span><span class="txt">MediaSession y Bluetooth<span class="st">parcial · servicio creado, sin probar en equipo</span></span></div>
+    <div class="ph todo"><span class="num">15</span><span class="txt">Optimización<span class="st">pendiente</span></span></div>
+    <div class="ph todo"><span class="num">16</span><span class="txt">Pruebas<span class="st">en curso · 31 tests de DSP</span></span></div>
+    <div class="ph todo"><span class="num">17</span><span class="txt">Release<span class="st">pendiente</span></span></div>
+  </div>
+
+  <h2><span class="n">02</span>Qué está comprobado, y cómo</h2>
+  <p class="lead">Cada línea de esta tabla corresponde a algo que la compilación o CI ejecutan de verdad.
+  Nada de esta tabla está «previsto»: está ejecutado.</p>
+  <table>
+    <thead><tr><th>Componente</th><th>Evidencia</th></tr></thead>
+    <tbody>
+      <tr><td>Dominio completo (15 modelos, 10 contratos de repositorio, ~100 casos de uso)</td><td class="m">compileDebugKotlin</td></tr>
+      <tr><td>Motor DSP en C++/Kotlin (EQ, ReplayGain, crossfeed, ganancia)</td><td class="m">31 tests verdes</td></tr>
+      <tr><td>Room: 12 entidades, 8 DAOs, mappers</td><td class="m">compileDebugKotlin</td></tr>
+      <tr><td>Escáner de biblioteca, metadatos (tags sin usar Internet), portadas</td><td class="m">compileDebugKotlin</td></tr>
+      <tr><td>Motor de reproducción Media3 + puente DSP + sink con salida float</td><td class="m">compileDebugKotlin</td></tr>
+      <tr><td>Repositorio de reproducción + servicio en primer plano con MediaSession</td><td class="m">compileDebugKotlin</td></tr>
+      <tr><td>Tema Dark Hi-Fi, pantalla Now Playing, mini reproductor, navegación</td><td class="m">compileDebugKotlin</td></tr>
+      <tr><td>Aplicación completa ensamblada</td><td class="m">:app:assembleDebug en CI → APK</td></tr>
+    </tbody>
+  </table>
+  <div class="note">Lo que <b>no</b> está comprobado todavía: el comportamiento en un teléfono real. Ninguna
+  afirmación de bit-perfect se muestra como verificada hasta que el sistema lo confirme en el dispositivo
+  (fase 10). Los textos de la app dicen «no verificado» mientras tanto.</div>
+
+  <h2><span class="n">03</span>Arquitectura</h2>
+  <p class="lead">22 módulos. La UI no conoce Room, Media3, USB ni el sistema de archivos; el motor es
+  reemplazable sin tocar dominio ni pantallas.</p>
+  <div class="flow">
+    <span>UI · Compose</span><i>→</i><span>ViewModel</span><i>→</i><span>Casos de uso</span><i>→</i>
+    <span>Repositorios</span><i>→</i><span>Fuentes de datos</span><i>→</i><span>Motor / Room / Almacenamiento</span>
+  </div>
+  <div class="grid cols-2" style="margin-top:14px">
+    <div class="card">
+      <h3>Módulos</h3>
+      <ul class="mono">
+        <li>app · presentation/{navigation, library, playback, settings}</li>
+        <li>domain/{model, repository, usecase}</li>
+        <li>data/{repository, local, metadata, audio}</li>
+        <li>core/{common, designsystem, database, storage, metadata, permissions, usb, audio}</li>
+        <li>native/{dsp, audio_engine}</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Reglas que se cumplen por construcción</h3>
+      <ul>
+        <li>Ninguna pantalla accede a datos: solo a su ViewModel.</li>
+        <li>Ningún botón decorativo: lo que no está implementado se marca «pendiente · fase N».</li>
+        <li>Ningún dato inventado: lo que no se midió se muestra «no detectado».</li>
+        <li>Errores tipados (PlaybackError, StorageError, MetadataError, AudioDeviceError) y log centralizado
+            que nunca escribe rutas ni contenido de los archivos.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2><span class="n">04</span>Diseño «Dark Hi-Fi»</h2>
+  <p class="lead">Estos son los valores reales de <code>HiFiColors.kt</code> y <code>HiFiTypography.kt</code>,
+  no una aproximación: el tema de la app usa exactamente estos códigos.</p>
+  <div class="sw">
+    <div><div class="box" style="background:#0A0A0B"></div><div class="meta"><b>#0A0A0B</b>background</div></div>
+    <div><div class="box" style="background:#121316"></div><div class="meta"><b>#121316</b>surface</div></div>
+    <div><div class="box" style="background:#1A1C1F"></div><div class="meta"><b>#1A1C1F</b>surface container</div></div>
+    <div><div class="box" style="background:#23262A"></div><div class="meta"><b>#23262A</b>surface variant</div></div>
+    <div><div class="box" style="background:#D9B36C"></div><div class="meta"><b>#D9B36C</b>acento (play, activo)</div></div>
+    <div><div class="box" style="background:#8FB6B8"></div><div class="meta"><b>#8FB6B8</b>secundario</div></div>
+    <div><div class="box" style="background:#E0A458"></div><div class="meta"><b>#E0A458</b>aviso</div></div>
+    <div><div class="box" style="background:#7A8089"></div><div class="meta"><b>#7A8089</b>no detectado</div></div>
+    <div><div class="box" style="background:#6FBF73"></div><div class="meta"><b>#6FBF73</b>verificado</div></div>
+    <div><div class="box" style="background:#E5484D"></div><div class="meta"><b>#E5484D</b>error</div></div>
+  </div>
+  <div class="demo">
+    <h3 style="margin:0 0 10px;font-family:var(--mono);font-size:14px;letter-spacing:.08em;text-transform:uppercase;color:var(--on-var)">Componentes reales</h3>
+    <div class="row"><span class="k">Formato</span><span class="v">24-bit / 96 kHz</span></div>
+    <div class="row"><span class="k">Codec</span><span class="v">FLAC</span></div>
+    <div class="row"><span class="k">Dispositivo</span><span class="v miss">no detectado</span></div>
+    <div class="row"><span class="k">Bitrate</span><span class="v miss">no detectado</span></div>
+    <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+      <span class="badge off">BIT-PERFECT NO DISPONIBLE</span>
+      <span class="badge">DSP ACTIVE</span>
+      <span class="badge off">CONVERTED</span>
+    </div>
+  </div>
+
+  <h2><span class="n">05</span>Maqueta del reproductor</h2>
+  <p class="lead">Maqueta estática construida con los mismos tokens del tema, para revisar el aspecto sin
+  instalar nada. <b>No es una captura</b>: la pantalla real está escrita en Compose y se empaqueta en el APK;
+  hasta que no corra en un teléfono no se puede fotografiar desde aquí.</p>
+  <div class="phones">
+    <div class="phone">
+      <div class="cap">Now Playing — pantalla real, en maqueta</div>
+      <div class="art">PORTADA GRANDE<br>(se pide ya escalada; nunca se decodifica el original completo)</div>
+      <p class="t1">Sonata para piano nº 14</p>
+      <p class="t2">Artista desconocido</p>
+      <p class="t3">FLAC · 24-bit / 96 kHz · 2 304 kbps</p>
+      <div class="bar"><i></i></div>
+      <div class="times"><span>1:24</span><span>14:07</span></div>
+      <div class="transport">
+        <div class="tbtn dim">⤨</div>
+        <div class="tbtn dim">⏮</div>
+        <div class="tbtn main">▶</div>
+        <div class="tbtn">⏭</div>
+        <div class="tbtn dim">🔁</div>
+      </div>
+      <div class="row" style="border-top:1px solid var(--line);padding-top:10px;margin-top:8px">
+        <span class="k">Source</span><span class="v">FLAC · 24-bit / 96 kHz</span>
+      </div>
+      <div class="row"><span class="k">Decode</span><span class="v miss">no detectado</span></div>
+      <div class="row"><span class="k">Output</span><span class="v miss">no detectado</span></div>
+      <div class="row"><span class="k">Cadena</span><span class="v">Source → Decode → Output</span></div>
+    </div>
+    <div class="phone" style="width:340px">
+      <div class="cap">Mini reproductor + navegación</div>
+      <p class="t2" style="margin:0 0 10px">Aparece por encima de las pestañas cuando hay algo cargado.</p>
+      <div class="mini">
+        <div class="sq"></div>
+        <div style="flex:1;min-width:0">
+          <p class="mt">Sonata para piano nº 14</p>
+          <p class="ms">Artista desconocido</p>
+        </div>
+        <div class="tbtn" style="width:36px;height:36px">⏭</div>
+        <div class="tbtn gold" style="width:44px;height:44px">⏸</div>
+      </div>
+      <div class="tabs"><span><b>Inicio</b></span><span>Biblioteca</span><span>Listas</span><span>Ajustes</span></div>
+      <div class="note gold" style="font-size:12.5px">Inicio, Biblioteca, Listas y Ajustes hoy muestran
+      «pendiente · fase N» con lo que contendrán: sin datos de ejemplo y sin botones que no hagan nada.</div>
+    </div>
+  </div>
+
+  <h2><span class="n">06</span>Cómo probarlo hoy</h2>
+  <div class="grid cols-2">
+    <div class="card">
+      <h3>APK de depuración</h3>
+      <p style="margin:6px 0 0">Lo empaqueta CI en cada push y queda como artefacto descargable:</p>
+      <ul class="mono">
+        <li>Actions → run 37119762346 → hifi-player-debug-apk</li>
+        <li>app/build/outputs/apk/debug/app-debug.apk</li>
+      </ul>
+      <p style="margin:8px 0 0;color:var(--on-var);font-size:13.5px">Al abrirlo funciona el arranque real:
+      el grafo de objetos, el servicio de reproducción y la navegación. La biblioteca aún no tiene pantalla,
+      así que todavía no hay de dónde elegir música.</p>
+    </div>
+    <div class="card">
+      <h3>Compilar y probar aquí</h3>
+      <ul class="mono">
+        <li>sh scripts/install-toolchain.sh</li>
+        <li>sh scripts/build.sh --all</li>
+      </ul>
+      <p style="margin:8px 0 0;color:var(--on-var);font-size:13.5px">Compila los 12 módulos verificados y
+      corre los 31 tests de DSP. El APK no se puede ensamblar en esta máquina: el kernel mata cualquier JVM
+      que pase de ~1,35 GB y el fusionador de dex no cabe; por eso se empaqueta en CI.</p>
+    </div>
+  </div>
+
+  <footer>HiFi Player · e18a20e · generado el 3 de octubre de 2026 · ninguna cifra de esta página es estimada</footer>
+</div>
+</body>
+</html>
