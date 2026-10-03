@@ -87,8 +87,11 @@ jobs:
             :data:repository:compileDebugKotlin \
             :data:audio:compileDebugKotlin \
             :native:audio_engine:compileDebugKotlin \
+            :presentation:library:compileDebugKotlin \
+            :presentation:library:testDebugUnitTest \
             :presentation:playback:compileDebugKotlin \
             :presentation:navigation:compileDebugKotlin \
+            :presentation:navigation:testDebugUnitTest \
             :app:assembleDebug \
             :app:assembleRelease $VERSION_ARG \
             --console=plain
