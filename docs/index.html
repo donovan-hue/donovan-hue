@@ -106,14 +106,14 @@
   <header class="top">
     <div>
       <h1>HiFi Player · Panel de revisión</h1>
-      <div class="sub">rama main · commit 114d7d9 · versión 0.6.0-alpha · 3 de octubre de 2026</div>
+      <div class="sub">rama main · commit 02bf871 · versión 0.6.0-alpha · 3 de octubre de 2026</div>
     </div>
     <div class="chips">
       <span class="chip ok">CI verde · 37156018697</span>
       <span class="chip gold">APK de release v0.6.0-alpha</span>
       <span class="chip gold">panel en GitHub Pages</span>
       <span class="chip">22 módulos</span>
-      <span class="chip">fases 1-7 de 17</span>
+      <span class="chip">fases 1-13 de 17</span>
     </div>
   </header>
 
@@ -133,19 +133,41 @@
     <div class="ph done"><span class="num">5</span><span class="txt">Cola y Up Next<span class="st">hecha · CI</span></span></div>
     <div class="ph done"><span class="num">6</span><span class="txt">Listas de reproducción<span class="st">hecha · CI · 18 tests nuevos</span></span></div>
     <div class="ph done"><span class="num">7</span><span class="txt">Metadatos y portadas<span class="st">hecha · CI</span></span></div>
-    <div class="ph part"><span class="num">8</span><span class="txt">Información de audio<span class="st">parcial · tarjeta en el reproductor</span></span></div>
-    <div class="ph todo"><span class="num">9</span><span class="txt">USB DAC<span class="st">pendiente</span></span></div>
-    <div class="ph todo"><span class="num">10</span><span class="txt">Bit-Perfect<span class="st">pendiente · sin verificar en dispositivo</span></span></div>
-    <div class="ph todo"><span class="num">11</span><span class="txt">ReplayGain<span class="st">pendiente</span></span></div>
-    <div class="ph todo"><span class="num">12</span><span class="txt">Ecualizador<span class="st">pendiente</span></span></div>
-    <div class="ph todo"><span class="num">13</span><span class="txt">Crossfeed<span class="st">pendiente</span></span></div>
-    <div class="ph part"><span class="num">14</span><span class="txt">MediaSession y Bluetooth<span class="st">parcial · servicio creado, sin probar en equipo</span></span></div>
+    <div class="ph done"><span class="num">8</span><span class="txt">Información de audio<span class="st">hecha · CI</span></span></div>
+    <div class="ph done"><span class="num">9</span><span class="txt">USB DAC y salidas<span class="st">hecha · CI · sin probar en hardware</span></span></div>
+    <div class="ph done"><span class="num">10</span><span class="txt">Bit-Perfect<span class="st">hecha · CI · estado medido</span></span></div>
+    <div class="ph done"><span class="num">11</span><span class="txt">ReplayGain<span class="st">hecha · CI</span></span></div>
+    <div class="ph done"><span class="num">12</span><span class="txt">Ecualizador<span class="st">hecha · CI</span></span></div>
+    <div class="ph done"><span class="num">13</span><span class="txt">Crossfeed<span class="st">hecha · CI</span></span></div>
+    <div class="ph part"><span class="num">14</span><span class="txt">MediaSession y Bluetooth<span class="st">se trabaja ahora</span></span></div>
     <div class="ph todo"><span class="num">15</span><span class="txt">Optimización<span class="st">pendiente</span></span></div>
-    <div class="ph todo"><span class="num">16</span><span class="txt">Pruebas<span class="st">en curso · 31 de DSP + 18 de biblioteca</span></span></div>
+    <div class="ph todo"><span class="num">16</span><span class="txt">Pruebas<span class="st">en curso · 66 pruebas</span></span></div>
     <div class="ph todo"><span class="num">17</span><span class="txt">Release<span class="st">pendiente</span></span></div>
   </div>
 
-  <h3>Entregado en esta iteración (fases 6 y 7)</h3>
+  <h3>Entregado en esta iteración (fases 8 a 13)</h3>
+  <ul class="plain">
+    <li><b>Información de audio</b>: pantalla propia con la tarjeta SOURCE → OUTPUT, la cadena de
+      procesamiento que se está aplicando de verdad, los bloqueos del bit-perfect con su explicación y
+      una verificación bajo demanda del formato que suena. La descripción de la ruta se comparte con el
+      reproductor, así que las dos pantallas no pueden contar historias distintas.</li>
+    <li><b>Dispositivos de salida y USB DAC</b>: lista real de rutas (altavoz, auriculares, Bluetooth, USB…)
+      con la activa marcada, permiso de USB pedido solo cuando hace falta, y la tarjeta de capacidades
+      mostrando únicamente lo que el equipo ha respondido al sondearlo.</li>
+    <li><b>Bit-Perfect</b>: interruptor con estado medido (solicitado, activo, soporte), bloqueos posibles
+      y evidencia. Si no se puede, dice «no disponible en esta configuración»; nunca lo finge.</li>
+    <li><b>ReplayGain, ecualizador y crossfeed</b>: módulo OFF/TRACK/ALBUM con las ganancias reales de la
+      pista que suena; EQ paramétrico de 10 bandas con frecuencia, ganancia, Q y tipo por banda y presets
+      Flat / Bass Boost / Vocal / Treble / Custom (guardar y borrar); crossfeed OFF/BAJO/MEDIO/ALTO con la
+      advertencia de que altera la señal.</li>
+    <li><b>Ajustes</b>: seis grupos (Audio, Reproducción, Biblioteca, Apariencia, Almacenamiento, Acerca de)
+      con cada fila escribiendo de verdad; el tema de la app ya lo decide el ajuste, no una constante.</li>
+    <li><b>47 pruebas nuevas en total desde la fase 5</b>: 9 de la ruta de audio y 8 del módulo de
+      procesamiento, más las de biblioteca y navegación. Dos comportamientos que las pruebas fijan: el EQ
+      se escribe al soltar el dedo (no en cada píxel que se arrastra) y elegir un preset no lo enciende.</li>
+  </ul>
+
+  <h3>Entregado en la iteración anterior (fases 6 y 7)</h3>
   <ul class="plain">
     <li><b>Inicio</b> con Reproducido recientemente, Álbumes (portada real), Favoritos y Añadido recientemente;
       cada estante reproduce como lista y el estado vacío lleva a añadir una carpeta.</li>
@@ -314,7 +336,9 @@
   <p class="lead">El canal de entrega es GitHub: APK adjunto al <i>release</i> y este panel publicado con
   GitHub Pages. Al empujar una etiqueta <code>v*</code>, el workflow compila el APK de release con R8 y lo
   publica solo: no hay pasos manuales ni artefactos que caduquen. La versión <code>0.6.0-alpha</code> corresponde
-  a las fases 1-7; la 1.0.0 llegará solo cuando el pliego completo esté hecho y probado en dispositivos reales.</p>
+  a las fases 1-7 y sigue siendo la última publicada: las fases 8 a 13 están en <code>main</code> y pasan por CI,
+  pero no se etiqueta nada nuevo hasta terminar el pliego (fases 14 a 17). La 1.0.0 llegará solo cuando todo
+  esté hecho y probado en dispositivos reales.</p>
   <div class="grid cols-3">
     <div class="card">
       <h3>APK instalable</h3>
