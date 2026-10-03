@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      Framework theme only: the whole UI is Compose (Theme.Material has no dependency cost and no
+      appcompat requirement). Status/navigation bars are transparent because the activity draws
+      edge to edge and Compose paints the background.
+    -->
+    <style name="Theme.HiFiPlayer" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/hifi_background</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+
+    <!-- Cold start: same background, so the launch is a plain dark screen instead of a white flash. -->
+    <style name="Theme.HiFiPlayer.Splash" parent="Theme.HiFiPlayer" />
+</resources>

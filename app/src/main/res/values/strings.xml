@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">HiFi Player</string>
+
+    <!-- Playback notification and media session -->
+    <string name="playback_channel_name">Reproducción</string>
+    <string name="playback_channel_description">Controles de reproducción y portada de la pista actual</string>
+    <string name="playback_notification_unknown_track">Pista desconocida</string>
+
+    <!-- Permission explanations (requirement 33: explain every permission) -->
+    <string name="permission_audio_title">Acceso a tu música</string>
+    <string name="permission_audio_explanation">HiFi Player solo lee los archivos de audio que elijas. No se envía nada a internet.</string>
+
+    <!-- USB -->
+    <string name="usb_devices_filter_name">DAC de audio USB</string>
+</resources>

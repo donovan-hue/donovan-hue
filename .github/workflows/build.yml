@@ -76,7 +76,16 @@ jobs:
             :data:repository:compileDebugKotlin \
             :data:audio:compileDebugKotlin \
             :native:audio_engine:compileDebugKotlin \
+            :app:assembleDebug \
             --console=plain
+
+      - name: Subir el APK de depuración
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hifi-player-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: warn
 
       - name: Guardar informes de tests
         if: always()

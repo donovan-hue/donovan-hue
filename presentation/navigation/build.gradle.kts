@@ -39,7 +39,9 @@ kotlin {
 dependencies {
     implementation(project(":core:designsystem"))
     implementation(project(":domain:model"))
+    implementation(project(":presentation:playback"))
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
