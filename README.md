@@ -75,3 +75,26 @@ Este README no declara nada como terminado si no está compilado o probado.
 - Ninguna cifra de audio (frecuencia, profundidad, bitrate) se muestra si no proviene de una
   lectura real del archivo o del hardware.
 - Las funciones que aún no existen se marcan como pendientes; nunca se simulan.
+
+## Despliegue
+
+El canal de entrega es GitHub, sin pasos manuales:
+
+| Disparador | Qué ocurre |
+|---|---|
+| push a `main` | compila los 14 módulos verificados, corre los 31 tests de DSP y sube los APK (debug y release) como artefactos |
+| etiqueta `v*` | además publica el APK de release en el *release* de GitHub |
+
+```sh
+git tag v0.5.0-alpha && git push origin v0.5.0-alpha
+```
+
+El panel de estado del proyecto se publica con GitHub Pages desde `docs/`.
+
+**Versión actual: 0.5.0-alpha** — fases 1-5 del plan (arquitectura, biblioteca y escáner, motor de
+audio y reproducción, pantalla Now Playing, cola con reordenación). La 1.0.0 llega cuando el pliego
+esté completo y probado en dispositivos reales.
+
+**Firma:** el APK se firma con la clave de depuración mientras no exista un keystore de producción
+(`keystore.properties` o las variables `HIFI_KEYSTORE_FILE`, `HIFI_KEYSTORE_PASSWORD`, `HIFI_KEY_ALIAS`,
+`HIFI_KEY_PASSWORD`). Es instalable; para una tienda hay que firmarlo con la clave definitiva.

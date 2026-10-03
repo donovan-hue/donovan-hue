@@ -103,11 +103,12 @@
   <header class="top">
     <div>
       <h1>HiFi Player · Panel de revisión</h1>
-      <div class="sub">rama main · commit f73e89d · 3 de octubre de 2026</div>
+      <div class="sub">rama main · commit c916992 · versión 0.5.0-alpha · 3 de octubre de 2026</div>
     </div>
     <div class="chips">
       <span class="chip ok">CI verde · 37129300839</span>
-      <span class="chip gold">APK debug · 22,3 MB</span>
+      <span class="chip gold">APK de release publicado</span>
+      <span class="chip gold">panel en GitHub Pages</span>
       <span class="chip">22 módulos</span>
       <span class="chip">fases 1-5 de 17</span>
     </div>
@@ -280,32 +281,58 @@
     </div>
   </div>
 
-  <h2><span class="n">06</span>Cómo probarlo hoy</h2>
-  <div class="grid cols-2">
+  <h2><span class="n">06</span>Despliegue</h2>
+  <p class="lead">El canal de entrega es GitHub: APK adjunto al <i>release</i> y este panel publicado con
+  GitHub Pages. Al empujar una etiqueta <code>v*</code>, el workflow compila el APK de release con R8 y lo
+  publica solo: no hay pasos manuales ni artefactos que caduquen.</p>
+  <div class="grid cols-3">
     <div class="card">
-      <h3>APK de depuración</h3>
-      <p style="margin:6px 0 0">Lo empaqueta CI en cada push y queda como artefacto descargable:</p>
-      <ul class="mono">
-        <li>Actions → run 37129300839 → hifi-player-debug-apk</li>
-        <li>app/build/outputs/apk/debug/app-debug.apk</li>
-      </ul>
-      <p style="margin:8px 0 0;color:var(--on-var);font-size:13.5px">Al abrirlo funciona el arranque real:
-      el grafo de objetos, el servicio de reproducción y la navegación. La biblioteca aún no tiene pantalla,
-      así que todavía no hay de dónde elegir música.</p>
+      <h3>APK instalable</h3>
+      <p style="margin:6px 0 0"><a href="https://github.com/donovan-hue/donovan-hue/releases/tag/v0.5.0-alpha">release v0.5.0-alpha</a> ·
+      <a href="https://github.com/donovan-hue/donovan-hue/releases">todos los releases</a></p>
+      <p style="margin:8px 0 0;color:var(--on-var);font-size:13px">Compilado con R8 y recursos reducidos.
+      <b>Firmado con la clave de depuración</b> mientras no haya keystore de producción: se instala, pero
+      no sirve para publicar en una tienda.</p>
     </div>
     <div class="card">
-      <h3>Compilar y probar aquí</h3>
+      <h3>Este panel</h3>
+      <p style="margin:6px 0 0"><a href="https://donovan-hue.github.io/donovan-hue/">donovan-hue.github.io/donovan-hue</a></p>
+      <p style="margin:8px 0 0;color:var(--on-var);font-size:13px">Se publica desde <code>docs/</code> en la
+      rama <code>main</code>. Es el mismo archivo que estás viendo.</p>
+    </div>
+    <div class="card">
+      <h3>Automatización</h3>
+      <p style="margin:6px 0 0"><a href="https://github.com/donovan-hue/donovan-hue/actions">.github/workflows/build.yml</a></p>
+      <ul class="mono" style="font-size:12px">
+        <li>push a main → compila, prueba y sube los APK</li>
+        <li>tag v* → además publica el release</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2><span class="n">07</span>Cómo probarlo hoy</h2>
+  <div class="grid cols-2">
+    <div class="card">
+      <h3>Instalar el APK</h3>
+      <p style="margin:6px 0 0">Descarga el APK del release y ábrelo en el teléfono (hay que permitir
+      «instalar apps desconocidas» para el navegador o el gestor de archivos).</p>
+      <p style="margin:8px 0 0;color:var(--on-var);font-size:13.5px">Al abrirlo funciona el arranque real:
+      grafo de objetos, servicio de reproducción y navegación. La biblioteca aún no tiene pantalla, así que
+      todavía no hay de dónde elegir música — eso llega en la fase 6.</p>
+    </div>
+    <div class="card">
+      <h3>Compilar aquí</h3>
       <ul class="mono">
         <li>sh scripts/install-toolchain.sh</li>
         <li>sh scripts/build.sh --all</li>
       </ul>
-      <p style="margin:8px 0 0;color:var(--on-var);font-size:13.5px">Compila los 12 módulos verificados y
-      corre los 31 tests de DSP. El APK no se puede ensamblar en esta máquina: el kernel mata cualquier JVM
-      que pase de ~1,35 GB y el fusionador de dex no cabe; por eso se empaqueta en CI.</p>
+      <p style="margin:8px 0 0;color:var(--on-var);font-size:13.5px">Compila los 14 módulos verificados y
+      corre los 31 tests de DSP. El APK no se puede ensamblar en esta máquina (el kernel mata cualquier JVM
+      que pase de ~1,35 GB y el fusionador de dex no cabe); por eso se empaqueta en CI.</p>
     </div>
   </div>
 
-  <footer>HiFi Player · f73e89d · generado el 3 de octubre de 2026 · ninguna cifra de esta página es estimada</footer>
+  <footer>HiFi Player · 0.5.0-alpha · c916992 · generado el 3 de octubre de 2026 · ninguna cifra de esta página es estimada</footer>
 </div>
 </body>
 </html>

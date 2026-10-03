@@ -3,6 +3,8 @@ name: Compilar y probar
 on:
   push:
     branches: [main]
+    # Las etiquetas v* despliegan: el trabajo "publicar" adjunta el APK al release de GitHub.
+    tags: ['v*']
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -60,6 +62,14 @@ jobs:
           restore-keys: |
             gradle-${{ runner.os }}-
 
+      - name: Versión (etiqueta o por defecto)
+        run: |
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            echo "VERSION_ARG=-PversionNameOverride=${GITHUB_REF_NAME}" >> "$GITHUB_ENV"
+          else
+            echo "VERSION_ARG=" >> "$GITHUB_ENV"
+          fi
+
       - name: Compilar y ejecutar los tests
         run: |
           chmod +x gradlew
@@ -80,6 +90,7 @@ jobs:
             :presentation:playback:compileDebugKotlin \
             :presentation:navigation:compileDebugKotlin \
             :app:assembleDebug \
+            :app:assembleRelease $VERSION_ARG \
             --console=plain
 
       - name: Subir el APK de depuración
@@ -90,6 +101,14 @@ jobs:
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: warn
 
+      - name: Subir el APK de release (R8)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hifi-player-release-apk
+          path: app/build/outputs/apk/release/*.apk
+          if-no-files-found: warn
+
       - name: Guardar informes de tests
         if: always()
         uses: actions/upload-artifact@v4
@@ -97,3 +116,58 @@ jobs:
           name: informes-tests
           path: '**/build/test-results/**/*.xml'
           if-no-files-found: ignore
+
+  # --------------------------------------------------------------------------------------------
+  # Despliegue: al empujar una etiqueta v* (por ejemplo v0.5.0-alpha) se publica el APK de release
+  # como release de GitHub. No hay tienda de por medio todavía, así que este es el canal de entrega.
+  publicar:
+    name: Publicar APK en el release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Descargar el APK de release
+        uses: actions/download-artifact@v4
+        with:
+          name: hifi-player-release-apk
+          path: apk
+
+      - name: Comprobar que hay un APK
+        run: |
+          set -eu
+          ls -la apk
+          count=$(ls apk/*.apk 2>/dev/null | wc -l)
+          if [ "$count" -eq 0 ]; then
+            echo "La compilación no produjo ningún APK de release; no se publica nada." >&2
+            exit 1
+          fi
+
+      - name: Publicar el release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: HiFi Player ${{ github.ref_name }}
+          files: apk/*.apk
+          # Las versiones con -alpha/-beta se marcan como preliminares.
+          prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') }}
+          body: |
+            APK de HiFi Player **${{ github.ref_name }}** (compilado con R8, minificado).
+
+            **Qué funciona hoy (fases 1-5 del plan):** motor de audio Media3 con el DSP conectado,
+            reproducción en primer plano con MediaSession, pantalla Now Playing con la información
+            técnica medida, mini reproductor, navegación y cola de reproducción con reordenación
+            por arrastre, guardado y restauración de la cola.
+
+            **Qué todavía no:** la biblioteca no tiene pantalla (fase 6+), así que al abrir la app
+            aún no hay de dónde elegir música; el ecualizador, ReplayGain, crossfeed, la selección
+            de DAC USB y el modo bit-perfect están pendientes y la app los muestra como tales, sin
+            botones decorativos.
+
+            **Firma:** este APK se firma con la clave de depuración mientras no exista un keystore
+            de producción configurado (`keystore.properties` o las variables `HIFI_*`). Es instalable,
+            pero para publicar en una tienda hay que firmarlo con la clave definitiva.
+
+            **Honestidad técnica:** ninguna cifra de calidad de audio se muestra si no se ha medido.
+            El bit-perfect no se anuncia como activo hasta que el sistema lo confirme en el dispositivo.

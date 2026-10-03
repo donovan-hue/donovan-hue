@@ -1,7 +1,10 @@
 # ============================ HiFi Player – R8 rules ============================
-# Keep the media session service entry point discovered via manifest reflection.
--keep class com.hifiplayer.core.audio.service.PlaybackService { *; }
+# Entry points named from the manifest (the Application, the activity and the playback service) are
+# kept because Android instantiates them by name at runtime.
+-keep class com.hifiplayer.data.audio.service.PlaybackService { *; }
 -keep class * extends androidx.media3.session.MediaSessionService { *; }
+-keep class com.hifiplayer.HiFiPlayerApp { *; }
+-keep class com.hifiplayer.ui.MainActivity { *; }
 -keep class * extends androidx.media3.session.MediaLibraryService { *; }
 
 # Media3 / ExoPlayer
