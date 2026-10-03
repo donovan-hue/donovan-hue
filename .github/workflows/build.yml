@@ -65,6 +65,7 @@ jobs:
           chmod +x gradlew
           ./gradlew \
             :native:dsp:test \
+            :core:designsystem:compileDebugKotlin \
             :core:database:compileDebugKotlin \
             :core:storage:compileDebugKotlin \
             :core:metadata:compileDebugKotlin \
@@ -76,6 +77,8 @@ jobs:
             :data:repository:compileDebugKotlin \
             :data:audio:compileDebugKotlin \
             :native:audio_engine:compileDebugKotlin \
+            :presentation:playback:compileDebugKotlin \
+            :presentation:navigation:compileDebugKotlin \
             :app:assembleDebug \
             --console=plain
 
