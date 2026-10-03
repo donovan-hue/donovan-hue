@@ -42,6 +42,10 @@ dependencies {
     implementation(project(":core:audio"))
     implementation(project(":native:audio_engine"))
     implementation(project(":native:dsp"))
+    implementation(libs.media3.common)
+    implementation(libs.media3.exoplayer)
+    implementation(libs.media3.session)
+    implementation(libs.timber)
     implementation(libs.kotlinx.coroutines.android)
 
     testImplementation(libs.junit)

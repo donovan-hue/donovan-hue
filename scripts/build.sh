@@ -11,7 +11,7 @@ export ANDROID_HOME="${ANDROID_HOME:-/home/user/.cache/tools/android-sdk}"
 PATH="$JAVA_HOME/bin:$PATH"
 export PATH
 
-TASKS=":native:dsp:test :core:database:compileDebugKotlin :core:storage:compileDebugKotlin :core:metadata:compileDebugKotlin :core:permissions:compileDebugKotlin :core:usb:compileDebugKotlin :core:audio:compileDebugKotlin :data:local:compileDebugKotlin :data:metadata:compileDebugKotlin :data:repository:compileDebugKotlin"
+TASKS=":native:dsp:test :core:database:compileDebugKotlin :core:storage:compileDebugKotlin :core:metadata:compileDebugKotlin :core:permissions:compileDebugKotlin :core:usb:compileDebugKotlin :core:audio:compileDebugKotlin :data:local:compileDebugKotlin :data:metadata:compileDebugKotlin :data:repository:compileDebugKotlin :data:audio:compileDebugKotlin :native:audio_engine:compileDebugKotlin"
 
 if [ "$#" -eq 0 ] || [ "${1:-}" = "--all" ]; then
   # shellcheck disable=SC2086

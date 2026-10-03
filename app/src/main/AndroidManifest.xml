@@ -64,7 +64,7 @@
 
         <!-- Foreground MediaSessionService: keeps playback gapless and uninterrupted -->
         <service
-            android:name="com.hifiplayer.core.audio.service.PlaybackService"
+            android:name="com.hifiplayer.data.audio.service.PlaybackService"
             android:exported="true"
             android:foregroundServiceType="mediaPlayback">
             <intent-filter>

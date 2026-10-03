@@ -74,6 +74,8 @@ jobs:
             :data:local:compileDebugKotlin \
             :data:metadata:compileDebugKotlin \
             :data:repository:compileDebugKotlin \
+            :data:audio:compileDebugKotlin \
+            :native:audio_engine:compileDebugKotlin \
             --console=plain
 
       - name: Guardar informes de tests
