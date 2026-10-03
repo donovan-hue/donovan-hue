@@ -1,0 +1,85 @@
+name: Compilar y probar
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Núcleo + datos + tests de DSP
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v4
+
+      # Se instala el JDK de forma explícita en lugar de depender del runner: la versión queda
+      # fijada por el workflow, no por la imagen que GitHub use ese día.
+      - name: JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Android SDK (platform 36 + build-tools 36.0.0)
+        run: |
+          set -eu
+          SDK="$RUNNER_TEMP/android-sdk"
+          mkdir -p "$SDK/cmdline-tools"
+          curl -sL -o cmdline.zip "https://dl.google.com/android/repository/commandlinetools-linux-13114758_latest.zip"
+          unzip -q cmdline.zip -d "$SDK/cmdline-tools"
+          mv "$SDK/cmdline-tools/cmdline-tools" "$SDK/cmdline-tools/latest"
+          yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$SDK" --licenses > /dev/null 2>&1 || true
+          "$SDK/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$SDK" \
+            "platforms;android-36" "build-tools;36.0.0" "platform-tools" > /dev/null
+          echo "ANDROID_HOME=$SDK" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$SDK" >> "$GITHUB_ENV"
+
+      # El gradle.properties del repo está ajustado a una máquina de 2 GB; aquí hay margen de sobra.
+      # Se sobrescribe en el perfil del usuario para no tocar la configuración del proyecto.
+      - name: Memoria del runner
+        run: |
+          mkdir -p ~/.gradle
+          printf 'org.gradle.jvmargs=-Xmx3g -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8\norg.gradle.parallel=true\n' > ~/.gradle/gradle.properties
+
+      - name: Caché de Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties', 'gradle/libs.versions.toml', '**/*.gradle.kts') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
+      - name: Compilar y ejecutar los tests
+        run: |
+          chmod +x gradlew
+          ./gradlew \
+            :native:dsp:test \
+            :core:database:compileDebugKotlin \
+            :core:storage:compileDebugKotlin \
+            :core:metadata:compileDebugKotlin \
+            :core:permissions:compileDebugKotlin \
+            :core:usb:compileDebugKotlin \
+            :core:audio:compileDebugKotlin \
+            :data:local:compileDebugKotlin \
+            :data:metadata:compileDebugKotlin \
+            :data:repository:compileDebugKotlin \
+            --console=plain
+
+      - name: Guardar informes de tests
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: informes-tests
+          path: '**/build/test-results/**/*.xml'
+          if-no-files-found: ignore
