@@ -35,8 +35,38 @@ import com.hifiplayer.domain.repository.PlaylistRepository
 import com.hifiplayer.domain.repository.QueueRepository
 import com.hifiplayer.domain.repository.SearchRepository
 import com.hifiplayer.domain.repository.SettingsRepository
+import com.hifiplayer.domain.usecase.favorites.GetFavoriteTracksUseCase
+import com.hifiplayer.domain.usecase.favorites.ObserveFavoriteIdsUseCase
+import com.hifiplayer.domain.usecase.favorites.ToggleFavoriteUseCase
+import com.hifiplayer.domain.usecase.library.AddMusicFolderUseCase
+import com.hifiplayer.domain.usecase.library.CancelScanUseCase
+import com.hifiplayer.domain.usecase.library.GetAlbumsUseCase
+import com.hifiplayer.domain.usecase.library.GetArtistsUseCase
+import com.hifiplayer.domain.usecase.library.GetFoldersUseCase
+import com.hifiplayer.domain.usecase.library.GetGenresUseCase
+import com.hifiplayer.domain.usecase.library.GetLibraryStatsUseCase
+import com.hifiplayer.domain.usecase.library.GetRecentlyAddedUseCase
+import com.hifiplayer.domain.usecase.library.GetRecentlyPlayedUseCase
+import com.hifiplayer.domain.usecase.library.GetTracksUseCase
 import com.hifiplayer.domain.usecase.library.LoadArtworkBytesUseCase
+import com.hifiplayer.domain.usecase.library.PruneMissingTracksUseCase
+import com.hifiplayer.domain.usecase.library.RefreshLibraryUseCase
+import com.hifiplayer.domain.usecase.library.SearchLibraryUseCase
+import com.hifiplayer.domain.usecase.playback.PlayTrackUseCase
+import com.hifiplayer.domain.usecase.playback.PlayTracksUseCase
+import com.hifiplayer.domain.usecase.playlists.AddTrackToPlaylistUseCase
+import com.hifiplayer.domain.usecase.playlists.CreatePlaylistUseCase
+import com.hifiplayer.domain.usecase.playlists.DeletePlaylistUseCase
+import com.hifiplayer.domain.usecase.playlists.GetPlaylistTracksUseCase
+import com.hifiplayer.domain.usecase.playlists.GetPlaylistsUseCase
+import com.hifiplayer.domain.usecase.playlists.MovePlaylistTrackUseCase
+import com.hifiplayer.domain.usecase.playlists.PlayPlaylistUseCase
+import com.hifiplayer.domain.usecase.playlists.RemoveTrackFromPlaylistUseCase
+import com.hifiplayer.domain.usecase.playlists.RenamePlaylistUseCase
+import com.hifiplayer.domain.usecase.queue.AddToQueueUseCase
+import com.hifiplayer.domain.usecase.queue.AddTracksToQueueUseCase
 import com.hifiplayer.domain.usecase.queue.ClearQueueUseCase
+import com.hifiplayer.domain.usecase.queue.PlayNextUseCase
 import com.hifiplayer.domain.usecase.queue.GetSavedQueueUseCase
 import com.hifiplayer.domain.usecase.queue.MoveQueueItemUseCase
 import com.hifiplayer.domain.usecase.queue.PlayQueueIndexUseCase
@@ -52,8 +82,24 @@ import com.hifiplayer.domain.usecase.playback.SetRepeatModeUseCase
 import com.hifiplayer.domain.usecase.playback.SetShuffleUseCase
 import com.hifiplayer.domain.usecase.playback.TogglePlayPauseUseCase
 import com.hifiplayer.domain.usecase.settings.ObserveSettingsUseCase
+import com.hifiplayer.domain.model.playback.QueueOrigin
+import com.hifiplayer.domain.model.library.SortDirection
+import com.hifiplayer.domain.model.library.TrackQuery
+import com.hifiplayer.domain.model.library.TrackSort
 import com.hifiplayer.nativeaudio.engine.AudioEngine
 import com.hifiplayer.nativeaudio.engine.Media3AudioEngine
+import com.hifiplayer.presentation.library.admin.LibraryAdminViewModel
+import com.hifiplayer.presentation.library.artwork.ArtworkLoader
+import com.hifiplayer.presentation.library.artwork.LocalArtworkLoaderImpl
+import com.hifiplayer.presentation.library.browse.BrowseViewModel
+import com.hifiplayer.presentation.library.collection.CollectionViewModel
+import com.hifiplayer.presentation.library.home.HomeViewModel
+import com.hifiplayer.presentation.library.playlists.PlaylistDetailViewModel
+import com.hifiplayer.presentation.library.playlists.PlaylistPickerViewModel
+import com.hifiplayer.presentation.library.playlists.PlaylistsViewModel
+import com.hifiplayer.presentation.library.search.SearchViewModel
+import com.hifiplayer.presentation.navigation.CollectionArgs
+import com.hifiplayer.presentation.navigation.CollectionKind
 import com.hifiplayer.presentation.playback.NowPlayingViewModel
 import com.hifiplayer.presentation.playback.QueueViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -202,5 +248,143 @@ class AppGraph(context: Context) {
         getSavedQueue = GetSavedQueueUseCase(queue),
         timeProvider = timeProvider,
         dispatchers = dispatchers,
+    )
+
+    // ---------------------------------------------------------------- biblioteca (fases 6 y 7)
+
+    /** Home: the shelves the user lands on (requirement 24). */
+    fun homeViewModel(): HomeViewModel = HomeViewModel(
+        musicRepository = music,
+        getRecentlyPlayed = GetRecentlyPlayedUseCase(music),
+        getRecentlyAdded = GetRecentlyAddedUseCase(music),
+        getFavorites = GetFavoriteTracksUseCase(favorites),
+        getAlbums = GetAlbumsUseCase(music),
+        getStats = GetLibraryStatsUseCase(music),
+        observeFavoriteIds = ObserveFavoriteIdsUseCase(favorites),
+        toggleFavorite = ToggleFavoriteUseCase(favorites),
+        refreshLibrary = RefreshLibraryUseCase(music),
+        playTracks = PlayTracksUseCase(playback),
+        playNext = PlayNextUseCase(playback),
+        addToQueue = AddToQueueUseCase(playback),
+        addTracksToQueue = AddTracksToQueueUseCase(playback),
+        dispatchers = dispatchers,
+    )
+
+    /** Library browsing: songs, albums, artists, genres and folders (requirement 25). */
+    fun browseViewModel(): BrowseViewModel = BrowseViewModel(
+        musicRepository = music,
+        getTracks = GetTracksUseCase(music),
+        getAlbums = GetAlbumsUseCase(music),
+        getArtists = GetArtistsUseCase(music),
+        getGenres = GetGenresUseCase(music),
+        getFolders = GetFoldersUseCase(music),
+        getStats = GetLibraryStatsUseCase(music),
+        observeFavoriteIds = ObserveFavoriteIdsUseCase(favorites),
+        toggleFavorite = ToggleFavoriteUseCase(favorites),
+        refreshLibrary = RefreshLibraryUseCase(music),
+        playTracks = PlayTracksUseCase(playback),
+        playNext = PlayNextUseCase(playback),
+        addToQueue = AddToQueueUseCase(playback),
+    )
+
+    /**
+     * One collection screen for albums, artists, genres and folders.
+     *
+     * The query is built here from the navigation arguments because the repository is what knows how
+     * to translate a filter into SQL, and the screens only know what to display.
+     */
+    fun collectionViewModel(args: CollectionArgs): CollectionViewModel {
+        val query = when (args.kind) {
+            CollectionKind.ALBUM -> TrackQuery(albumId = args.id)
+            CollectionKind.ARTIST -> TrackQuery(artistId = args.id)
+            CollectionKind.GENRE -> TrackQuery(genre = args.id)
+            CollectionKind.FOLDER -> TrackQuery(folderPath = args.id)
+        }
+        val origin = when (args.kind) {
+            CollectionKind.ALBUM -> QueueOrigin.ALBUM
+            CollectionKind.ARTIST -> QueueOrigin.ARTIST
+            CollectionKind.GENRE -> QueueOrigin.GENRE
+            CollectionKind.FOLDER -> QueueOrigin.FOLDER
+        }
+        return CollectionViewModel(
+            musicRepository = music,
+            title = args.title,
+            subtitle = args.subtitle,
+            origin = origin,
+            query = query,
+            observeFavoriteIds = ObserveFavoriteIdsUseCase(favorites),
+            toggleFavorite = ToggleFavoriteUseCase(favorites),
+            playTracks = PlayTracksUseCase(playback),
+            setShuffle = SetShuffleUseCase(playback),
+            playNext = PlayNextUseCase(playback),
+            addToQueue = AddToQueueUseCase(playback),
+            addTracksToQueue = AddTracksToQueueUseCase(playback),
+            dispatchers = dispatchers,
+        )
+    }
+
+    /** Global search with the 300 ms debounce inside the ViewModel (requirement 26). */
+    fun searchViewModel(): SearchViewModel = SearchViewModel(
+        musicRepository = music,
+        searchLibrary = SearchLibraryUseCase(search),
+        playTrack = PlayTrackUseCase(playback),
+        playTracks = PlayTracksUseCase(playback),
+        playNext = PlayNextUseCase(playback),
+        addToQueue = AddToQueueUseCase(playback),
+        dispatchers = dispatchers,
+    )
+
+    /** Playlist list and management (phase 6). */
+    fun playlistsViewModel(): PlaylistsViewModel = PlaylistsViewModel(
+        getPlaylists = GetPlaylistsUseCase(playlists),
+        createPlaylist = CreatePlaylistUseCase(playlists),
+        renamePlaylist = RenamePlaylistUseCase(playlists),
+        deletePlaylist = DeletePlaylistUseCase(playlists),
+        playPlaylist = PlayPlaylistUseCase(playlists, playback),
+        dispatchers = dispatchers,
+    )
+
+    /** One playlist's tracks, with real reordering (phase 6). */
+    fun playlistDetailViewModel(playlistId: String): PlaylistDetailViewModel = PlaylistDetailViewModel(
+        playlistId = playlistId,
+        getPlaylists = GetPlaylistsUseCase(playlists),
+        getTracks = GetPlaylistTracksUseCase(playlists),
+        observeFavoriteIds = ObserveFavoriteIdsUseCase(favorites),
+        toggleFavorite = ToggleFavoriteUseCase(favorites),
+        removeTrack = RemoveTrackFromPlaylistUseCase(playlists),
+        moveTrack = MovePlaylistTrackUseCase(playlists),
+        playTracks = PlayTracksUseCase(playback),
+        setShuffle = SetShuffleUseCase(playback),
+        playNext = PlayNextUseCase(playback),
+        addToQueue = AddToQueueUseCase(playback),
+        addTracksToQueue = AddTracksToQueueUseCase(playback),
+        dispatchers = dispatchers,
+    )
+
+    /** "Add to a playlist" picker, offered from every track list. */
+    fun playlistPickerViewModel(): PlaylistPickerViewModel = PlaylistPickerViewModel(
+        getPlaylists = GetPlaylistsUseCase(playlists),
+        addTrack = AddTrackToPlaylistUseCase(playlists),
+        createPlaylist = CreatePlaylistUseCase(playlists),
+    )
+
+    /** Folders and scanning: the actions behind "Añadir carpeta" and "Escanear". */
+    fun libraryAdminViewModel(): LibraryAdminViewModel = LibraryAdminViewModel(
+        musicRepository = music,
+        addMusicFolder = AddMusicFolderUseCase(music),
+        refreshLibrary = RefreshLibraryUseCase(music),
+        cancelScan = CancelScanUseCase(music),
+        pruneMissing = PruneMissingTracksUseCase(music),
+    )
+
+    /**
+     * The artwork loader the UI uses.
+     *
+     * It is built here, over the artwork use cases, so no Composables ever hold a repository, and it
+     * is a single instance because the decoded-bitmap cache is worth sharing across screens.
+     */
+    val artworkLoader: ArtworkLoader = LocalArtworkLoaderImpl(
+        resolveArtwork = ResolveTrackArtworkUseCase(artwork),
+        loadArtworkBytes = LoadArtworkBytesUseCase(artwork),
     )
 }

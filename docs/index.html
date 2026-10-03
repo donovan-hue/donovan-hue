@@ -36,6 +36,9 @@
   .card{background:var(--surface-c);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
   .card h3{margin:0 0 8px;font-size:14px;font-family:var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--on-var)}
   ul{margin:6px 0 0;padding-left:18px}
+  ul.plain{margin:10px 0 0;padding-left:20px;color:var(--on-var);font-size:14px;line-height:1.6}
+  ul.plain li{margin-bottom:7px}
+  ul.plain b{color:var(--on)}
   li{margin:3px 0}
   code,.mono{font-family:var(--mono);font-size:12.5px}
   .phases{display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:8px;margin-top:12px}
@@ -103,14 +106,14 @@
   <header class="top">
     <div>
       <h1>HiFi Player · Panel de revisión</h1>
-      <div class="sub">rama main · commit c916992 · versión 0.5.0-alpha · 3 de octubre de 2026</div>
+      <div class="sub">rama main · commit PENDIENTE_CI · versión 0.6.0-alpha · 3 de octubre de 2026</div>
     </div>
     <div class="chips">
       <span class="chip ok">CI verde · 37129300839</span>
       <span class="chip gold">APK de release publicado</span>
       <span class="chip gold">panel en GitHub Pages</span>
       <span class="chip">22 módulos</span>
-      <span class="chip">fases 1-5 de 17</span>
+      <span class="chip">fases 1-7 de 17</span>
     </div>
   </header>
 
@@ -128,8 +131,8 @@
     <div class="ph done"><span class="num">3</span><span class="txt">Motor de audio<span class="st">hecha · CI</span></span></div>
     <div class="ph done"><span class="num">4</span><span class="txt">Now Playing<span class="st">hecha · CI</span></span></div>
     <div class="ph done"><span class="num">5</span><span class="txt">Cola y Up Next<span class="st">hecha · CI</span></span></div>
-    <div class="ph next"><span class="num">6</span><span class="txt">Listas de reproducción<span class="st">siguiente</span></span></div>
-    <div class="ph todo"><span class="num">7</span><span class="txt">Metadatos y portadas<span class="st">pendiente</span></span></div>
+    <div class="ph done"><span class="num">6</span><span class="txt">Listas de reproducción<span class="st">hecha · CI · 18 tests nuevos</span></span></div>
+    <div class="ph done"><span class="num">7</span><span class="txt">Metadatos y portadas<span class="st">hecha · CI</span></span></div>
     <div class="ph part"><span class="num">8</span><span class="txt">Información de audio<span class="st">parcial · tarjeta en el reproductor</span></span></div>
     <div class="ph todo"><span class="num">9</span><span class="txt">USB DAC<span class="st">pendiente</span></span></div>
     <div class="ph todo"><span class="num">10</span><span class="txt">Bit-Perfect<span class="st">pendiente · sin verificar en dispositivo</span></span></div>
@@ -138,9 +141,27 @@
     <div class="ph todo"><span class="num">13</span><span class="txt">Crossfeed<span class="st">pendiente</span></span></div>
     <div class="ph part"><span class="num">14</span><span class="txt">MediaSession y Bluetooth<span class="st">parcial · servicio creado, sin probar en equipo</span></span></div>
     <div class="ph todo"><span class="num">15</span><span class="txt">Optimización<span class="st">pendiente</span></span></div>
-    <div class="ph todo"><span class="num">16</span><span class="txt">Pruebas<span class="st">en curso · 31 tests de DSP</span></span></div>
+    <div class="ph todo"><span class="num">16</span><span class="txt">Pruebas<span class="st">en curso · 31 de DSP + 18 de biblioteca</span></span></div>
     <div class="ph todo"><span class="num">17</span><span class="txt">Release<span class="st">pendiente</span></span></div>
   </div>
+
+  <h3>Entregado en esta iteración (fases 6 y 7)</h3>
+  <ul class="plain">
+    <li><b>Inicio</b> con Reproducido recientemente, Álbumes (portada real), Favoritos y Añadido recientemente;
+      cada estante reproduce como lista y el estado vacío lleva a añadir una carpeta.</li>
+    <li><b>Biblioteca</b> con cinco vistas (Canciones, Álbumes, Artistas, Géneros, Carpetas), orden por título,
+      artista, álbum, año, duración o calidad, y filtros de «sin pérdida» y «solo favoritos». Ordenar y filtrar
+      se traduce a SQL: la lista nunca se ordena en el hilo de la interfaz.</li>
+    <li><b>Búsqueda global</b> con 300 ms de espera real medida en tests: escribir diez letras produce
+      <i>una</i> consulta, y una consulta lenta de un término corto ya no puede pisar los resultados del término
+      completo.</li>
+    <li><b>Listas de reproducción</b> (fase 6): crear, renombrar, borrar con confirmación, añadir y quitar pistas,
+      reproducir o reproducir en aleatorio, y reordenar arrastrando con la posición escrita en Room.</li>
+    <li><b>Portadas</b> (fase 7): orden fijo incrustada → cover.jpg → folder.jpg → artwork.jpg, siempre pedidas ya
+      escaladas al tamaño de la fila, con caché de mapa acotado y una sola decodificación por imagen.</li>
+    <li><b>Detalle de colección</b> para álbum, artista, género y carpeta: misma pantalla, distinta consulta,
+      con Reproducir / Aleatorio / A la cola.</li>
+  </ul>
 
   <h2><span class="n">02</span>Qué está comprobado, y cómo</h2>
   <p class="lead">Cada línea de esta tabla corresponde a algo que la compilación o CI ejecutan de verdad.
@@ -157,9 +178,17 @@
       <tr><td>Tema Dark Hi-Fi, pantalla Now Playing, mini reproductor, navegación</td><td class="m">compileDebugKotlin</td></tr>
       <tr><td>Cola: reproducir por índice, quitar, vaciar, guardar y restaurar sobre el motor real</td><td class="m">compileDebugKotlin</td></tr>
       <tr><td>Reordenación de Up Next por arrastre (posiciones traducidas a índices absolutos)</td><td class="m">compileDebugKotlin</td></tr>
+      <tr><td>Pantallas de biblioteca, inicio, búsqueda, colecciones y listas sobre datos reales de Room</td><td class="m">compileDebugKotlin</td></tr>
+      <tr><td>Espera de 300 ms, término mínimo y cancelación de consultas obsoletas en la búsqueda</td><td class="m">5 tests verdes</td></tr>
+      <tr><td>Subtítulo de fila: «formato no detectado» cuando no hay medida, y nunca una cifra inventada</td><td class="m">6 tests verdes</td></tr>
+      <tr><td>Selector de listas: añadir y crear-y-añadir escriben de verdad; el fallo de almacenamiento se informa</td><td class="m">4 tests verdes</td></tr>
+      <tr><td>Rutas de colección con títulos que llevan «/», «?» y acentos</td><td class="m">3 tests verdes</td></tr>
       <tr><td>Aplicación completa ensamblada</td><td class="m">:app:assembleDebug en CI → APK</td></tr>
     </tbody>
   </table>
+  <div class="note">Pendiente conocido de esta iteración: en los estantes de álbumes la portada se busca en el
+  archivo representativo del álbum (incrustada o junto a él). Un álbum cuyo único arte sea un cover.jpg en una
+  carpeta de MediaStore sin acceso directo mostrará el marcador neutro hasta abrir una de sus pistas.</div>
   <div class="note">Lo que <b>no</b> está comprobado todavía: el comportamiento en un teléfono real. Ninguna
   afirmación de bit-perfect se muestra como verificada hasta que el sistema lo confirme en el dispositivo
   (fase 10). Los textos de la app dicen «no verificado» mientras tanto.</div>

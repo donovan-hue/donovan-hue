@@ -27,6 +27,15 @@ class MainActivity : ComponentActivity() {
                 HiFiApp(
                     createPlayerViewModel = graph::nowPlayingViewModel,
                     createQueueViewModel = graph::queueViewModel,
+                    createHomeViewModel = graph::homeViewModel,
+                    createBrowseViewModel = graph::browseViewModel,
+                    createSearchViewModel = graph::searchViewModel,
+                    createPlaylistsViewModel = graph::playlistsViewModel,
+                    createPlaylistDetailViewModel = graph::playlistDetailViewModel,
+                    createCollectionViewModel = graph::collectionViewModel,
+                    createAdminViewModel = graph::libraryAdminViewModel,
+                    createPickerViewModel = graph::playlistPickerViewModel,
+                    artworkLoader = graph.artworkLoader,
                 )
             }
         }
