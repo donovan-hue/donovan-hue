@@ -24,7 +24,10 @@ class MainActivity : ComponentActivity() {
         setContent {
             // Appearance settings will drive this in the settings phase; the product default is dark.
             HiFiTheme(darkTheme = true) {
-                HiFiApp(createPlayerViewModel = graph::nowPlayingViewModel)
+                HiFiApp(
+                    createPlayerViewModel = graph::nowPlayingViewModel,
+                    createQueueViewModel = graph::queueViewModel,
+                )
             }
         }
     }

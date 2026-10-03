@@ -25,6 +25,11 @@ data class HiFiDimens(
     val sectionSpacing: Dp = 24.dp,
     val rowSpacing: Dp = 8.dp,
     val progressThickness: Dp = 4.dp,
+    /**
+     * Fixed row height of the queue list. It is fixed on purpose: drag-to-reorder computes the
+     * target position from the finger offset, so a constant height keeps that math exact.
+     */
+    val queueRowHeight: Dp = 64.dp,
 )
 
 val LocalHiFiDimens = staticCompositionLocalOf { HiFiDimens() }

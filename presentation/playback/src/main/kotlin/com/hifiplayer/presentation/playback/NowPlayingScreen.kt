@@ -15,6 +15,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.PlaylistPlay
 import androidx.compose.material.icons.filled.Album
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
@@ -68,6 +69,7 @@ fun NowPlayingScreen(
     onScrubChange: (Float) -> Unit,
     onScrubFinish: () -> Unit,
     onDismissMessage: () -> Unit,
+    onOpenQueue: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val dimens = LocalHiFiDimens.current
@@ -81,6 +83,17 @@ fun NowPlayingScreen(
                 else -> null
             },
             onBack = onBack,
+            actions = {
+                // Only offered when there is a queue to look at; it opens a real screen.
+                if (state.queueSize > 0) {
+                    HiFiTransportButton(
+                        icon = Icons.AutoMirrored.Filled.PlaylistPlay,
+                        contentDescription = "Abrir la cola de reproducción",
+                        onClick = onOpenQueue,
+                        size = dimens.touchTarget,
+                    )
+                }
+            },
         )
 
         Column(

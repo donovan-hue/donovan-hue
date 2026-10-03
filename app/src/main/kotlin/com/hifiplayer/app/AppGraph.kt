@@ -36,10 +36,17 @@ import com.hifiplayer.domain.repository.QueueRepository
 import com.hifiplayer.domain.repository.SearchRepository
 import com.hifiplayer.domain.repository.SettingsRepository
 import com.hifiplayer.domain.usecase.library.LoadArtworkBytesUseCase
+import com.hifiplayer.domain.usecase.queue.ClearQueueUseCase
+import com.hifiplayer.domain.usecase.queue.GetSavedQueueUseCase
+import com.hifiplayer.domain.usecase.queue.MoveQueueItemUseCase
+import com.hifiplayer.domain.usecase.queue.PlayQueueIndexUseCase
+import com.hifiplayer.domain.usecase.queue.RemoveFromQueueUseCase
 import com.hifiplayer.domain.usecase.library.ResolveTrackArtworkUseCase
 import com.hifiplayer.domain.usecase.playback.NextTrackUseCase
 import com.hifiplayer.domain.usecase.playback.ObservePlaybackStateUseCase
 import com.hifiplayer.domain.usecase.playback.PreviousTrackUseCase
+import com.hifiplayer.domain.usecase.playback.RestoreQueueUseCase
+import com.hifiplayer.domain.usecase.playback.SaveQueueUseCase
 import com.hifiplayer.domain.usecase.playback.SeekUseCase
 import com.hifiplayer.domain.usecase.playback.SetRepeatModeUseCase
 import com.hifiplayer.domain.usecase.playback.SetShuffleUseCase
@@ -48,6 +55,7 @@ import com.hifiplayer.domain.usecase.settings.ObserveSettingsUseCase
 import com.hifiplayer.nativeaudio.engine.AudioEngine
 import com.hifiplayer.nativeaudio.engine.Media3AudioEngine
 import com.hifiplayer.presentation.playback.NowPlayingViewModel
+import com.hifiplayer.presentation.playback.QueueViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -179,6 +187,20 @@ class AppGraph(context: Context) {
         setRepeatMode = SetRepeatModeUseCase(playback),
         resolveArtwork = ResolveTrackArtworkUseCase(artwork),
         loadArtworkBytes = LoadArtworkBytesUseCase(artwork),
+        dispatchers = dispatchers,
+    )
+
+    /** Queue / Up Next screen (phase 5): all actions end in real engine operations. */
+    fun queueViewModel(): QueueViewModel = QueueViewModel(
+        observePlaybackState = ObservePlaybackStateUseCase(playback),
+        playQueueIndex = PlayQueueIndexUseCase(playback),
+        removeFromQueue = RemoveFromQueueUseCase(playback),
+        moveQueueItem = MoveQueueItemUseCase(playback),
+        clearQueue = ClearQueueUseCase(playback),
+        saveQueue = SaveQueueUseCase(playback),
+        restoreQueue = RestoreQueueUseCase(playback),
+        getSavedQueue = GetSavedQueueUseCase(queue),
+        timeProvider = timeProvider,
         dispatchers = dispatchers,
     )
 }

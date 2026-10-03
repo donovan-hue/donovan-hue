@@ -18,6 +18,8 @@ import androidx.navigation.compose.rememberNavController
 import com.hifiplayer.presentation.playback.MiniPlayer
 import com.hifiplayer.presentation.playback.NowPlayingScreen
 import com.hifiplayer.presentation.playback.NowPlayingViewModel
+import com.hifiplayer.presentation.playback.QueueScreen
+import com.hifiplayer.presentation.playback.QueueViewModel
 
 /**
  * Application shell: bottom tabs, the mini player that sits above them, and Now Playing opened over
@@ -29,6 +31,7 @@ import com.hifiplayer.presentation.playback.NowPlayingViewModel
 @Composable
 fun HiFiApp(
     createPlayerViewModel: () -> NowPlayingViewModel,
+    createQueueViewModel: () -> QueueViewModel,
     modifier: Modifier = Modifier,
 ) {
     val navController = rememberNavController()
@@ -43,7 +46,11 @@ fun HiFiApp(
         modifier = modifier.fillMaxSize(),
         bottomBar = {
             Column {
-                if (currentRoute != HiFiDestination.NowPlaying.route) {
+                val fullScreenRoutes = setOf(
+                    HiFiDestination.NowPlaying.route,
+                    HiFiDestination.Queue.route,
+                )
+                if (currentRoute !in fullScreenRoutes) {
                     MiniPlayer(
                         state = playerState,
                         onTogglePlayPause = playerViewModel::onTogglePlayPause,
@@ -116,6 +123,30 @@ fun HiFiApp(
                     onScrubChange = playerViewModel::onScrubChange,
                     onScrubFinish = playerViewModel::onScrubFinish,
                     onDismissMessage = playerViewModel::onDismissMessage,
+                    onOpenQueue = {
+                        navController.navigate(HiFiDestination.Queue.route) { launchSingleTop = true }
+                    },
+                )
+            }
+            composable(HiFiDestination.Queue.route) {
+                // Scoped to this back stack entry: the queue screen stops observing when it leaves,
+                // and the queue itself lives in the engine, not in this ViewModel.
+                val queueViewModel: QueueViewModel = viewModel(
+                    factory = viewModelFactory { initializer { createQueueViewModel() } },
+                )
+                val queueState by queueViewModel.state.collectAsStateWithLifecycle()
+                QueueScreen(
+                    state = queueState,
+                    onBack = { navController.popBackStack() },
+                    onPlayIndex = queueViewModel::onPlayIndex,
+                    onRemove = queueViewModel::onRemove,
+                    onMove = queueViewModel::onMove,
+                    onClearRequested = queueViewModel::onClearRequested,
+                    onClearCancelled = queueViewModel::onClearCancelled,
+                    onClearConfirmed = queueViewModel::onClearConfirmed,
+                    onSave = queueViewModel::onSave,
+                    onRestore = queueViewModel::onRestore,
+                    onDismissMessage = queueViewModel::onDismissMessage,
                 )
             }
         }

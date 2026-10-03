@@ -16,6 +16,8 @@ sealed class HiFiDestination(val route: String) {
 
     data object NowPlaying : HiFiDestination("now_playing")
 
+    data object Queue : HiFiDestination("queue")
+
     /** Tabs shown in the bottom bar, in order. Now Playing is not a tab: it opens over them. */
     companion object {
         val tabs: List<HiFiDestination> = listOf(Home, Library, Playlists, Settings)

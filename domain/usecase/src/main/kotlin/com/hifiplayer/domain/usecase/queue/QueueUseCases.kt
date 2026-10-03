@@ -5,6 +5,7 @@ import com.hifiplayer.domain.model.library.Track
 import com.hifiplayer.domain.model.playback.QueueInsertPosition
 import com.hifiplayer.domain.model.playback.QueueItem
 import com.hifiplayer.domain.repository.PlaybackRepository
+import com.hifiplayer.domain.repository.QueueRepository
 
 /**
  * QueueManager use cases (requirement 27). The authoritative queue lives in the engine; these
@@ -45,4 +46,13 @@ class PlayQueueIndexUseCase(private val playback: PlaybackRepository) {
 /** Up Next list for the queue sheet, derived from the same state the player renders. */
 class GetUpNextUseCase(private val playback: PlaybackRepository) {
     operator fun invoke(): List<QueueItem> = playback.state.value.upNext
+}
+
+/**
+ * Reads the saved queue so the UI can offer "Restaurar" only when there is something to restore,
+ * and can describe it ("12 pistas, guardada hace 4 min"). Returning the persisted snapshot —
+ * instead of a boolean — keeps the screen from guessing what it is about to restore.
+ */
+class GetSavedQueueUseCase(private val queue: QueueRepository) {
+    suspend operator fun invoke(): QueueRepository.SavedQueue? = queue.load()
 }
