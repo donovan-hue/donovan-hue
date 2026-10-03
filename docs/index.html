@@ -290,22 +290,23 @@
       <h3>APK instalable</h3>
       <p style="margin:6px 0 0"><a href="https://github.com/donovan-hue/donovan-hue/releases/tag/v0.5.0-alpha">release v0.5.0-alpha</a> ·
       <a href="https://github.com/donovan-hue/donovan-hue/releases">todos los releases</a></p>
-      <p style="margin:8px 0 0;color:var(--on-var);font-size:13px">Compilado con R8 y recursos reducidos.
-      <b>Firmado con la clave de depuración</b> mientras no haya keystore de producción: se instala, pero
-      no sirve para publicar en una tienda.</p>
+      <p style="margin:8px 0 0;color:var(--on-var);font-size:13px"><b>app-release.apk · 2,6 MB</b>, compilado
+      con R8 y recursos reducidos. <b>Firmado con la clave de depuración</b> mientras no haya keystore de
+      producción: se instala, pero no sirve para publicar en una tienda.</p>
     </div>
     <div class="card">
       <h3>Este panel</h3>
       <p style="margin:6px 0 0"><a href="https://donovan-hue.github.io/donovan-hue/">donovan-hue.github.io/donovan-hue</a></p>
-      <p style="margin:8px 0 0;color:var(--on-var);font-size:13px">Se publica desde <code>docs/</code> en la
-      rama <code>main</code>. Es el mismo archivo que estás viendo.</p>
+      <p style="margin:8px 0 0;color:var(--on-var);font-size:13px">Se publica desde <code>docs/</code> con
+      GitHub Actions en cada push a <code>main</code>. Es el mismo archivo que estás viendo.</p>
     </div>
     <div class="card">
       <h3>Automatización</h3>
       <p style="margin:6px 0 0"><a href="https://github.com/donovan-hue/donovan-hue/actions">.github/workflows/build.yml</a></p>
       <ul class="mono" style="font-size:12px">
         <li>push a main → compila, prueba y sube los APK</li>
-        <li>tag v* → además publica el release</li>
+        <li>tag v* → además publica el release con el APK</li>
+        <li>push a main → despliega este panel en Pages</li>
       </ul>
     </div>
   </div>

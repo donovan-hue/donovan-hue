@@ -171,3 +171,34 @@ jobs:
 
             **Honestidad técnica:** ninguna cifra de calidad de audio se muestra si no se ha medido.
             El bit-perfect no se anuncia como activo hasta que el sistema lo confirme en el dispositivo.
+
+  # --------------------------------------------------------------------------------------------
+  # Panel de estado del proyecto. El repositorio tiene Pages configurado para desplegarse desde
+  # Actions (no con el generador Jekyll), así que aquí se sube la carpeta docs/ tal cual: es HTML
+  # plano, sin build ni dependencias.
+  paginas:
+    name: Publicar el panel en GitHub Pages
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.despliegue.outputs.page_url }}
+
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v4
+
+      - name: Preparar Pages
+        uses: actions/configure-pages@v5
+
+      - name: Empaquetar docs/
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+      - name: Desplegar
+        id: despliegue
+        uses: actions/deploy-pages@v4
