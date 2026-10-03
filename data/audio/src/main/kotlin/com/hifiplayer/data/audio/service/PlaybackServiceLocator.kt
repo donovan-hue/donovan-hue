@@ -1,7 +1,9 @@
 package com.hifiplayer.data.audio.service
 
 import android.content.Context
+import com.hifiplayer.domain.repository.MusicRepository
 import com.hifiplayer.domain.repository.PlaybackRepository
+import com.hifiplayer.domain.repository.PlaylistRepository
 import com.hifiplayer.nativeaudio.engine.AudioEngine
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,6 +19,10 @@ import kotlinx.coroutines.flow.asStateFlow
 interface PlaybackServiceDependencies {
     val engine: AudioEngine
     val playbackRepository: PlaybackRepository
+
+    /** The library the car and any other media browser may read (requirement 27). */
+    val musicRepository: MusicRepository
+    val playlistRepository: PlaylistRepository
 }
 
 /**

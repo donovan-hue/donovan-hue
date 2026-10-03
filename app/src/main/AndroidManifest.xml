@@ -40,6 +40,11 @@
         android:theme="@style/Theme.HiFiPlayer"
         tools:targetApi="34">
 
+        <!-- Android Auto / Automotive: declares the app as a media app so the car may browse it. -->
+        <meta-data
+            android:name="com.google.android.gms.car.application"
+            android:resource="@xml/automotive_app_desc" />
+
         <activity
             android:name=".ui.MainActivity"
             android:exported="true"
@@ -62,7 +67,11 @@
             </intent-filter>
         </activity>
 
-        <!-- Foreground MediaSessionService: keeps playback gapless and uninterrupted -->
+        <!--
+          Foreground library service: keeps playback gapless and uninterrupted, owns the MediaSession
+          that the lock screen, the notification, the Bluetooth buttons and Android Auto drive, and
+          serves the browse tree those controllers read.
+        -->
         <service
             android:name="com.hifiplayer.data.audio.service.PlaybackService"
             android:exported="true"

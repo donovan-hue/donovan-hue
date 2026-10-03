@@ -60,6 +60,10 @@ import com.hifiplayer.domain.model.playback.RepeatMode
 @Composable
 fun NowPlayingScreen(
     state: NowPlayingUiState,
+    // The playhead moves twice per second. It arrives as a lambda so only the composable that reads
+    // it is redrawn — the artwork, the buttons and the technical card are not (requirement 36).
+    progress: () -> Float,
+    positionMs: () -> Long,
     onBack: () -> Unit,
     onTogglePlayPause: () -> Unit,
     onNext: () -> Unit,
@@ -152,6 +156,8 @@ fun NowPlayingScreen(
 
             PositionControls(
                 state = state,
+                progress = progress,
+                positionMs = positionMs,
                 onScrubStart = onScrubStart,
                 onScrubChange = onScrubChange,
                 onScrubFinish = onScrubFinish,
@@ -265,15 +271,20 @@ private fun ArtworkPanel(state: NowPlayingUiState, modifier: Modifier = Modifier
 @Composable
 private fun PositionControls(
     state: NowPlayingUiState,
+    progress: () -> Float,
+    positionMs: () -> Long,
     onScrubStart: () -> Unit,
     onScrubChange: (Float) -> Unit,
     onScrubFinish: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val duration = state.durationMs
+    // Read here, in this composable, so the churn stays in this row.
+    val currentProgress = progress()
+    val currentPositionMs = positionMs()
     Column(modifier = modifier.fillMaxWidth()) {
         HiFiSlider(
-            value = state.progress,
+            value = currentProgress,
             onValueChange = { fraction ->
                 onScrubStart()
                 onScrubChange(fraction)
@@ -284,7 +295,7 @@ private fun PositionControls(
         )
         Row(modifier = Modifier.fillMaxWidth()) {
             Text(
-                text = formatDuration(if (state.isScrubbing) (duration * state.progress).toLong() else state.positionMs),
+                text = formatDuration(if (state.isScrubbing) (duration * currentProgress).toLong() else currentPositionMs),
                 style = TechLabelStyle,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.weight(1f),

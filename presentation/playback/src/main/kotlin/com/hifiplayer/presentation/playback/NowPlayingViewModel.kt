@@ -74,6 +74,14 @@ class NowPlayingViewModel(
 
     private var artworkJob: Job? = null
 
+    /**
+     * Everything that changes when the *track* or the *controls* change — but not when the playhead
+     * moves (requirement 36: a smooth player).
+     *
+     * The playback position changes twice per second; if it lived in the same state object the whole
+     * Now Playing screen — artwork included — would rebuild at that rate. It lives in [progress] and
+     * [positionMs] instead, and only the row that shows the time reads them.
+     */
     val state: StateFlow<NowPlayingUiState> = combine(
         observePlaybackState(),
         observeSettings(),
@@ -87,6 +95,28 @@ class NowPlayingViewModel(
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = NowPlayingUiState(),
     )
+
+    /**
+     * The screen state *without* the moving parts: [positionMs] and [progress] are pinned to zero
+     * here, so a state that only differs in the playhead compares equal and Compose does not even
+     * look at the screen again. [progress] and [positionMs] are the flows the seek bar reads.
+     */
+    val visuals: StateFlow<NowPlayingUiState> = state
+        .map { it.copy(positionMs = 0L, progress = 0f) }
+        .distinctUntilChanged()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), NowPlayingUiState())
+
+    /** How far the playhead is, as a fraction, for the seek bar. Emits only when it really moves. */
+    val progress: StateFlow<Float> = state
+        .map { it.progress }
+        .distinctUntilChanged()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0f)
+
+    /** The position in milliseconds, for the elapsed-time label. */
+    val positionMs: StateFlow<Long> = state
+        .map { it.positionMs }
+        .distinctUntilChanged()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0L)
 
     init {
         viewModelScope.launch {

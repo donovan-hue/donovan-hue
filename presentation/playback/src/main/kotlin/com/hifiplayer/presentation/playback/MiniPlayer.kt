@@ -42,6 +42,8 @@ import com.hifiplayer.core.designsystem.theme.LocalHiFiDimens
 @Composable
 fun MiniPlayer(
     state: NowPlayingUiState,
+    // Same deferred read as the full screen: the bar is redrawn at draw time, not recomposed.
+    progress: () -> Float,
     onTogglePlayPause: () -> Unit,
     onNext: () -> Unit,
     onOpen: () -> Unit,
@@ -58,7 +60,7 @@ fun MiniPlayer(
             .semantics { contentDescription = "Abrir el reproductor: ${state.title}" },
     ) {
         LinearProgressIndicator(
-            progress = { state.progress },
+            progress = progress,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(2.dp),

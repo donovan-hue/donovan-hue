@@ -86,6 +86,7 @@ jobs:
             :data:metadata:compileDebugKotlin \
             :data:repository:compileDebugKotlin \
             :data:audio:compileDebugKotlin \
+            :data:audio:testDebugUnitTest \
             :native:audio_engine:compileDebugKotlin \
             :presentation:library:compileDebugKotlin \
             :presentation:library:testDebugUnitTest \

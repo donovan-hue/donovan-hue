@@ -24,11 +24,11 @@ import com.hifiplayer.presentation.settings.ThemeViewModel
  * These two numbers are written by hand on purpose: they are a statement about the project, not a
  * runtime fact, and the About screen says so. Getting them from the code would be guessing.
  */
-private const val PHASES_DONE = 13
+private const val PHASES_DONE = 15
 private const val PHASES_TOTAL = 17
 
 /** Automated tests across the whole project; CI prints the exact number on every run. */
-private const val TEST_COUNT = 66
+private const val TEST_COUNT = 83
 
 /**
  * Single activity (requirement: the UI is Compose + one host).

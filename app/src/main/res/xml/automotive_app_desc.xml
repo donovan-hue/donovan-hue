@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android Auto / Android Automotive (requirement 27).
+
+  The app declares itself as a media app: the car then connects to the MediaLibrarySession the
+  playback service publishes and browses the same library the phone shows.
+-->
+<automotiveApp>
+    <uses name="media" />
+</automotiveApp>

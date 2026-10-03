@@ -430,13 +430,6 @@ class Media3AudioEngine(
         }
     }
 
-    private fun Track.toMediaItem(): MediaItem = MediaItem.Builder()
-        .setUri(uri)
-        .setMediaId(id)
-        // MIME hint helps ExoPlayer pick the right extractor for extension-less content URIs.
-        .apply { mimeType?.let { setMimeType(it) } }
-        .build()
-
     private companion object {
         const val TAG = "Media3AudioEngine"
         const val POSITION_TICK_MS = 500L

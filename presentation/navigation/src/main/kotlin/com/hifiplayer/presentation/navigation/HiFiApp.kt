@@ -94,7 +94,13 @@ fun HiFiApp(
     val playerViewModel: NowPlayingViewModel = viewModel(
         factory = viewModelFactory { initializer { createPlayerViewModel() } },
     )
-    val playerState by playerViewModel.state.collectAsStateWithLifecycle()
+    // `visuals` deliberately excludes the moving playhead: the shell, the mini player and every
+    // screen below only redraw when the track or a control changes, not twice per second.
+    val playerState by playerViewModel.visuals.collectAsStateWithLifecycle()
+    // Collected (not read): the value is touched inside the two controls that display it, so a new
+    // playhead position only redraws those two and never the shell.
+    val playheadProgress = playerViewModel.progress.collectAsStateWithLifecycle()
+    val playheadPositionMs = playerViewModel.positionMs.collectAsStateWithLifecycle()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
 
@@ -179,6 +185,7 @@ fun HiFiApp(
                 if (currentRoute !in HiFiDestination.fullScreen) {
                     MiniPlayer(
                         state = playerState,
+                        progress = { playheadProgress.value },
                         onTogglePlayPause = playerViewModel::onTogglePlayPause,
                         onNext = playerViewModel::onNext,
                         onOpen = {
@@ -556,6 +563,8 @@ fun HiFiApp(
                 composable(HiFiDestination.NowPlaying.route) {
                     NowPlayingScreen(
                         state = playerState,
+                        progress = { playheadProgress.value },
+                        positionMs = { playheadPositionMs.value },
                         onBack = { navController.popBackStack() },
                         onTogglePlayPause = playerViewModel::onTogglePlayPause,
                         onNext = playerViewModel::onNext,

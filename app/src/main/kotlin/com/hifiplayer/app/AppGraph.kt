@@ -264,6 +264,10 @@ class AppGraph(context: Context) {
     val serviceDependencies: PlaybackServiceDependencies = object : PlaybackServiceDependencies {
         override val engine: AudioEngine get() = this@AppGraph.engine
         override val playbackRepository: PlaybackRepository get() = this@AppGraph.playback
+
+        // The library the car may browse: the same repositories the phone screens read.
+        override val musicRepository: MusicRepository get() = this@AppGraph.music
+        override val playlistRepository: PlaylistRepository get() = this@AppGraph.playlists
     }
 
     /** ViewModels are created by the graph so screens never touch a repository (requirement 1). */

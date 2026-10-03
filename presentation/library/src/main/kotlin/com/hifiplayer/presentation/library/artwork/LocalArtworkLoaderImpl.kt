@@ -29,13 +29,17 @@ import kotlinx.coroutines.withContext
 class LocalArtworkLoaderImpl(
     private val resolveArtwork: ResolveTrackArtworkUseCase,
     private val loadArtworkBytes: LoadArtworkBytesUseCase,
-    private val maxEntries: Int = DEFAULT_MAX_ENTRIES,
+    private val maxBytes: Long = DEFAULT_MAX_BYTES,
     private val logger: Logger = AppLogger.logger(),
 ) : ArtworkLoader {
 
-    private val cache = object : LinkedHashMap<String, ImageBitmap>(16, 0.75f, true) {
-        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, ImageBitmap>): Boolean =
-            size > maxEntries
+    /**
+     * The budget is in bytes, and the size of an entry is what it really occupies: width × height × 4.
+     * A list cover (44 px) costs ~7 KB and the Now Playing artwork (320 px) ~410 KB, so counting
+     * entries would have been off by two orders of magnitude (requirement 36).
+     */
+    private val cache = ArtworkCache<ImageBitmap>(maxBytes = maxBytes) { bitmap ->
+        bitmap.width.toLong() * bitmap.height.toLong() * BYTES_PER_PIXEL
     }
 
     private val cacheMutex = Mutex()
@@ -107,19 +111,19 @@ class LocalArtworkLoaderImpl(
         format = null,
     )
 
-    private suspend fun cached(key: String): ImageBitmap? = cacheMutex.withLock { cache[key] }
+    private suspend fun cached(key: String): ImageBitmap? = cacheMutex.withLock { cache.get(key) }
 
     private suspend fun decodeAndCache(key: String, bytes: ByteArray): ImageBitmap? {
         val lock = inFlight.computeIfAbsent(key) { Mutex() }
         return lock.withLock {
-            cacheMutex.withLock { cache[key] }?.let { return@withLock it }
+            cacheMutex.withLock { cache.get(key) }?.let { return@withLock it }
             val decoded = withContext(Dispatchers.Default) {
                 runCatching { BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap() }
                     .onFailure { logger.w(TAG, "Portada ilegible para $key: ${it.javaClass.simpleName}") }
                     .getOrNull()
             }
             if (decoded != null) {
-                cacheMutex.withLock { cache[key] = decoded }
+                cacheMutex.withLock { cache.put(key, decoded) }
             }
             decoded
         }
@@ -130,10 +134,16 @@ class LocalArtworkLoaderImpl(
         cacheMutex.withLock { cache.clear() }
     }
 
+    /** Decoded cover bytes held right now; the settings screen shows this figure. */
+    suspend fun sizeBytes(): Long = cacheMutex.withLock { cache.sizeBytes }
+
     private companion object {
         const val TAG = "Artwork"
 
-        /** Roughly 6 MB of decoded covers at list size, which is what a fast scroll really needs. */
-        const val DEFAULT_MAX_ENTRIES = 120
+        /** ARGB_8888, which is what a decoded cover occupies. */
+        const val BYTES_PER_PIXEL = 4L
+
+        /** 16 MB of decoded covers: several screens of list thumbnails plus the current artwork. */
+        const val DEFAULT_MAX_BYTES = 16L * 1024L * 1024L
     }
 }

@@ -3,8 +3,8 @@ package com.hifiplayer.data.audio.service
 import android.app.PendingIntent
 import android.content.Intent
 import androidx.media3.common.Player
+import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
-import androidx.media3.session.MediaSessionService
 import com.hifiplayer.core.common.logging.AppLogger
 import com.hifiplayer.nativeaudio.engine.Media3PlayerHandle
 
@@ -20,9 +20,9 @@ import com.hifiplayer.nativeaudio.engine.Media3PlayerHandle
  * The service owns no engine of its own: it attaches to the engine the application built, so the
  * queue and the DSP configuration are shared, not duplicated.
  */
-class PlaybackService : MediaSessionService() {
+class PlaybackService : MediaLibraryService() {
 
-    private var session: MediaSession? = null
+    private var session: MediaLibraryService.MediaLibrarySession? = null
     private var listener: Player.Listener? = null
 
     override fun onCreate() {
@@ -49,7 +49,17 @@ class PlaybackService : MediaSessionService() {
             )
         }
 
-        session = MediaSession.Builder(this, player)
+        // A *library* session, not a plain one: this is what lets Android Auto, Android Automotive
+        // and any other media browser see the real library instead of a single playing item
+        // (requirement 27). The browse tree reads the same repositories the phone screens read.
+        session = MediaLibraryService.MediaLibrarySession.Builder(
+            this,
+            player,
+            LibrarySessionCallback(
+                music = dependencies.musicRepository,
+                playlists = dependencies.playlistRepository,
+            ),
+        )
             .setId(SESSION_ID)
             .apply { sessionActivity?.let { setSessionActivity(it) } }
             .build()
@@ -68,7 +78,7 @@ class PlaybackService : MediaSessionService() {
         AppLogger.i(TAG, "Servicio de reproducción iniciado")
     }
 
-    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = session
+    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaLibrarySession? = session
 
     /**
      * The user swiped the app away. If something is playing it keeps playing (that is what a music

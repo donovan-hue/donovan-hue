@@ -113,7 +113,7 @@
       <span class="chip gold">APK de release v0.6.0-alpha</span>
       <span class="chip gold">panel en GitHub Pages</span>
       <span class="chip">22 módulos</span>
-      <span class="chip">fases 1-13 de 17</span>
+      <span class="chip">fases 1-15 de 17</span>
     </div>
   </header>
 
@@ -139,13 +139,37 @@
     <div class="ph done"><span class="num">11</span><span class="txt">ReplayGain<span class="st">hecha · CI</span></span></div>
     <div class="ph done"><span class="num">12</span><span class="txt">Ecualizador<span class="st">hecha · CI</span></span></div>
     <div class="ph done"><span class="num">13</span><span class="txt">Crossfeed<span class="st">hecha · CI</span></span></div>
-    <div class="ph part"><span class="num">14</span><span class="txt">MediaSession y Bluetooth<span class="st">se trabaja ahora</span></span></div>
-    <div class="ph todo"><span class="num">15</span><span class="txt">Optimización<span class="st">pendiente</span></span></div>
-    <div class="ph todo"><span class="num">16</span><span class="txt">Pruebas<span class="st">en curso · 66 pruebas</span></span></div>
+    <div class="ph done"><span class="num">14</span><span class="txt">MediaSession, Bluetooth y Android Auto<span class="st">hecha · CI · sin coche ni coche real donde probarla</span></span></div>
+    <div class="ph done"><span class="num">15</span><span class="txt">Optimización<span class="st">hecha · CI · falta perfilado en un móvil real</span></span></div>
+    <div class="ph part"><span class="num">16</span><span class="txt">Pruebas<span class="st">en curso · 83 pruebas</span></span></div>
     <div class="ph todo"><span class="num">17</span><span class="txt">Release<span class="st">pendiente</span></span></div>
   </div>
 
-  <h3>Entregado en esta iteración (fases 8 a 13)</h3>
+  <h3>Entregado en esta iteración (fases 14 y 15)</h3>
+  <ul class="plain">
+    <li><b>Notificación y pantalla de bloqueo con datos reales</b>: hasta ahora el reproductor enviaba
+      a Media3 el archivo y nada más, así que el sistema mostraba «Unknown artist» y ningún arte.
+      Ahora cada pista viaja con sus metadatos (título, artista, álbum, género, año, número de pista y
+      la portada que la biblioteca resolvió) más la ficha técnica del formato. Lo mismo que se ve en
+      el reproductor es lo que se ve en el bloqueo, en el reloj y en el coche.</li>
+    <li><b>Android Auto y Android Automotive</b>: el servicio pasa a ser un servicio de <i>biblioteca</i>
+      y publica un árbol navegable real (Recientes, Álbumes, Artistas, Canciones, Favoritos, Listas,
+      Géneros) que se resuelve contra las mismas consultas que usan las pantallas del teléfono, con
+      paginación y búsqueda. Un identificador desconocido se responde como «no encontrado» y un fallo de
+      lectura como error: nunca como una biblioteca vacía, que es un mensaje muy distinto para quien
+      conduce.</li>
+    <li><b>El reproductor deja de repintarse 120 veces por minuto</b>: la posición de reproducción avanzaba
+      dos veces por segundo dentro del mismo estado que el título, el arte y los botones, así que toda la
+      pantalla (y la barra inferior, y el mini reproductor) se reconstruía con cada tic. La posición vive
+      ahora en sus propios flujos y se lee dentro del mando que la muestra; la interfaz solo se redibuja
+      cuando cambia algo de verdad. Cinco pruebas nuevas fijan ese comportamiento, incluida la de que
+      arrastrar la barra no busca hasta que se suelta.</li>
+    <li><b>Caché de portadas con presupuesto en bytes</b>: antes contaba entradas (120) sin mirar cuánto
+      ocupaban, y una portada de lista (44 px, unos 7 KB) y la del reproductor (320 px, unos 410 KB) se
+      trataban igual. Ahora el límite son 16 MB reales, con desalojo del menos usado, y está probado.</li>
+  </ul>
+
+  <h3>Entregado en la iteración anterior (fases 8 a 13)</h3>
   <ul class="plain">
     <li><b>Información de audio</b>: pantalla propia con la tarjeta SOURCE → OUTPUT, la cadena de
       procesamiento que se está aplicando de verdad, los bloqueos del bit-perfect con su explicación y
