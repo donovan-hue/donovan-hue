@@ -1,31 +1,39 @@
 #!/usr/bin/env bash
-# Restaura la configuración local de git que NO se conserva entre sesiones
-# (la carpeta .git/config está excluida de los snapshots del workspace).
+# Restaura la configuración de git que NO sobrevive entre sesiones del workspace
+# (.git/config está excluido de los snapshots) y comprueba el acceso al remoto.
 #
 # Uso:
-#   ./scripts/git-setup.sh "Tu Nombre" tu@correo.com [url-del-remoto]
-set -euo pipefail
-
-NAME="${1:-}"
-EMAIL="${2:-}"
-REMOTE="${3:-}"
-
+#   ./scripts/git-setup.sh                 # aplica remoto + llave si existen
+#   ./scripts/git-setup.sh --check         # solo informa
+set -uo pipefail
 cd "$(dirname "$0")/.."
 
-if [ -n "$NAME" ]; then git config user.name "$NAME"; fi
-if [ -n "$EMAIL" ]; then git config user.email "$EMAIL"; fi
-git config core.autocrlf false
-git config pull.rebase true
-git config fetch.prune true
+REMOTE_URL="git@github.com:donovan-hue/donovan-hue.git"
+KEY="/home/user/.cache/ssh/hifi_deploy"
 
-if [ -n "$REMOTE" ]; then
-  if git remote get-url origin >/dev/null 2>&1; then
-    git remote set-url origin "$REMOTE"
-  else
-    git remote add origin "$REMOTE"
-  fi
-  echo "Remoto 'origin' -> $REMOTE"
+if [ "${1:-}" = "--check" ]; then
+  echo "remoto : $(git remote get-url origin 2>/dev/null || echo 'NO CONFIGURADO')"
+  echo "llave  : $([ -f "$KEY" ] && echo 'presente' || echo 'AUSENTE (regenerar con ssh-keygen)')"
+  echo "commits: $(git rev-list --count HEAD 2>/dev/null || echo 0)"
+  exit 0
 fi
 
-echo "Identidad git: $(git config user.name 2>/dev/null || echo 'SIN CONFIGURAR') <$(git config user.email 2>/dev/null || echo 'SIN CONFIGURAR')>"
-git remote -v || true
+git config user.name  >/dev/null 2>&1 || git config user.name  "HiFi Player"
+git config user.email >/dev/null 2>&1 || git config user.email "dev@hifiplayer.local"
+git config core.autocrlf false
+
+if git remote get-url origin >/dev/null 2>&1; then
+  git remote set-url origin "$REMOTE_URL"
+else
+  git remote add origin "$REMOTE_URL"
+fi
+
+if [ -f "$KEY" ]; then
+  git config core.sshCommand "ssh -i $KEY -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
+  echo "llave SSH configurada: $KEY"
+else
+  echo "AVISO: falta la llave $KEY; el push por SSH fallará hasta regenerarla."
+fi
+
+echo "remoto: $(git remote get-url origin)"
+git log --oneline | head -3
