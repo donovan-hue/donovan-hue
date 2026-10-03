@@ -1,0 +1,36 @@
+*.iml
+.gradle/
+build/
+local.properties
+keystore.properties
+*.jks
+*.keystore
+.idea/
+.DS_Store
+captures/
+.externalNativeBuild/
+.cxx/
+*.aar
+!libs/*.aar
+!*/libs/*.aar
+
+# --- Gradle / Kotlin ---
+.kotlin/
+*.hprof
+.gradle/configuration-cache/
+
+# --- Android ---
+*.apk
+*.aab
+*.ap_
+*.dex
+release/
+output.json
+lint-results*.html
+lint-results*.xml
+.navigation/
+*.orig
+
+# --- Entorno local (nunca se sube) ---
+.env
+*.log

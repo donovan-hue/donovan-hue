@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Matches USB Audio Class devices so Android can hand us the attach event.
+     class 1 = Audio (UAC1/UAC2/UAC3), subclass 1 = AudioStreaming, 2 = AudioControl -->
+<resources>
+    <usb-device class="1" />
+</resources>

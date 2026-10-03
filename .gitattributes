@@ -1,0 +1,11 @@
+# Normaliza finales de línea: el wrapper de Gradle y los binarios quedan intactos.
+* text=auto eol=lf
+*.bat text eol=crlf
+*.jar binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.ttf binary
+*.otf binary
+*.so binary
