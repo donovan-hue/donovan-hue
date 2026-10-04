@@ -161,6 +161,11 @@ jobs:
     timeout-minutes: 40
 
     steps:
+      # El recorrido de la interfaz vive en scripts/ui-walk.py, así que este trabajo también trae el
+      # código (el APK se descarga aparte, del artefacto ya construido).
+      - name: Descargar el código
+        uses: actions/checkout@v4
+
       - name: Descargar el APK de release
         uses: actions/download-artifact@v4
         with:
