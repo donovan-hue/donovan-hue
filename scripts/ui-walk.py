@@ -91,7 +91,15 @@ def scroll_down(times: int = 1) -> None:
 
 
 def screenshot(name: str) -> str:
+    """Captura la pantalla, esperando a que el fotograma esté asentado.
+
+    Se toma dos veces: con la GPU por software, la primera captura cae a veces a mitad de una
+    transición y salen dos pantallas superpuestas (se veía contenido desplazado encima del título,
+    y en la jerarquía de la interfaz ese contenido no estaba). La segunda siempre está limpia.
+    """
     path = f"{out_dir}/{name}.png"
+    sh(f"adb exec-out screencap -p > {path}")
+    time.sleep(1.2)
     sh(f"adb exec-out screencap -p > {path}")
     notes.append(f"captura {name}.png")
     return path
@@ -195,16 +203,21 @@ if tap_text("Ajustes", exact=True):
             tap_text("Oscuro", index=0)  # se deja el tema del producto
 
 # --- Crossfeed: ahí viven Balance y los avisos que salían en rojo ---
-if scroll_until("Crossfeed") and tap_text("Crossfeed", index=0):
-    time.sleep(1)
+if scroll_until("Crossfeed", max_swipes=12) and tap_text("Crossfeed", index=0):
+    time.sleep(2)
     screenshot("07-crossfeed")
-    save_dump("07-crossfeed")
+    seen = save_dump("07-crossfeed")
+    for expected in ["Balance", "Nivel", "Ganancia de la app"]:
+        if any(expected.lower() in t.lower() for t in seen):
+            notes.append(f"Crossfeed: «{expected}» está en pantalla")
+        else:
+            notes.append(f"Crossfeed: no vi «{expected}» sin desplazar (puede estar más abajo)")
     sh("adb shell input keyevent KEYCODE_BACK")
     time.sleep(1)
 
 # --- Ecualizador ---
 if scroll_until("Ecualizador paramétrico") and tap_text("Ecualizador paramétrico", index=0):
-    time.sleep(1)
+    time.sleep(2)
     screenshot("08-ecualizador")
     save_dump("08-ecualizador")
     sh("adb shell input keyevent KEYCODE_BACK")

@@ -106,11 +106,11 @@
   <header class="top">
     <div>
       <h1>HiFi Player · Panel de revisión</h1>
-      <div class="sub">rama main · versión 0.17.2-alpha · 4 de octubre de 2026</div>
+      <div class="sub">rama main · versión 0.17.3-alpha · 4 de octubre de 2026</div>
     </div>
     <div class="chips">
       <span class="chip ok">CI verde · 37156018697</span>
-      <span class="chip gold">compilación 0.17.2-alpha</span>
+      <span class="chip gold">compilación 0.17.3-alpha</span>
       <span class="chip gold">panel en GitHub Pages</span>
       <span class="chip">22 módulos</span>
       <span class="chip">fases 1-17 de 17</span>
@@ -144,6 +144,32 @@
     <div class="ph done"><span class="num">16</span><span class="txt">Pruebas<span class="st">hecha · 97 pruebas, 0 fallos</span></span></div>
     <div class="ph done"><span class="num">17</span><span class="txt">Release<span class="st">hecha · 0.17.1-alpha publicada</span></span></div>
   </div>
+
+  <h3>Corrección 0.17.3 (en curso, sin release)</h3>
+  <ul class="plain">
+    <li><b>El tema no hacía nada.</b> El tema oscurecía siempre que el teléfono estuviera en modo
+      oscuro, así que «Claro» no cambiaba nada. Ahora la elección del usuario manda y «Seguir al
+      sistema» es el único modo que mira al teléfono. Comprobado en el emulador midiendo el brillo de
+      la pantalla: <b>24.5 con oscuro · 235.7 con claro</b>. «Negro puro (OLED)» además existía como
+      opción sin hacer nada: ahora es una paleta de negro real (brillo 15.4).</li>
+    <li><b>Botones sin texto.</b> En las filas de opciones, Compose mide antes los elementos sin peso,
+      así que un valor o un chip largo se comía el ancho y el resto quedaba aplastado hasta
+      desaparecer: recuadros de color sin etiqueta, imposibles de identificar. Ahora la fila envuelve
+      en varias líneas y los valores se limitan a 160 dp con puntos suspensivos. El título de la fila
+      siempre manda: antes «Información de audio» llegó a dibujarse letra a letra, una por línea.</li>
+    <li><b>Avisos en rojo que no eran errores.</b> Las pantallas de DSP decían «el ecualizador no se
+      aplica mientras bit-perfect esté activo» con solo tener el ajuste <i>pedido</i>, aunque el
+      sistema no lo hubiera concedido — y en un teléfono sin DAC USB nunca lo concede. Es decir: la
+      app avisaba de que un ajuste no sonaba cuando sí sonaba. Ahora manda el estado que el motor
+      mide, el aviso dice la verdad y trae el botón «Desactivar bit-perfect» para resolverlo sin
+      salir de la pantalla. Los avisos tienen nivel: informativo, aviso y error; el rojo queda para
+      lo que falla.</li>
+    <li><b>Nada se dibuja encima del título.</b> La barra superior no tenía fondo y el contenido
+      desplazado se veía por encima de él. Visto en las capturas del emulador, no deducido.</li>
+    <li><b>Y se puede ver:</b> en cada push, CI abre la app instalada en un emulador, recorre Ajustes,
+      Apariencia, Crossfeed y Ecualizador, <b>mide</b> que el tema cambia de verdad y guarda las
+      capturas como artefacto. Los fallos de estas tres correcciones se encontraron ahí, mirando.</li>
+  </ul>
 
   <h3>Corrección 0.17.2 (en curso, sin release)</h3>
   <ul class="plain">

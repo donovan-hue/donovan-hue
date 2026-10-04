@@ -1,10 +1,19 @@
 # Cómo instalar HiFi Player en tu móvil
 
-Versión: **0.17.2-alpha** · Android 8.0 o superior · archivo: `hifi-player.apk` (3,0 MB)
+Versión: **0.17.3-alpha** · Android 8.0 o superior · archivo: `hifi-player.apk` (3,0 MB)
 
-Esta versión **corrige el cierre al abrir** de la 0.17.1: el reproductor se consultaba desde un hilo de
-fondo y Android mataba el proceso por ello. La causa se encontró abriendo el APK de release en un
-emulador, no adivinando; desde ahora CI hace esa comprobación en cada cambio.
+Esta versión corrige el **cierre al abrir** de la 0.17.1 (el reproductor se consultaba desde un hilo
+de fondo y Android mataba el proceso por ello) y, sobre esa base, tres cosas que se veían al usarla:
+
+- **El tema ahora cambia de verdad**: «Claro» se pone claro aunque el teléfono esté en modo oscuro, y
+  «Negro puro (OLED)» es negro de verdad.
+- **Ningún botón sale vacío**: las filas de opciones envuelven en varias líneas en lugar de aplastar
+  los botones hasta dejarlos sin texto.
+- **Los avisos dicen la verdad**: ya no avisan de que un efecto no se aplica cuando sí se está
+  aplicando, y traen el botón para desactivar bit-perfect si es lo que quieres.
+
+Se puede comprobar en las capturas que CI guarda en cada compilación, y el tema se verifica midiendo
+el brillo de la pantalla en un emulador, no a ojo.
 
 ## 1. Descarga
 

@@ -29,8 +29,8 @@ android {
         // Al desplegar desde una etiqueta (v1.2.3) el workflow pasa -PversionNameOverride=v1.2.3,
         // de modo que el APK publicado y la etiqueta no pueden discrepar.
         val versionOverride = (project.findProperty("versionNameOverride") as String?)?.removePrefix("v")
-        versionCode = 19
-        versionName = versionOverride ?: "0.17.2-alpha"
+        versionCode = 20
+        versionName = versionOverride ?: "0.17.3-alpha"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
