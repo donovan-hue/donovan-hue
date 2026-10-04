@@ -84,6 +84,10 @@ El canal de entrega es GitHub, sin pasos manuales:
 |---|---|
 | push a `main` | compila los 22 módulos, ejecuta las 97 pruebas y sube los APK (debug y release) como artefactos |
 | etiqueta `v*` | además publica el APK de release en el *release* de GitHub |
+
+Antes de subir cualquier APK, CI ejecuta `scripts/verify-apk.sh`: comprueba que cada componente que
+nombra el manifest (Application, actividad de entrada, servicios, receptores) existe de verdad como
+clase dentro del `dex`. Es la comprobación que faltaba cuando la 0.17.0 se publicó sin arrancar.
 | push a `main` (rama del panel) | republica el panel de `docs/` en GitHub Pages |
 
 ```sh
@@ -104,7 +108,8 @@ contradecir lo que dice el código. Procedimiento de una versión:
 git tag v0.17.0-alpha && git push origin v0.17.0-alpha
 ```
 
-**Versión actual: 0.17.0-alpha** — las 17 fases del pliego, implementadas y verificadas con CI.
+**Versión actual: 0.17.1-alpha** (la 0.17.0 no arrancaba: el manifest nombraba sus componentes con el
+namespace del módulo en vez del paquete real de las clases; ver `docs/RELEASE-NOTES.md`) — las 17 fases del pliego, implementadas y verificadas con CI.
 La numeración sigue a las fases a propósito: **1.0.0 no es «todo hecho», es «todo hecho y probado en
 hardware real»**, y eso no se puede afirmar desde una máquina sin dispositivo.
 

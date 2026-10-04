@@ -1,4 +1,4 @@
-# HiFi Player · notas de la versión 0.17.0-alpha
+# HiFi Player · notas de la versión 0.17.1-alpha
 
 > Este archivo se copia a `docs/RELEASE-NOTES.md` en cada versión: es el texto que aparece en el
 > *release* de GitHub, y vive en el repositorio para que no pueda contradecir al código.
@@ -6,6 +6,21 @@
 Reproductor de música para Android **solo con archivos locales**: sin streaming, sin publicidad y sin
 cuentas. Las 17 fases del pliego están implementadas; lo que sigue sin poder afirmarse es lo que solo
 se puede comprobar con hardware delante, y este documento lo dice en cada caso.
+
+## Corrección de la 0.17.0-alpha
+
+**La 0.17.0-alpha no arrancaba.** El manifest nombraba sus componentes con el *namespace* del módulo
+(`com.hifiplayer.app.HiFiPlayerApp`, `com.hifiplayer.app.ui.MainActivity`) en lugar del paquete real de
+las clases (`com.hifiplayer.HiFiPlayerApp`, `com.hifiplayer.ui.MainActivity`), y el receptor de
+conexión USB apuntaba a un paquete que no existe. El APK se instalaba y se cerraba al abrir.
+
+Nada de eso lo detecta un compilador: los `android:name` son cadenas que solo se resuelven en tiempo
+de ejecución, y en esta máquina no hay dispositivo donde probarlo. Se encontró inspeccionando el APK
+publicado con `aapt2` y comparando cada componente contra las clases que contiene el `dex`.
+
+La 0.17.1 lo corrige y añade `scripts/verify-apk.sh`, que hace exactamente esa comprobación sobre el
+APK ya construido y **se ejecuta en CI antes de subir los artefactos**: si un componente del manifest
+no existe en el APK, el pipeline falla en vez de publicar algo que no arranca.
 
 ## Qué se puede usar hoy
 

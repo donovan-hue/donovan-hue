@@ -6,6 +6,9 @@
 -keep class com.hifiplayer.HiFiPlayerApp { *; }
 -keep class com.hifiplayer.ui.MainActivity { *; }
 -keep class * extends androidx.media3.session.MediaLibraryService { *; }
+# El receptor de conexión USB se declara en el manifest: si R8 lo renombra o lo quita, la app
+# deja de enterarse de que se ha enchufado un DAC.
+-keep class com.hifiplayer.core.usb.UsbAttachReceiver { *; }
 
 # Media3 / ExoPlayer
 -dontwarn androidx.media3.**

@@ -101,6 +101,17 @@ jobs:
             :app:assembleRelease $VERSION_ARG \
             --console=plain
 
+      # Antes de subir nada: ¿el APK puede arrancar? Un android:name que apunta a una clase que no
+      # existe compila, se instala y se cierra al abrir; ningún compilador lo ve porque es una cadena.
+      - name: Verificar los componentes del APK
+        if: always()
+        run: |
+          set -eu
+          for apk in app/build/outputs/apk/release/*.apk app/build/outputs/apk/debug/*.apk; do
+            [ -f "$apk" ] || continue
+            sh scripts/verify-apk.sh "$apk"
+          done
+
       - name: Subir el APK de depuración
         if: always()
         uses: actions/upload-artifact@v4
