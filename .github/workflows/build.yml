@@ -148,6 +148,12 @@ jobs:
       contents: write
 
     steps:
+      # El texto del release vive en docs/RELEASE-NOTES.md dentro del repositorio, así que hay que
+      # traerlo: sin este paso el `body_path` no encuentra el archivo y la versión sale sin notas
+      # (que es exactamente lo que pasó al publicar la 0.17.1).
+      - name: Descargar el código (para las notas de la versión)
+        uses: actions/checkout@v4
+
       - name: Descargar el APK de release
         uses: actions/download-artifact@v4
         with:
