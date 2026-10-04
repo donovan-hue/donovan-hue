@@ -485,6 +485,7 @@ class AppGraph(context: Context) {
         setCrossfeed = SetCrossfeedUseCase(settings),
         setBalance = SetBalanceUseCase(settings),
         setAppGain = SetAppGainUseCase(settings),
+        setBitPerfect = SetBitPerfectUseCase(settings),
     )
 
     /** The settings screens (requirement 28). */

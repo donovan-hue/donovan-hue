@@ -79,6 +79,22 @@ internal val HiFiDarkColors = darkColorScheme(
     scrim = Color(0xCC000000),
 )
 
+/**
+ * Pure black variant ("Negro puro (OLED)", requirement 28).
+ *
+ * Same scheme as [HiFiDarkColors] with the two surfaces the user actually looks at set to real
+ * black, so an OLED panel can switch those pixels off. It exists because the Appearance screen
+ * offers that option: an option that changes nothing is a lie (requirement 46).
+ */
+internal val HiFiPureBlackColors = HiFiDarkColors.copy(
+    background = Color(0xFF000000),
+    surface = Color(0xFF000000),
+    surfaceContainerLowest = Color(0xFF000000),
+    surfaceContainerLow = Color(0xFF0A0A0B),
+    surfaceContainer = Color(0xFF111214),
+    surfaceVariant = Color(0xFF1B1E21),
+)
+
 internal val HiFiLightColors = lightColorScheme(
     primary = HiFiPalette.AccentLight,
     onPrimary = HiFiPalette.AccentOnLight,

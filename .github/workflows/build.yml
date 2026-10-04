@@ -199,6 +199,9 @@ jobs:
             sleep 20
             adb logcat -d > logcat.txt
             adb shell pidof com.hifiplayer > /dev/null && echo "OK: la aplicación sigue viva 20 s después de abrirla." || (echo "FALLO: la aplicación se cerró al abrir. Rastro de Android:" && adb logcat -d -b crash && adb logcat -d -s AndroidRuntime:E && exit 1)
+            # Recorrido con capturas: hay fallos que solo se ven mirando (botones sin texto, avisos
+            # pintados como errores, un tema que no cambia). No bloquea el pipeline todavía.
+            python3 scripts/ui-walk.py ui-shots || echo "El recorrido de la interfaz encontró algo: mirar las capturas del artefacto."
 
       - name: Guardar el registro del sistema
         if: always()
@@ -206,6 +209,14 @@ jobs:
         with:
           name: registro-emulador
           path: logcat.txt
+          if-no-files-found: ignore
+
+      - name: Guardar las capturas de la interfaz
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: capturas-interfaz
+          path: ui-shots/
           if-no-files-found: ignore
 
   # --------------------------------------------------------------------------------------------

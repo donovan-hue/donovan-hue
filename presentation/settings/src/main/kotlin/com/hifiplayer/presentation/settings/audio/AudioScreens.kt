@@ -30,6 +30,7 @@ import com.hifiplayer.core.designsystem.component.HiFiEmptyState
 import com.hifiplayer.core.designsystem.component.HiFiInfoRow
 import com.hifiplayer.core.designsystem.component.HiFiTopBar
 import com.hifiplayer.core.designsystem.theme.LocalHiFiDimens
+import com.hifiplayer.core.designsystem.theme.LocalHiFiExtraColors
 import com.hifiplayer.core.designsystem.theme.TechLabelStyle
 import com.hifiplayer.presentation.settings.controls.SettingsNote
 import com.hifiplayer.presentation.settings.controls.SettingsSwitchRow
@@ -231,8 +232,10 @@ private fun OutputRow(
                 Text(
                     text = note,
                     style = TechLabelStyle,
+                    // Ni rojo: "necesita permiso" no es un fallo, es un paso que falta y que el
+                    // propio botón de al lado resuelve.
                     color = if (note.startsWith("necesita")) {
-                        MaterialTheme.colorScheme.error
+                        LocalHiFiExtraColors.current.warning
                     } else {
                         MaterialTheme.colorScheme.onSurfaceVariant
                     },

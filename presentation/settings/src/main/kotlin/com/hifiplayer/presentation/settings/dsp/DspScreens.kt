@@ -45,6 +45,8 @@ import com.hifiplayer.domain.model.settings.EqBand
 import com.hifiplayer.domain.model.settings.EqBandType
 import com.hifiplayer.presentation.settings.controls.SettingsChoiceRow
 import com.hifiplayer.presentation.settings.controls.SettingsNote
+import com.hifiplayer.presentation.settings.controls.SettingsNoteLevel
+import com.hifiplayer.presentation.settings.controls.SettingsNoteWithAction
 import com.hifiplayer.presentation.settings.controls.SettingsSectionHeader
 import com.hifiplayer.presentation.settings.controls.SettingsSliderRow
 import com.hifiplayer.presentation.settings.controls.SettingsSwitchRow
@@ -95,12 +97,24 @@ fun EqScreen(
                 )
             }
 
-            if (state.bitPerfectEnabled) {
+            if (state.effectsBypassed) {
+                item(key = "bp-note") {
+                    SettingsNoteWithAction(
+                        text = "Bit-perfect está activo y el sistema lo ha confirmado: mientras siga así, el " +
+                            "ecualizador no se aplica, porque bit-perfect significa que nada modifica la señal.",
+                        actionLabel = "Desactivar bit-perfect",
+                        onAction = { onBitPerfectChange(false) },
+                    )
+                }
+            } else if (state.bitPerfectUnavailable) {
                 item(key = "bp-note") {
                     SettingsNote(
-                        text = "El modo bit-perfect está activado: mientras siga así, el ecualizador no se aplica " +
-                            "a la señal, porque bit-perfect significa que nada la modifica.",
-                        isWarning = true,
+                        // Ni verde ni rojo: es un dato sobre lo que puede hacer este teléfono, y el
+                        // ajuste que el usuario toca aquí sí está sonando.
+                        text = "Tienes bit-perfect activado en Ajustes → Audio, pero en esta configuración " +
+                            "de audio el sistema no lo concede, así que el ecualizador sí se está aplicando. " +
+                            "El motivo exacto está en Ajustes → Audio → Estado de bit-perfect.",
+                        level = SettingsNoteLevel.INFO,
                     )
                 }
             }
@@ -111,7 +125,7 @@ fun EqScreen(
                         text = "Hay ganancia positiva (bandas hasta %+.1f dB, preamp %+.1f dB). Puede recortar la " +
                             "señal: se recomienda bajar la preamp hasta que la suma quede por debajo de 0 dB."
                                 .format(state.eq.maxBoostDb, state.eq.preampDb),
-                        isWarning = true,
+                        level = SettingsNoteLevel.WARNING,
                     )
                 }
             }
@@ -398,6 +412,7 @@ fun ReplayGainScreen(
     onPreventClippingChange: (Boolean) -> Unit,
     onAlbumGainPreferenceChange: (Boolean) -> Unit,
     onDismissMessage: () -> Unit,
+    onBitPerfectChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val dimens = LocalHiFiDimens.current
@@ -422,12 +437,21 @@ fun ReplayGainScreen(
                 )
             }
 
-            if (state.bitPerfectEnabled && rg.mode != ReplayGainMode.OFF) {
+            if (state.effectsBypassed && rg.mode != ReplayGainMode.OFF) {
+                item(key = "bp-note") {
+                    SettingsNoteWithAction(
+                        text = "Bit-perfect está activo y confirmado por el sistema, así que este ajuste no se " +
+                            "está aplicando: bit-perfect implica que nada modifica la señal.",
+                        actionLabel = "Desactivar bit-perfect",
+                        onAction = { onBitPerfectChange(false) },
+                    )
+                }
+            } else if (state.bitPerfectUnavailable && rg.mode != ReplayGainMode.OFF) {
                 item(key = "bp-note") {
                     SettingsNote(
-                        text = "El modo bit-perfect está activado, así que este ajuste no se está aplicando: " +
-                            "bit-perfect implica que nada modifica la señal.",
-                        isWarning = true,
+                        text = "Bit-perfect está pedido en Ajustes → Audio, pero el sistema no lo ha concedido en " +
+                            "esta configuración: ReplayGain sí se está aplicando.",
+                        level = SettingsNoteLevel.INFO,
                     )
                 }
             }
@@ -537,6 +561,7 @@ fun CrossfeedScreen(
     onBalanceChange: (Double) -> Unit,
     onAppGainChange: (Double) -> Unit,
     onDismissMessage: () -> Unit,
+    onBitPerfectChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val dimens = LocalHiFiDimens.current
@@ -594,11 +619,21 @@ fun CrossfeedScreen(
                 }
             }
 
-            if (state.bitPerfectEnabled && mode.isEnabled) {
+            if (state.effectsBypassed && mode.isEnabled) {
+                item(key = "bp-note") {
+                    SettingsNoteWithAction(
+                        text = "Bit-perfect está activo y confirmado por el sistema, así que el crossfeed no se " +
+                            "está aplicando a la señal.",
+                        actionLabel = "Desactivar bit-perfect",
+                        onAction = { onBitPerfectChange(false) },
+                    )
+                }
+            } else if (state.bitPerfectUnavailable && mode.isEnabled) {
                 item(key = "bp-note") {
                     SettingsNote(
-                        text = "El modo bit-perfect está activado, así que el crossfeed no se está aplicando a la señal.",
-                        isWarning = true,
+                        text = "Bit-perfect está pedido en Ajustes → Audio, pero el sistema no lo ha concedido en " +
+                            "esta configuración: el crossfeed sí se está aplicando.",
+                        level = SettingsNoteLevel.INFO,
                     )
                 }
             }
@@ -636,7 +671,7 @@ fun CrossfeedScreen(
                     SettingsNote(
                         text = "La ganancia de la app está en %+.1f dB: por encima de 0 dB la señal puede llegar al " +
                             "fondo de escala y recortar.".format(state.appGainDb),
-                        isWarning = true,
+                        level = SettingsNoteLevel.WARNING,
                     )
                 }
             }

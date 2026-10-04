@@ -3,6 +3,7 @@ package com.hifiplayer.presentation.settings.dsp
 import com.google.common.truth.Truth.assertThat
 import com.hifiplayer.core.common.result.Outcome
 import com.hifiplayer.domain.model.audio.CrossfeedMode
+import com.hifiplayer.domain.model.device.BitPerfectState
 import com.hifiplayer.domain.model.audio.ReplayGainMode
 import com.hifiplayer.domain.model.playback.PlaybackState
 import com.hifiplayer.domain.model.library.Track
@@ -32,6 +33,7 @@ import com.hifiplayer.domain.usecase.dsp.UpdateEqBandUseCase
 import com.hifiplayer.domain.usecase.dsp.UpdateReplayGainSettingsUseCase
 import com.hifiplayer.domain.usecase.playback.ObservePlaybackStateUseCase
 import com.hifiplayer.domain.usecase.settings.ObserveSettingsUseCase
+import com.hifiplayer.domain.usecase.settings.SetBitPerfectUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -58,9 +60,9 @@ class DspViewModelTest {
 
     private val settings = FakeSettings()
 
-    private fun viewModel() = DspViewModel(
+    private fun viewModel(playback: FakePlayback = FakePlayback()) = DspViewModel(
         observeSettings = ObserveSettingsUseCase(settings),
-        observePlaybackState = ObservePlaybackStateUseCase(FakePlayback()),
+        observePlaybackState = ObservePlaybackStateUseCase(playback),
         setEqEnabled = SetEqEnabledUseCase(settings),
         updateEqBand = UpdateEqBandUseCase(settings),
         setEqPreset = SetEqPresetUseCase(settings),
@@ -72,6 +74,7 @@ class DspViewModelTest {
         setCrossfeed = SetCrossfeedUseCase(settings),
         setBalance = SetBalanceUseCase(settings),
         setAppGain = SetAppGainUseCase(settings),
+        setBitPerfect = SetBitPerfectUseCase(settings),
     )
 
     @Before
@@ -241,7 +244,17 @@ private class FakeSettings : SettingsRepository {
  */
 private class FakePlayback : PlaybackRepository {
 
-    override val state: StateFlow<PlaybackState> = MutableStateFlow(PlaybackState())
+    private val mutable = MutableStateFlow(PlaybackState())
+    override val state: StateFlow<PlaybackState> = mutable
+
+    /** Deja el estado **verificado** de bit-perfect, como lo mediría el motor. */
+    fun setBitPerfectActive(active: Boolean) {
+        mutable.value = mutable.value.copy(
+            audioInfo = mutable.value.audioInfo.copy(
+                bitPerfect = BitPerfectState(requested = active, isActive = active),
+            ),
+        )
+    }
 
     override suspend fun playTracks(tracks: List<Track>, startIndex: Int, origin: QueueOrigin) = unreachable()
     override suspend fun playTrack(track: Track, origin: QueueOrigin) = unreachable()
@@ -266,4 +279,40 @@ private class FakePlayback : PlaybackRepository {
 
     private fun unreachable(): Outcome<Nothing> =
         throw AssertionError("the DSP screens must not touch the transport")
+
+    // ---------------------------------------------------------------------------------------
+    // Los avisos de bit-perfect. La app decía «el ecualizador no se aplica» con solo estar
+    // pedido, aunque el sistema no lo hubiera concedido y el ecualizador estuviera sonando.
+    // ---------------------------------------------------------------------------------------
+
+    @Test
+    fun `pedir bit-perfect sin que el sistema lo conceda no marca los efectos como anulados`() = runTest {
+        val playback = FakePlayback()
+        val vm = collecting(viewModel(playback))
+
+        assertThat(vm.state.value.bitPerfectRequested).isTrue()
+        assertThat(vm.state.value.bitPerfectActive).isFalse()
+        // Lo importante: los efectos SÍ se aplican, y la pantalla no puede decir lo contrario.
+        assertThat(vm.state.value.effectsBypassed).isFalse()
+        assertThat(vm.state.value.bitPerfectUnavailable).isTrue()
+    }
+
+    @Test
+    fun `con bit-perfect concedido de verdad los efectos quedan anulados`() = runTest {
+        val playback = FakePlayback()
+        playback.setBitPerfectActive(true)
+        val vm = collecting(viewModel(playback))
+
+        assertThat(vm.state.value.effectsBypassed).isTrue()
+        assertThat(vm.state.value.bitPerfectUnavailable).isFalse()
+    }
+
+    @Test
+    fun `desactivar bit-perfect desde el aviso escribe el ajuste`() = runTest {
+        val vm = collecting(viewModel())
+
+        vm.onBitPerfectChange(false)
+
+        assertThat(settings.current.playback.bitPerfectEnabled).isFalse()
+    }
 }

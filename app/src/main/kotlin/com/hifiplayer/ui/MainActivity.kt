@@ -36,9 +36,9 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.hifiplayer.app.BuildConfig
 import com.hifiplayer.HiFiPlayerApp
 import com.hifiplayer.core.designsystem.theme.HiFiTheme
-import com.hifiplayer.domain.model.settings.ThemeMode
 import com.hifiplayer.presentation.navigation.HiFiApp
 import com.hifiplayer.presentation.settings.AboutInfo
+import com.hifiplayer.presentation.settings.toThemeAppearance
 import com.hifiplayer.presentation.settings.ThemeViewModel
 
 /**
@@ -82,12 +82,10 @@ class MainActivity : ComponentActivity() {
                 factory = viewModelFactory { initializer { graph.themeViewModel() } },
             )
             val themeMode by themeViewModel.themeMode.collectAsStateWithLifecycle()
-            val darkTheme = when (themeMode) {
-                ThemeMode.LIGHT -> false
-                ThemeMode.SYSTEM -> isSystemInDarkTheme()
-                else -> true
-            }
-            HiFiTheme(darkTheme = darkTheme) {
+            // La decisión se toma en un solo sitio y se prueba ahí; el tema ya no la revisa por su
+            // cuenta (antes "Claro" se imponía como oscuro si el teléfono estaba en modo oscuro).
+            val appearance = themeMode.toThemeAppearance(isSystemInDarkTheme())
+            HiFiTheme(darkTheme = appearance.darkTheme, pureBlack = appearance.pureBlack) {
                 CrashReportDialog()
                 HiFiApp(
                     createPlayerViewModel = graph::nowPlayingViewModel,

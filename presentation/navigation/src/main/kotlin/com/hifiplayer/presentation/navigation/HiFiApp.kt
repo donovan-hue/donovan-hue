@@ -526,6 +526,7 @@ fun HiFiApp(
                         onDeletePreset = viewModel::onDeletePreset,
                         onPreampChange = viewModel::onPreampChange,
                         onDismissMessage = viewModel::onDismissMessage,
+                        onBitPerfectChange = viewModel::onBitPerfectChange,
                     )
                 }
 
@@ -542,6 +543,7 @@ fun HiFiApp(
                         onPreventClippingChange = viewModel::onPreventClippingChange,
                         onAlbumGainPreferenceChange = viewModel::onAlbumGainPreferenceChange,
                         onDismissMessage = viewModel::onDismissMessage,
+                        onBitPerfectChange = viewModel::onBitPerfectChange,
                     )
                 }
 
@@ -557,6 +559,7 @@ fun HiFiApp(
                         onBalanceChange = viewModel::onBalanceChange,
                         onAppGainChange = viewModel::onAppGainChange,
                         onDismissMessage = viewModel::onDismissMessage,
+                        onBitPerfectChange = viewModel::onBitPerfectChange,
                     )
                 }
 

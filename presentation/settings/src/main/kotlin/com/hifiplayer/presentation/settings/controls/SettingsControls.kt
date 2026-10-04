@@ -5,6 +5,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -14,6 +16,7 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -23,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import com.hifiplayer.core.designsystem.component.HiFiChip
 import com.hifiplayer.core.designsystem.component.HiFiSlider
 import com.hifiplayer.core.designsystem.theme.LocalHiFiDimens
+import com.hifiplayer.core.designsystem.theme.LocalHiFiExtraColors
 import com.hifiplayer.core.designsystem.theme.TechLabelStyle
 
 /**
@@ -87,7 +91,16 @@ fun SettingsSwitchRow(
     }
 }
 
-/** Mutually exclusive options shown as flat chips, so the active one is visible without opening. */
+/**
+ * Mutually exclusive options shown as flat chips, so the active one is visible without opening.
+ *
+ * The chips **wrap** onto as many lines as they need. Before, they were laid out in a single row:
+ * with labels like "Negro puro (OLED)" and "Seguir al sistema" the row ran out of width and Compose
+ * squeezed the last chips down to a bare coloured box — buttons with no text, which is exactly what
+ * a user reported ("los botones están vacíos, no pasa nada si los pulsas"). Nothing here may depend
+ * on the labels being short.
+ */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun <T> SettingsChoiceRow(
     title: String,
@@ -113,11 +126,12 @@ fun <T> SettingsChoiceRow(
                 modifier = Modifier.padding(top = 2.dp),
             )
         }
-        Row(
+        FlowRow(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 6.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             options.forEach { option ->
                 HiFiChip(
@@ -253,27 +267,77 @@ fun SettingsValueRow(
     }
 }
 
-/** Inline warning strip: used for the consequences the user must be told about. */
+/**
+ * How loud a note is. It matters: painting a fact about the phone in the error colour makes the user
+ * think the app is broken (reported: "son varias las que marcan así en rojo ... marca error"). Red is
+ * reserved for things that failed. A state the user chose, or a capability the hardware lacks, is a
+ * warning or a plain explanation — not a failure.
+ */
+enum class SettingsNoteLevel { INFO, WARNING, ERROR }
+
+/** Inline note: what the user must be told about, in the colour the fact deserves. */
 @Composable
 fun SettingsNote(text: String, isWarning: Boolean, modifier: Modifier = Modifier) {
+    SettingsNote(
+        text = text,
+        level = if (isWarning) SettingsNoteLevel.WARNING else SettingsNoteLevel.INFO,
+        modifier = modifier,
+    )
+}
+
+/** Inline note with an explicit level. */
+@Composable
+fun SettingsNote(text: String, level: SettingsNoteLevel, modifier: Modifier = Modifier) {
+    val warningColor = LocalHiFiExtraColors.current.warning
+    val (background, foreground) = when (level) {
+        SettingsNoteLevel.INFO -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f) to
+            MaterialTheme.colorScheme.onSurfaceVariant
+        SettingsNoteLevel.WARNING -> warningColor.copy(alpha = 0.14f) to warningColor
+        SettingsNoteLevel.ERROR -> MaterialTheme.colorScheme.error.copy(alpha = 0.12f) to
+            MaterialTheme.colorScheme.error
+    }
     Box(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = LocalHiFiDimens.current.screenPadding, vertical = 6.dp)
-            .background(
-                color = if (isWarning) {
-                    MaterialTheme.colorScheme.error.copy(alpha = 0.12f)
-                } else {
-                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                },
-                shape = RoundedCornerShape(10.dp),
-            )
+            .background(color = background, shape = RoundedCornerShape(10.dp))
             .padding(horizontal = 12.dp, vertical = 10.dp),
     ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.bodySmall,
-            color = if (isWarning) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        Text(text = text, style = MaterialTheme.typography.bodySmall, color = foreground)
+    }
+}
+
+/**
+ * A note that comes with the action that resolves it.
+ *
+ * Used for the one case that confuses everybody: an effect that is switched on but not being
+ * applied. Explaining it without offering a way out leaves the user stuck ("esa configuración no
+ * tiene función"); here the button turns the interfering setting off.
+ */
+@Composable
+fun SettingsNoteWithAction(
+    text: String,
+    actionLabel: String,
+    onAction: () -> Unit,
+    modifier: Modifier = Modifier,
+    level: SettingsNoteLevel = SettingsNoteLevel.WARNING,
+) {
+    val warningColor = LocalHiFiExtraColors.current.warning
+    val (background, foreground) = when (level) {
+        SettingsNoteLevel.INFO -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f) to
+            MaterialTheme.colorScheme.onSurfaceVariant
+        SettingsNoteLevel.WARNING -> warningColor.copy(alpha = 0.14f) to warningColor
+        SettingsNoteLevel.ERROR -> MaterialTheme.colorScheme.error.copy(alpha = 0.12f) to
+            MaterialTheme.colorScheme.error
+    }
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = LocalHiFiDimens.current.screenPadding, vertical = 6.dp)
+            .background(color = background, shape = RoundedCornerShape(10.dp))
+            .padding(start = 12.dp, end = 4.dp, top = 10.dp, bottom = 4.dp),
+    ) {
+        Text(text = text, style = MaterialTheme.typography.bodySmall, color = foreground)
+        TextButton(onClick = onAction) { Text(actionLabel) }
     }
 }

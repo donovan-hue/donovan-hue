@@ -26,6 +26,7 @@ import com.hifiplayer.domain.usecase.dsp.UpdateEqBandUseCase
 import com.hifiplayer.domain.usecase.dsp.UpdateReplayGainSettingsUseCase
 import com.hifiplayer.domain.usecase.playback.ObservePlaybackStateUseCase
 import com.hifiplayer.domain.usecase.settings.ObserveSettingsUseCase
+import com.hifiplayer.domain.usecase.settings.SetBitPerfectUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -48,7 +49,10 @@ data class DspUiState(
     val appGainDb: Double = 0.0,
     val balance: Double = 0.0,
     val clippingProtection: Boolean = true,
-    val bitPerfectEnabled: Boolean = true,
+    /** Lo que el usuario pidió en Ajustes → Audio. */
+    val bitPerfectRequested: Boolean = true,
+    /** Lo que el sistema ha concedido **de verdad** para la pista que suena, verificado. */
+    val bitPerfectActive: Boolean = false,
     val trackGainLabel: String? = null,
     val albumGainLabel: String? = null,
     val message: String? = null,
@@ -63,6 +67,19 @@ data class DspUiState(
     val presets: List<EqPreset> get() = EqPreset.BUILT_IN + eq.userPresets
 
     val clippingRisk: Boolean get() = eq.clippingRisk || appGainDb > 0.0 || preampDb > 0.0
+
+    /**
+     * Si los efectos se están aplicando o no.
+     *
+     * Lo decide el estado **verificado**, nunca lo que se pidió: hasta la 0.17.2 las pantallas
+     * decían «el ecualizador no se aplica» en cuanto el usuario tenía bit-perfect activado, aunque
+     * el sistema no lo hubiera concedido y el ecualizador sí estuviera sonando. Eso era mentira, y
+     * además asustaba: el usuario veía rojo por todas partes y concluía que nada funcionaba.
+     */
+    val effectsBypassed: Boolean get() = bitPerfectActive
+
+    /** Bit-perfect pedido, pero no concedido: el caso normal en un teléfono sin DAC USB. */
+    val bitPerfectUnavailable: Boolean get() = bitPerfectRequested && !bitPerfectActive
 }
 
 /**
@@ -87,6 +104,7 @@ class DspViewModel(
     private val setCrossfeed: SetCrossfeedUseCase,
     private val setBalance: SetBalanceUseCase,
     private val setAppGain: SetAppGainUseCase,
+    private val setBitPerfect: SetBitPerfectUseCase,
     private val logger: Logger = AppLogger.logger(),
 ) : ViewModel() {
 
@@ -114,7 +132,9 @@ class DspViewModel(
             appGainDb = settings.dsp.appGainDb,
             balance = settings.dsp.balance,
             clippingProtection = settings.dsp.clippingProtectionEnabled,
-            bitPerfectEnabled = settings.playback.bitPerfectEnabled,
+            bitPerfectRequested = settings.playback.bitPerfectEnabled,
+            // Verificado, medido por el motor para el formato que se está reproduciendo.
+            bitPerfectActive = playback.audioInfo.bitPerfect.isActive,
             // The ReplayGain figures of the track that is playing, straight from its tags: null when
             // the file carries none, so the screen can say "sin datos" instead of showing a zero.
             trackGainLabel = playback.currentTrack?.replayGain?.trackGainDb?.let { "%+.2f dB".format(it) },
@@ -127,6 +147,14 @@ class DspViewModel(
     // ------------------------------------------------------------------ EQ
 
     fun onEqEnabledChange(enabled: Boolean) = set { setEqEnabled(enabled) }
+
+    /**
+     * Apaga (o enciende) bit-perfect desde la pantalla que lo está explicando.
+     *
+     * El aviso dice «este efecto no se aplica mientras bit-perfect esté activo»: sin esta acción el
+     * usuario solo puede leerlo y salir a buscarlo en otro sitio.
+     */
+    fun onBitPerfectChange(enabled: Boolean) = set { setBitPerfect(enabled) }
 
     fun onBandDrag(band: EqBand) {
         pendingBand.value = band

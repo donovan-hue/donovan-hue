@@ -1,6 +1,5 @@
 package com.hifiplayer.core.designsystem.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -52,18 +51,25 @@ val LocalHiFiExtraColors = staticCompositionLocalOf {
 /**
  * The single theme entry point.
  *
- * `darkTheme` is passed in from the Appearance settings (which default to dark); the app never
- * follows the system automatically because "Dark Hi-Fi" is the product's own identity
- * (requirement 28).
+ * [darkTheme] is the decision **already made** by the Appearance settings: this function does not
+ * second-guess it. It used to be `darkTheme || systemInDarkTheme`, which meant that picking "Claro"
+ * on a phone set to dark mode changed nothing at all — the user chose light, and the system won.
+ * Whoever resolves the setting (including "seguir al sistema") does it before calling in.
+ *
+ * [pureBlack] switches the dark scheme to true black for OLED panels.
  */
 @Composable
 fun HiFiTheme(
     darkTheme: Boolean = true,
-    systemInDarkTheme: Boolean = isSystemInDarkTheme(),
+    pureBlack: Boolean = false,
     content: @Composable () -> Unit,
 ) {
-    val useDark = darkTheme || systemInDarkTheme
-    val colors = if (useDark) HiFiDarkColors else HiFiLightColors
+    val useDark = darkTheme
+    val colors = when {
+        useDark && pureBlack -> HiFiPureBlackColors
+        useDark -> HiFiDarkColors
+        else -> HiFiLightColors
+    }
     val extras = if (useDark) {
         HiFiExtraColors(
             warning = HiFiPalette.WarningDark,
