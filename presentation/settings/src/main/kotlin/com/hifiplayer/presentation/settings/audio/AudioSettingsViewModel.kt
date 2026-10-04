@@ -167,21 +167,7 @@ class AudioSettingsViewModel(
      * Only the probes that answered are printed. An empty answer becomes "sin datos", never a default
      * like "hasta 192 kHz" that the device never claimed.
      */
-    private fun describeCapabilities(device: OutputDevice): String {
-        val caps = device.capabilities
-        if (caps == null) return "sin datos de capacidad todavía"
-        val parts = mutableListOf<String>()
-        caps.maxSampleRateHz?.let { parts += "hasta ${"%.1f".format(it / 1000.0)} kHz" }
-        caps.maxBitDepth?.let { parts += "$it-bit" }
-        if (caps.supportsFloat) parts += "float"
-        parts += when {
-            caps.bitPerfectSupport.isActive -> "bit-perfect confirmado"
-            caps.supportsBitPerfectMixer -> "acepta mezclador sin mezcla"
-            else -> caps.bitPerfectSupport.displayName
-        }
-        if (device.type.isUsb) parts += "USB"
-        return parts.joinToString(" · ")
-    }
+    private fun describeCapabilities(device: OutputDevice): String = capabilityLine(device)
 
     private fun report(error: AppError) {
         logger.w(TAG, "Operación de audio fallida: ${error.code}")
@@ -193,4 +179,24 @@ class AudioSettingsViewModel(
     private companion object {
         const val TAG = "AudioDevices"
     }
+}
+
+/**
+ * The one-line summary of a route's capabilities, kept outside the ViewModel so the honesty rule can
+ * be tested without a device: only the probes that answered are printed, and an unanswered probe is
+ * left out instead of being filled with a plausible default (requirement 46).
+ */
+internal fun capabilityLine(device: OutputDevice): String {
+    val caps = device.capabilities ?: return "sin datos de capacidad todavía"
+    val parts = mutableListOf<String>()
+    caps.maxSampleRateHz?.let { parts += "hasta ${"%.1f".format(it / 1000.0)} kHz" }
+    caps.maxBitDepth?.let { parts += "$it-bit" }
+    if (caps.supportsFloat) parts += "float"
+    parts += when {
+        caps.bitPerfectSupport.isActive -> "bit-perfect confirmado"
+        caps.supportsBitPerfectMixer -> "acepta mezclador sin mezcla"
+        else -> caps.bitPerfectSupport.displayName
+    }
+    if (device.type.isUsb) parts += "USB"
+    return parts.joinToString(" · ")
 }

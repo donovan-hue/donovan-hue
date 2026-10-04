@@ -28,7 +28,7 @@ private const val PHASES_DONE = 15
 private const val PHASES_TOTAL = 17
 
 /** Automated tests across the whole project; CI prints the exact number on every run. */
-private const val TEST_COUNT = 83
+private const val TEST_COUNT = 97
 
 /**
  * Single activity (requirement: the UI is Compose + one host).

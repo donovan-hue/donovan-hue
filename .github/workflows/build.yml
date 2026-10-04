@@ -75,6 +75,7 @@ jobs:
           chmod +x gradlew
           ./gradlew \
             :native:dsp:test \
+            :domain:model:test \
             :core:designsystem:compileDebugKotlin \
             :core:database:compileDebugKotlin \
             :core:storage:compileDebugKotlin \
