@@ -92,6 +92,18 @@ git tag v0.17.0-alpha && git push origin v0.17.0-alpha
 
 El panel de estado del proyecto se publica con GitHub Pages desde `docs/`.
 
+Al etiquetar, el *release* toma su texto de `docs/RELEASE-NOTES.md`, que es el archivo de notas de la
+versión en curso. Vive en el repositorio a propósito: el texto que ve quien descarga el APK no puede
+contradecir lo que dice el código. Procedimiento de una versión:
+
+```sh
+# 1. subir la versión en app/build.gradle.kts (versionCode/versionName)
+# 2. copiar las notas de la versión a docs/RELEASE-NOTES.md
+# 3. push a main y esperar a que CI esté en verde
+# 4. etiquetar
+git tag v0.17.0-alpha && git push origin v0.17.0-alpha
+```
+
 **Versión actual: 0.17.0-alpha** — las 17 fases del pliego, implementadas y verificadas con CI.
 La numeración sigue a las fases a propósito: **1.0.0 no es «todo hecho», es «todo hecho y probado en
 hardware real»**, y eso no se puede afirmar desde una máquina sin dispositivo.

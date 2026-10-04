@@ -160,25 +160,7 @@ jobs:
           files: apk/*.apk
           # Las versiones con -alpha/-beta se marcan como preliminares.
           prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') }}
-          body: |
-            APK de HiFi Player **${{ github.ref_name }}** (compilado con R8, minificado).
-
-            **Qué funciona hoy (fases 1-5 del plan):** motor de audio Media3 con el DSP conectado,
-            reproducción en primer plano con MediaSession, pantalla Now Playing con la información
-            técnica medida, mini reproductor, navegación y cola de reproducción con reordenación
-            por arrastre, guardado y restauración de la cola.
-
-            **Qué todavía no:** la biblioteca no tiene pantalla (fase 6+), así que al abrir la app
-            aún no hay de dónde elegir música; el ecualizador, ReplayGain, crossfeed, la selección
-            de DAC USB y el modo bit-perfect están pendientes y la app los muestra como tales, sin
-            botones decorativos.
-
-            **Firma:** este APK se firma con la clave de depuración mientras no exista un keystore
-            de producción configurado (`keystore.properties` o las variables `HIFI_*`). Es instalable,
-            pero para publicar en una tienda hay que firmarlo con la clave definitiva.
-
-            **Honestidad técnica:** ninguna cifra de calidad de audio se muestra si no se ha medido.
-            El bit-perfect no se anuncia como activo hasta que el sistema lo confirme en el dispositivo.
+          body_path: docs/RELEASE-NOTES.md
 
   # --------------------------------------------------------------------------------------------
   # Panel de estado del proyecto. El repositorio tiene Pages configurado para desplegarse desde
