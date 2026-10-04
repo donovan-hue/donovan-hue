@@ -70,7 +70,20 @@ class Media3AudioEngine(
     @Volatile
     private var lastError: com.hifiplayer.domain.model.error.AppError? = null
 
-    private val queue = mutableListOf<Track>()
+    /**
+     * Copia del tema actual, refrescada en el hilo principal por [publishNow].
+     *
+     * [currentTrack] la lee desde cualquier hilo: ExoPlayer no es seguro entre hilos y tocarlo desde
+     * uno de fondo mata el proceso (pasó de verdad: la aplicación se cerraba al abrir).
+     */
+    @Volatile
+    private var currentTrackMirror: Track? = null
+
+    /**
+     * Lista copiada al escribir: el reproductor la modifica en el hilo principal y los repositorios
+     * la leen desde hilos de fondo ([queueSnapshot]), así que una lista normal sería una carrera.
+     */
+    private val queue = java.util.concurrent.CopyOnWriteArrayList<Track>()
 
     private val _state = MutableStateFlow(EngineState())
     override val state: StateFlow<EngineState> = _state.asStateFlow()
@@ -300,7 +313,7 @@ class Media3AudioEngine(
 
     override fun queueSnapshot(): List<Track> = queue.toList()
 
-    override fun currentTrack(): Track? = queue.getOrNull(player.currentMediaItemIndex)
+    override fun currentTrack(): Track? = currentTrackMirror
 
     // ---------------------------------------------------------------- configuration
 
@@ -325,6 +338,7 @@ class Media3AudioEngine(
 
     override fun updateBitPerfect(state: BitPerfectState) {
         bitPerfect = state
+        // El repositorio lo llama desde un hilo de fondo: `publish` lo reenvía al principal.
         publish()
     }
 
@@ -343,8 +357,13 @@ class Media3AudioEngine(
 
     // ---------------------------------------------------------------- internals
 
-    /** Called from the audio thread with the format the sink is really being fed. */
-    private fun onDecodedFormatMeasured(sampleRateHz: Int, channels: Int, encoding: Int) {
+    /**
+     * Called from the audio thread with the format the sink is really being fed.
+     *
+     * El cuerpo se ejecuta en el hilo principal: es donde vive el reproductor y donde se lee el tema
+     * actual. El hilo de audio solo deja el aviso y sigue con lo suyo.
+     */
+    private fun onDecodedFormatMeasured(sampleRateHz: Int, channels: Int, encoding: Int) = onMain {
         val codec = currentTrack()?.format?.codec ?: com.hifiplayer.domain.model.audio.Codec.UNKNOWN
         val bitDepth = when (encoding) {
             C.ENCODING_PCM_16BIT -> 16
@@ -360,11 +379,26 @@ class Media3AudioEngine(
             codec = codec,
             pcmEncoding = com.hifiplayer.domain.model.audio.PcmEncoding.of(bitDepth, encoding == C.ENCODING_PCM_FLOAT),
         )
-        onMain { publish() }
+        publishNow()
     }
 
-    private fun publish() {
-        val track = currentTrack()
+    /**
+     * Publica el estado, siempre en el hilo principal.
+     *
+     * ExoPlayer no es seguro entre hilos: leerlo desde uno de fondo lanza `IllegalStateException:
+     * Player is accessed on the wrong thread` y, al ser una excepción no capturada de un hilo de
+     * fondo, mata el proceso entero. Eso es exactamente lo que cerraba la aplicación al abrirla (en
+     * 505 ms, medido en un Android 14 real). Desde otro hilo, la llamada se reenvía al principal.
+     */
+    private fun publish() = onMain { publishNow() }
+
+    /** Cuerpo real de [publish]: **solo** se puede ejecutar en el hilo principal. */
+    private fun publishNow() {
+        // El índice se lee una vez, aquí, y de ahí sale todo: el resto de la función no vuelve a
+        // preguntarle al reproductor por él.
+        val index = if (queue.isEmpty()) -1 else player.currentMediaItemIndex
+        val track = queue.getOrNull(index)
+        currentTrackMirror = track
         val position = if (queue.isEmpty()) 0L else player.currentPosition.coerceAtLeast(0L)
         val duration = track?.durationMs?.takeIf { it > 0L }
             ?: player.duration.takeIf { it != C.TIME_UNSET && it > 0L }
@@ -373,7 +407,7 @@ class Media3AudioEngine(
         _state.value = EngineState(
             status = player.playbackState.toStatus(),
             isPlaying = player.isPlaying,
-            currentIndex = if (queue.isEmpty()) -1 else player.currentMediaItemIndex,
+            currentIndex = index,
             positionMs = position,
             durationMs = duration,
             bufferedMs = if (queue.isEmpty()) 0L else player.bufferedPosition.coerceAtLeast(0L),

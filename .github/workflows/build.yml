@@ -191,21 +191,15 @@ jobs:
           avd-name: prueba-de-arranque
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          # OJO: esta acción ejecuta cada línea en un shell independiente, así que no valen los
+          # bloques de varias líneas (if/then/fi) ni un `set -e` que cruce de una línea a otra. Cada
+          # línea tiene que valerse por sí sola.
           script: |
-            set -eu
             adb install -r apk/app-release.apk
-            # `am start -W` espera a que la actividad esté dibujada; si el proceso muere, se ve aquí.
-            adb shell am start -W -n com.hifiplayer/com.hifiplayer.ui.MainActivity || true
+            adb shell am start -W -n com.hifiplayer/com.hifiplayer.ui.MainActivity
             sleep 20
-            adb logcat -d > logcat.txt || true
-            if adb shell pidof com.hifiplayer > /dev/null; then
-              echo "OK: la aplicación sigue viva 20 s después de abrirla."
-            else
-              echo "FALLO: la aplicación se cerró al abrir. Rastro de Android:"
-              adb logcat -d -b crash || true
-              adb logcat -d -s AndroidRuntime:E || true
-              exit 1
-            fi
+            adb logcat -d > logcat.txt
+            adb shell pidof com.hifiplayer > /dev/null && echo "OK: la aplicación sigue viva 20 s después de abrirla." || (echo "FALLO: la aplicación se cerró al abrir. Rastro de Android:" && adb logcat -d -b crash && adb logcat -d -s AndroidRuntime:E && exit 1)
 
       - name: Guardar el registro del sistema
         if: always()

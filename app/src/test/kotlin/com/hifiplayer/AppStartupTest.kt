@@ -1,5 +1,6 @@
 package com.hifiplayer
 
+import android.os.Looper
 import androidx.test.core.app.ApplicationProvider
 import com.google.common.truth.Truth.assertThat
 import com.hifiplayer.app.logging.CrashReporter
@@ -9,6 +10,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 
 /**
@@ -21,7 +23,9 @@ import org.robolectric.annotation.Config
  *   instalaba y se cerraba al abrir);
  * - un tema o un recurso que el manifest usa y que no está;
  * - una API del sistema que no existe en el nivel de Android del dispositivo;
- * - cualquier excepción dentro del grafo de dependencias al construirse.
+ * - cualquier excepción dentro del grafo de dependencias al construirse;
+ * - y una llamada a ExoPlayer desde un hilo que no es el suyo, que es lo que cerraba la aplicación
+ *   al abrirla en un teléfono real (media3 lanza `IllegalStateException` y el proceso muere).
  *
  * Se ejecuta en varios niveles de Android a propósito: escribir código que solo funciona en el
  * Android más nuevo y se cae en uno más viejo es un fallo real, y esta es la única forma de verlo
@@ -58,12 +62,42 @@ class AppStartupTest {
     @Test
     @Config(sdk = [34])
     fun `la pantalla de inicio se abre sin cerrarse`() {
+        val app = ApplicationProvider.getApplicationContext<HiFiPlayerApp>()
+        clearReports(app)
+
         val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
 
         assertThat(controller.get()).isNotNull()
         assertThat(controller.get().isFinishing).isFalse()
 
         controller.pause().stop().destroy()
+    }
+
+    /**
+     * La prueba de la avería de verdad (0.17.1): en un teléfono, la aplicación abría y moría en
+     * 505 ms con `IllegalStateException: Player is accessed on the wrong thread` en un hilo de fondo
+     * — y una excepción no capturada en un hilo de fondo se lleva por delante el proceso entero.
+     *
+     * Aquí se arranca la aplicación completa, se deja trabajar a los hilos de fondo (los flujos
+     * corren ahí, y por eso el fallo no se ve en una llamada directa) y se exige que no haya quedado
+     * ningún informe de fallo. Los 200 ms son tiempo real: en el móvil el fallo tarda 505 ms.
+     */
+    @Test
+    @Config(sdk = [34])
+    fun `el arranque no deja ninguna excepción, tampoco en los hilos de fondo`() {
+        val app = ApplicationProvider.getApplicationContext<HiFiPlayerApp>()
+        clearReports(app)
+
+        val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
+        repeat(6) {
+            Thread.sleep(200)
+            shadowOf(Looper.getMainLooper()).idle()
+        }
+
+        val report = CrashReporter.consume(app)
+        controller.pause().stop().destroy()
+
+        assertThat(report).isNull()
     }
 
     // ------------------------------------------------------------------------------------------
@@ -75,6 +109,7 @@ class AppStartupTest {
     @Config(sdk = [34])
     fun `un arranque limpio no deja ningún informe pendiente`() {
         val app = ApplicationProvider.getApplicationContext<HiFiPlayerApp>()
+        clearReports(app)
 
         assertThat(CrashReporter.consume(app)).isNull()
         // El registro de etapas sí tiene que existir: es lo que delata un cierre sin excepción.
@@ -85,6 +120,7 @@ class AppStartupTest {
     @Config(sdk = [34])
     fun `un arranque que se quedó a medias deja un informe que se enseña una sola vez`() {
         val app = ApplicationProvider.getApplicationContext<HiFiPlayerApp>()
+        clearReports(app)
         // Se reproduce lo que deja un cierre sin excepción: etapas escritas, pero ninguna que diga
         // que la interfaz llegó a dibujarse.
         File(app.filesDir, "startup-stage.txt")
@@ -97,5 +133,11 @@ class AppStartupTest {
 
         // Y no vuelve a aparecer: si no, sería un aviso eterno.
         assertThat(CrashReporter.consume(app)).isNull()
+    }
+
+    /** Deja el almacenamiento de informes como recién instalado: cada prueba parte de cero. */
+    private fun clearReports(app: HiFiPlayerApp) {
+        File(app.filesDir, "last-crash.txt").delete()
+        File(app.filesDir, "last-crash.txt.seen").delete()
     }
 }
