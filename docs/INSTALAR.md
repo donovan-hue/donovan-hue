@@ -1,17 +1,18 @@
 # Cómo instalar HiFi Player en tu móvil
 
-Versión: **0.17.1-alpha** · Android 8.0 o superior · archivo: `app-release.apk` (3,0 MB)
+Versión: **0.17.2-alpha** · Android 8.0 o superior · archivo: `hifi-player.apk` (unos 3 MB)
 
 ## 1. Descarga
 
-Desde el móvil, abre:
+Desde el móvil, abre este enlace y toca **Download**/descargar:
 
-**https://github.com/donovan-hue/donovan-hue/releases/tag/v0.17.1-alpha**
+**https://donovan-hue.github.io/donovan-hue/hifi-player.apk**
 
-Y toca `app-release.apk` en la sección *Assets*.
+Es la última compilación de la rama `main`: no hace falta cuenta de GitHub ni descomprimir nada.
+(La misma pantalla del panel de estado tiene este enlace en *Cómo probarlo hoy*.)
 
-> No instales la **0.17.0-alpha**: su APK no arranca (está corregido en la 0.17.1). Si ya la
-> instalaste, desinstálala antes de continuar.
+> No instales ninguna versión anterior a la **0.17.1**: sus APK no arrancaban. Si tienes una de esas
+> instalada, desinstálala antes de continuar.
 
 ## 2. Permite la instalación
 
@@ -22,23 +23,37 @@ Play Store:
 2. Activa **Permitir desde esta fuente** para el navegador (o el gestor de archivos) que estés usando.
 3. Vuelve atrás y toca **Instalar**.
 
-Si ya tenías otra versión instalada, la 0.17.1 puede pedirte **desinstalar primero**. A partir de
-ahora no: todas las compilaciones llevan la misma firma, así que las versiones nuevas se instalan
-encima y conservan tus ajustes, tu biblioteca y tus listas.
+Si ya tenías otra versión instalada, esta se instala **encima**: desde la 0.17.1 todas las
+compilaciones llevan la misma firma, así que no hay que desinstalar y no se pierden ajustes, ni
+biblioteca, ni listas.
 
 ## 3. Primer arranque
 
 1. Abre **HiFi Player**.
 2. Acepta el permiso de audio cuando lo pida (es para leer tus archivos; la app no pide red para la
    biblioteca).
-3. Verás una pantalla vacía con un botón para **añadir una carpeta**. Eso es lo esperado: la app solo
-   reproduce archivos locales, no trae música ni la busca en internet.
-4. Elige la carpeta donde tengas tu música (por ejemplo `Música` o la carpeta de tus descargas).
-   Android pedirá confirmar el acceso a esa carpeta: **Permitir**.
-5. El escáner empieza solo y muestra el progreso («Analizando… 42/381»). En cuanto termina, ya hay
+3. Añade una carpeta con música: por ejemplo `Música` o la carpeta de tus descargas. Android pedirá
+   confirmar el acceso a esa carpeta: **Permitir**.
+4. El escáner empieza solo y muestra el progreso («Analizando… 42/381»). En cuanto termina, ya hay
    canciones.
 
-## 4. Si algo no funciona
+## 4. Si la aplicación se cierra al abrir
+
+Eso es un fallo y hay que arreglarlo, pero desde la máquina donde se compila no se puede ver: hace
+falta el informe que la propia app deja en el teléfono. La 0.17.2 lo escribe **en dos sitios**, para
+que no se pierda aunque la aplicación no llegue a abrirse:
+
+1. **En la carpeta Descargas.** Busca un archivo llamado `hifi-player-fallo-FECHA.txt` (abre
+   *Archivos* → *Descargas*, o el gestor de archivos del teléfono). Este es el camino que funciona
+   aunque la app se cierre en cada intento.
+2. **En un aviso dentro de la app.** Si al volver a abrirla aparece un cuadro que dice «La aplicación
+   falló la última vez», toca **Copiar informe**.
+
+Manda el contenido: pégalo en el chat, o comparte el archivo de Descargas por donde te sea más
+fácil. El informe lleva la versión, el modelo de teléfono, el error exacto y su rastro; **no** lleva
+tus archivos ni tus datos.
+
+## 5. Si algo más no funciona
 
 | Síntoma | Qué pasa |
 |---|---|
@@ -48,7 +63,7 @@ encima y conservan tus ajustes, tu biblioteca y tus listas.
 | Sale "sin datos de capacidad todavía" | Es correcto: esa salida no ha respondido al sondeo. La app nunca rellena ese dato a ojo. |
 | Bit-perfect "no disponible" | Normal en Android 13 o inferior, y en salidas Bluetooth. Solo las salidas USB o con cable, en Android 14+, pueden entregar la señal sin mezcla. |
 
-## 5. Desinstalar
+## 6. Desinstalar
 
 Ajustes de Android → Aplicaciones → HiFi Player → Desinstalar. La música no se toca: la app solo
 guarda en su base de datos las rutas de los archivos que le diste.

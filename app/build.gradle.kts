@@ -29,8 +29,8 @@ android {
         // Al desplegar desde una etiqueta (v1.2.3) el workflow pasa -PversionNameOverride=v1.2.3,
         // de modo que el APK publicado y la etiqueta no pueden discrepar.
         val versionOverride = (project.findProperty("versionNameOverride") as String?)?.removePrefix("v")
-        versionCode = 18
-        versionName = versionOverride ?: "0.17.1-alpha"
+        versionCode = 19
+        versionName = versionOverride ?: "0.17.2-alpha"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
@@ -119,8 +119,17 @@ android {
 
     testOptions {
         unitTests {
+            // Robolectric necesita los recursos y el manifest fusionado para arrancar la app igual
+            // que en un dispositivo.
             isIncludeAndroidResources = true
             isReturnDefaultValues = true
+
+            all {
+                // Una sola máquina virtual de test, con memoria acotada: el mismo límite que usa el
+                // resto del proyecto. Robolectric levanta un JVM aparte y aquí la memoria es escasa.
+                it.maxHeapSize = "640m"
+                it.jvmArgs("-XX:MaxMetaspaceSize=320m")
+            }
         }
     }
 

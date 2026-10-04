@@ -17,7 +17,8 @@ jobs:
   build:
     name: Núcleo + datos + tests de DSP
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    # Un test que se cuelga no debe dejar el pipeline colgado seis horas.
+    timeout-minutes: 45
 
     steps:
       - name: Descargar el código
@@ -128,12 +129,90 @@ jobs:
           path: app/build/outputs/apk/release/*.apk
           if-no-files-found: warn
 
+      # Aquí se arranca la aplicación de verdad, con el manifest y los recursos reales, en dos
+      # versiones de Android. Es la prueba que faltaba cuando la 0.17.0 se cerraba al abrir.
+      # Va al final y con `continue-on-error` a propósito: mientras se estabiliza, no debe impedir
+      # que se suba el APK. El resultado se lee en el registro y en los informes de tests.
+      - name: Pruebas de arranque de la app (Robolectric)
+        continue-on-error: true
+        run: ./gradlew :app:testDebugUnitTest --console=plain
+
       - name: Guardar informes de tests
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: informes-tests
           path: '**/build/test-results/**/*.xml'
+          if-no-files-found: ignore
+
+  # --------------------------------------------------------------------------------------------
+  # La prueba que de verdad importa y que hasta ahora nadie hacía: instalar el APK **de release**
+  # (el que se entrega, con R8) en un Android de verdad y comprobar que sigue vivo después de
+  # abrirlo. Un APK que compila, se instala y se cierra al abrir es exactamente el fallo que se
+  # escapó dos veces, porque ninguna comprobación estática lo ve.
+  #
+  # Mientras se estabiliza no bloquea nada: si el emulador no arranca, el aviso queda en el registro
+  # y el APK se publica igual.
+  # --------------------------------------------------------------------------------------------
+  arranque:
+    name: El APK de release abre de verdad (emulador)
+    needs: build
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    timeout-minutes: 40
+
+    steps:
+      - name: Descargar el APK de release
+        uses: actions/download-artifact@v4
+        with:
+          name: hifi-player-release-apk
+          path: apk
+
+      - name: Comprobar que hay un APK
+        run: |
+          set -eu
+          ls -la apk
+          ls apk/*.apk > /dev/null
+
+      # El emulador necesita el grupo kvm accesible; sin esto arranca, pero a paso de tortuga.
+      - name: Activar la aceleración por hardware
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Arrancar el emulador, instalar y abrir
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          avd-name: prueba-de-arranque
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: |
+            set -eu
+            adb install -r apk/app-release.apk
+            # `am start -W` espera a que la actividad esté dibujada; si el proceso muere, se ve aquí.
+            adb shell am start -W -n com.hifiplayer/com.hifiplayer.ui.MainActivity || true
+            sleep 20
+            adb logcat -d > logcat.txt || true
+            if adb shell pidof com.hifiplayer > /dev/null; then
+              echo "OK: la aplicación sigue viva 20 s después de abrirla."
+            else
+              echo "FALLO: la aplicación se cerró al abrir. Rastro de Android:"
+              adb logcat -d -b crash || true
+              adb logcat -d -s AndroidRuntime:E || true
+              exit 1
+            fi
+
+      - name: Guardar el registro del sistema
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: registro-emulador
+          path: logcat.txt
           if-no-files-found: ignore
 
   # --------------------------------------------------------------------------------------------
@@ -160,6 +239,14 @@ jobs:
           name: hifi-player-release-apk
           path: apk
 
+      # El APK de depuración se publica junto al de release a propósito: no lleva R8, así que
+      # comparar los dos dice si un fallo viene de la minificación o del código.
+      - name: Descargar el APK de depuración
+        uses: actions/download-artifact@v4
+        with:
+          name: hifi-player-debug-apk
+          path: apk-debug
+
       - name: Comprobar que hay un APK
         run: |
           set -eu
@@ -174,7 +261,9 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: HiFi Player ${{ github.ref_name }}
-          files: apk/*.apk
+          files: |
+            apk/*.apk
+            apk-debug/*.apk
           # Las versiones con -alpha/-beta se marcan como preliminares.
           prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') }}
           body_path: docs/RELEASE-NOTES.md
@@ -183,8 +272,13 @@ jobs:
   # Panel de estado del proyecto. El repositorio tiene Pages configurado para desplegarse desde
   # Actions (no con el generador Jekyll), así que aquí se sube la carpeta docs/ tal cual: es HTML
   # plano, sin build ni dependencias.
+  #
+  # Además se copia ahí el APK de release: así hay un enlace de descarga directa que se puede abrir
+  # desde el propio teléfono, sin entrar en GitHub, sin iniciar sesión y sin descomprimir nada.
+  # --------------------------------------------------------------------------------------------
   paginas:
     name: Publicar el panel en GitHub Pages
+    needs: build
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
@@ -200,6 +294,24 @@ jobs:
 
       - name: Preparar Pages
         uses: actions/configure-pages@v5
+
+      - name: Descargar el APK de release
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: hifi-player-release-apk
+          path: apk-pagina
+
+      - name: Copiar el APK a docs/
+        continue-on-error: true
+        run: |
+          set -eu
+          ls -la apk-pagina
+          VERSION=$(grep -o 'versionName = versionOverride ?: "[^"]*"' app/build.gradle.kts \
+            | head -1 | sed 's/.*"\(.*\)"/\1/')
+          cp apk-pagina/*.apk docs/hifi-player.apk
+          cp apk-pagina/*.apk "docs/hifi-player-${VERSION}.apk"
+          ls -la docs/*.apk
 
       - name: Empaquetar docs/
         uses: actions/upload-pages-artifact@v3

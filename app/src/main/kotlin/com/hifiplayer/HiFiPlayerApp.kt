@@ -3,6 +3,7 @@ package com.hifiplayer
 import android.app.Application
 import com.hifiplayer.app.AppGraph
 import com.hifiplayer.app.BuildConfig
+import com.hifiplayer.app.logging.CrashReporter
 import com.hifiplayer.app.logging.ReleaseTree
 import com.hifiplayer.app.logging.TimberLogger
 import com.hifiplayer.core.common.logging.AppLogger
@@ -24,9 +25,15 @@ class HiFiPlayerApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        // Lo primero de todo: si algo de lo que viene ahora falla, el usuario podrá enviarnos el error
+        // (la app se cerraba al abrir en un móvil real y no había forma de ver por qué).
+        CrashReporter.install(this)
         installLogging()
+        CrashReporter.stage("Application: registro listo")
         graph = AppGraph(this)
+        CrashReporter.stage("Application: grafo construido")
         PlaybackServiceLocator.install { graph.serviceDependencies }
+        CrashReporter.stage("Application: servicio enlazado")
         AppLogger.i(TAG, "HiFi Player iniciado")
     }
 

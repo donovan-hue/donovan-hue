@@ -5,7 +5,30 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.unit.dp
+import android.widget.Toast
+import com.hifiplayer.app.logging.CrashReporter
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
@@ -42,6 +65,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        CrashReporter.stage("Actividad: creada")
         enableEdgeToEdge()
         val graph = (application as HiFiPlayerApp).graph
         val about = AboutInfo(
@@ -64,6 +88,7 @@ class MainActivity : ComponentActivity() {
                 else -> true
             }
             HiFiTheme(darkTheme = darkTheme) {
+                CrashReportDialog()
                 HiFiApp(
                     createPlayerViewModel = graph::nowPlayingViewModel,
                     createQueueViewModel = graph::queueViewModel,
@@ -82,7 +107,74 @@ class MainActivity : ComponentActivity() {
                     aboutInfo = about,
                     artworkLoader = graph.artworkLoader,
                 )
+                // Va después de HiFiApp a propósito: si la composición de la interfaz lanza una
+                // excepción, esto no llega a ejecutarse y el arranque queda marcado como incompleto.
+                StartupStageWatcher()
             }
         }
     }
+}
+
+/**
+ * Deja constancia de que el arranque llegó a dibujar la pantalla.
+ *
+ * No es decorativo: cuando no hay excepción que guardar (el sistema mata el proceso, o falla código
+ * nativo), la única prueba que queda es hasta dónde llegó el arranque. Y si esto no se ejecuta, el
+ * siguiente arranque sabe que el anterior se quedó a medias.
+ */
+@Composable
+private fun StartupStageWatcher() {
+    val view = LocalView.current
+    LaunchedEffect(Unit) {
+        CrashReporter.stage("Interfaz: compuesta")
+        // El primer fotograma se pinta en el siguiente recorrido del árbol de vistas.
+        view.post { CrashReporter.stage("Interfaz: dibujada") }
+    }
+}
+
+/**
+ * Si la aplicación falló la última vez, enseña el informe y lo deja copiado (requisito 31).
+ *
+ * Esto no es una función decorativa: la 0.17.1 se cerraba al abrir en un móvil real y desde la
+ * máquina de construcción no había forma de ver el error. Ahora el fallo viaja con el usuario en
+ * lugar de perderse en un registro que nadie puede leer sin un ordenador.
+ */
+@Composable
+private fun CrashReportDialog() {
+    val context = LocalContext.current
+    val clipboard = LocalClipboardManager.current
+    // `consume` marca el informe como entregado: se enseña una vez, no en cada arranque.
+    var report by remember { mutableStateOf(CrashReporter.consume(context)) }
+
+    val current = report ?: return
+
+    AlertDialog(
+        onDismissRequest = { report = null },
+        title = { Text("La aplicación falló la última vez") },
+        text = {
+            Column(modifier = Modifier.height(320.dp).verticalScroll(rememberScrollState())) {
+                Text(
+                    text = "Copia el informe y envíalo: dice exactamente dónde falló.",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = current,
+                    style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    clipboard.setText(AnnotatedString(current))
+                    Toast.makeText(context, "Informe copiado al portapapeles", Toast.LENGTH_LONG).show()
+                    report = null
+                },
+            ) { Text("Copiar informe") }
+        },
+        dismissButton = {
+            TextButton(onClick = { report = null }) { Text("Cerrar") }
+        },
+    )
 }
