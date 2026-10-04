@@ -46,13 +46,27 @@ def nodes(root: ET.Element):
 
 
 def find_all(root: ET.Element, wanted: str, exact: bool = False):
-    """Nodos cuyo texto coincide. `exact=True` para no confundir «Ajustes» con la pestaña."""
+    """Nodos cuyo texto coincide, del más corto al más largo.
+
+    El orden importa: uiautomator pega a veces los textos de un contenedor, así que buscando
+    «Claro» el primer resultado puede ser un párrafo entero. El nodo más corto que contiene el texto
+    es el chip, que es lo que se quiere pulsar.
+    """
     result = []
     for node in nodes(root):
         text = (node.get("text") or "").strip()
         if (text == wanted) if exact else (wanted.lower() in text.lower()):
             result.append(node)
-    return result
+    return sorted(result, key=lambda n: len((n.get("text") or "")))
+
+
+def scroll_until(wanted: str, max_swipes: int = 12, exact: bool = False) -> bool:
+    """Baja hasta encontrar el texto. Evita depender de cuántas pantallas hay de por medio."""
+    for _ in range(max_swipes):
+        if find_all(dump(), wanted, exact=exact):
+            return True
+        scroll_down(1)
+    return False
 
 
 def tap_node(node) -> None:
@@ -133,13 +147,7 @@ if tap_text("Ajustes", exact=True):
     save_dump("02-ajustes")
 
     # --- Apariencia: hay que bajar hasta ella ---
-    reached = False
-    for step in range(6):
-        if find_all(dump(), "Apariencia"):
-            reached = True
-            break
-        scroll_down(1)
-    if not reached:
+    if not scroll_until("Apariencia", max_swipes=8):
         failures.append("no llegué a la sección «Apariencia»")
     else:
         screenshot("03-apariencia")
@@ -154,12 +162,12 @@ if tap_text("Ajustes", exact=True):
             notes.append("las cuatro opciones de tema tienen texto")
 
         # --- El tema tiene que cambiar DE VERDAD, medido en píxeles ---
-        if tap_text("Oscuro", exact=True):
+        if tap_text("Oscuro", index=0):
             time.sleep(1.5)
             dark_brightness = mean_brightness()
             screenshot("04-tema-oscuro")
 
-        if tap_text("Claro", exact=True):
+        if tap_text("Claro", index=0):
             time.sleep(1.5)
             light_brightness = mean_brightness()
             screenshot("05-tema-claro")
@@ -175,7 +183,7 @@ if tap_text("Ajustes", exact=True):
                 notes.append("«Claro» cambia el tema de verdad")
 
         # --- Negro puro tiene que ser distinto de Oscuro ---
-        if tap_text("Negro puro", exact=True) and dark_brightness is not None:
+        if tap_text("Negro puro", index=0) and dark_brightness is not None:
             time.sleep(1.5)
             pure = mean_brightness()
             screenshot("06-tema-negro-puro")
@@ -184,11 +192,10 @@ if tap_text("Ajustes", exact=True):
                 failures.append("«Negro puro (OLED)» no cambia nada respecto a «Oscuro»")
             else:
                 notes.append("«Negro puro» es distinto de «Oscuro»")
-            tap_text("Oscuro", exact=True)  # se deja el tema del producto
+            tap_text("Oscuro", index=0)  # se deja el tema del producto
 
 # --- Crossfeed: ahí viven Balance y los avisos que salían en rojo ---
-scroll_down(6)
-if tap_text("Crossfeed", exact=True, index=0):
+if scroll_until("Crossfeed") and tap_text("Crossfeed", index=0):
     time.sleep(1)
     screenshot("07-crossfeed")
     save_dump("07-crossfeed")
@@ -196,8 +203,7 @@ if tap_text("Crossfeed", exact=True, index=0):
     time.sleep(1)
 
 # --- Ecualizador ---
-scroll_down(4)
-if tap_text("Ecualizador paramétrico", exact=True):
+if scroll_until("Ecualizador paramétrico") and tap_text("Ecualizador paramétrico", index=0):
     time.sleep(1)
     screenshot("08-ecualizador")
     save_dump("08-ecualizador")

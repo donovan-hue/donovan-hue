@@ -50,6 +50,10 @@ fun HiFiTopBar(
     Row(
         modifier = modifier
             .fillMaxWidth()
+            // Opaca: en las pantallas que son pestaña el contenido pasa por debajo al desplazar, y sin
+            // fondo se veía el texto y los interruptores dibujados encima del título (visto en una
+            // captura del emulador). Con el fondo del tema, lo que pasa por debajo simplemente no se ve.
+            .background(MaterialTheme.colorScheme.background)
             .padding(horizontal = LocalHiFiDimens.current.screenPadding)
             .padding(vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
