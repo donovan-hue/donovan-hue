@@ -85,9 +85,13 @@ El canal de entrega es GitHub, sin pasos manuales:
 | push a `main` | compila los 22 módulos, ejecuta las 97 pruebas y sube los APK (debug y release) como artefactos |
 | etiqueta `v*` | además publica el APK de release en el *release* de GitHub |
 
-Antes de subir cualquier APK, CI ejecuta `scripts/verify-apk.sh`: comprueba que cada componente que
-nombra el manifest (Application, actividad de entrada, servicios, receptores) existe de verdad como
-clase dentro del `dex`. Es la comprobación que faltaba cuando la 0.17.0 se publicó sin arrancar.
+Antes de subir cualquier APK, CI ejecuta `scripts/verify-apk.sh`, que comprueba dos cosas:
+
+1. Que cada componente que nombra el manifest (Application, actividad de entrada, servicios,
+   receptores) existe de verdad como clase dentro del `dex`. Es la comprobación que faltaba cuando la
+   0.17.0 se publicó sin arrancar.
+2. Que la firma del APK es la clave de depuración versionada en `ci/hifi-debug.keystore`, para que
+   cada versión se pueda instalar encima de la anterior en lugar de obligar a desinstalar.
 | push a `main` (rama del panel) | republica el panel de `docs/` en GitHub Pages |
 
 ```sh
@@ -113,6 +117,7 @@ namespace del módulo en vez del paquete real de las clases; ver `docs/RELEASE-N
 La numeración sigue a las fases a propósito: **1.0.0 no es «todo hecho», es «todo hecho y probado en
 hardware real»**, y eso no se puede afirmar desde una máquina sin dispositivo.
 
-**Firma:** el APK se firma con la clave de depuración mientras no exista un keystore de producción
-(`keystore.properties` o las variables `HIFI_KEYSTORE_FILE`, `HIFI_KEYSTORE_PASSWORD`, `HIFI_KEY_ALIAS`,
-`HIFI_KEY_PASSWORD`). Es instalable; para una tienda hay que firmarlo con la clave definitiva.
+**Firma:** el APK se firma con la clave de depuración versionada en `ci/hifi-debug.keystore` (misma
+firma en cada compilación, así las actualizaciones se instalan encima). Para publicar en una tienda hay
+que configurar un keystore de producción (`keystore.properties` o las variables `HIFI_KEYSTORE_FILE`,
+`HIFI_KEYSTORE_PASSWORD`, `HIFI_KEY_ALIAS`, `HIFI_KEY_PASSWORD`), que tiene prioridad sobre aquella.

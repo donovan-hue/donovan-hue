@@ -5,6 +5,10 @@ local.properties
 keystore.properties
 *.jks
 *.keystore
+# Excepción deliberada: la clave de *depuración* que usa CI para que una versión se instale sobre la
+# anterior. No es un secreto (una clave de depuración no sirve para publicar) y tiene que estar en el
+# repositorio para que cada compilación produzca la misma firma.
+!ci/hifi-debug.keystore
 .idea/
 .DS_Store
 captures/

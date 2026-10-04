@@ -104,3 +104,36 @@ if [ "$missing" -gt 0 ]; then
 fi
 
 echo "  ✔ todos los componentes del manifest existen en el APK"
+
+# ------------------------------------------------------------------- firma
+# ¿Lleva la clave de depuración versionada? Si cada compilación firma con una clave distinta, la
+# versión nueva no se puede instalar encima de la anterior y hay que desinstalar (perdiendo ajustes y
+# biblioteca). La comprobación se salta cuando hay credenciales de producción configuradas: en ese
+# caso la firma correcta es la otra, y compararla con la de depuración sería un falso positivo.
+if [ -f ci/hifi-debug.keystore ] && [ ! -f keystore.properties ] && [ -z "${HIFI_KEYSTORE_FILE:-}" ]; then
+  KEYTOOL="${JAVA_HOME:-}/bin/keytool"
+  [ -x "$KEYTOOL" ] || KEYTOOL=$(command -v keytool || true)
+  APKSIGNER=$(ls "$SDK"/build-tools/*/apksigner 2>/dev/null | sort -V | tail -1 || true)
+  if [ -n "$KEYTOOL" ] && [ -n "$APKSIGNER" ]; then
+    # keytool: "  SHA256: C0:4F:…"  ·  apksigner: "Signer #1 certificate SHA-256 digest: c04f…"
+    expected=$("$KEYTOOL" -list -v -keystore ci/hifi-debug.keystore -storepass hifiplayer 2>/dev/null \
+      | sed -n 's/.*SHA256:[[:space:]]*//p' | head -1 | tr -d ':\r' | tr 'A-Z' 'a-z')
+    actual=$("$APKSIGNER" verify --print-certs "$APK" 2>/dev/null \
+      | sed -n 's/.*SHA-256 digest:[[:space:]]*//p' | head -1 | tr -d ':\r' | tr 'A-Z' 'a-z')
+    if [ -n "$expected" ] && [ -n "$actual" ]; then
+      if [ "$expected" = "$actual" ]; then
+        echo "  ✔ firmado con la clave de depuración versionada (las actualizaciones se instalan encima)"
+      else
+        echo "  ✘ la firma no es la clave versionada en ci/hifi-debug.keystore" >&2
+        echo "    esperada: $expected" >&2
+        echo "    actual:   $actual" >&2
+        echo "    Con una clave distinta en cada compilación, actualizar exige desinstalar." >&2
+        missignature=1
+      fi
+    fi
+  fi
+fi
+
+if [ "${missignature:-0}" = "1" ]; then
+  exit 1
+fi

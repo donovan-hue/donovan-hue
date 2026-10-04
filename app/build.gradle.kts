@@ -37,6 +37,26 @@ android {
     }
 
     signingConfigs {
+        // Clave de DEPURACIÓN estable, versionada a propósito en `ci/`.
+        //
+        // Por qué: el keystore de depuración que Android Gradle Plugin genera solo vive en la máquina
+        // que compila, así que cada ejecución de CI producía una clave distinta. Consecuencia real:
+        // la versión nueva no se podía instalar encima de la anterior ("Aplicación no instalada") y
+        // había que desinstalar, perdiendo ajustes y biblioteca. Con esta clave, todas las compilaciones
+        // firman igual y las actualizaciones entran sin tocar nada.
+        //
+        // No es un secreto y no sirve para publicar en una tienda: las credenciales de producción, si
+        // existen, siguen teniendo prioridad en la configuración "release" de aquí abajo.
+        val ciDebugKeystore = rootProject.file("ci/hifi-debug.keystore")
+        if (ciDebugKeystore.exists()) {
+            getByName("debug") {
+                storeFile = ciDebugKeystore
+                storePassword = "hifiplayer"
+                keyAlias = "hifidebug"
+                keyPassword = "hifiplayer"
+            }
+        }
+
         create("release") {
             // Never hardcode secrets: read from keystore.properties (git-ignored) or CI env vars.
             val propsFile = rootProject.file("keystore.properties")
