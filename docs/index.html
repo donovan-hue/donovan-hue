@@ -106,14 +106,14 @@
   <header class="top">
     <div>
       <h1>HiFi Player · Panel de revisión</h1>
-      <div class="sub">rama main · commit 02bf871 · versión 0.6.0-alpha · 3 de octubre de 2026</div>
+      <div class="sub">rama main · versión 0.17.0-alpha · 3 de octubre de 2026</div>
     </div>
     <div class="chips">
       <span class="chip ok">CI verde · 37156018697</span>
-      <span class="chip gold">APK de release v0.6.0-alpha</span>
+      <span class="chip gold">release 0.17.0-alpha</span>
       <span class="chip gold">panel en GitHub Pages</span>
       <span class="chip">22 módulos</span>
-      <span class="chip">fases 1-15 de 17</span>
+      <span class="chip">fases 1-17 de 17</span>
     </div>
   </header>
 
@@ -141,11 +141,27 @@
     <div class="ph done"><span class="num">13</span><span class="txt">Crossfeed<span class="st">hecha · CI</span></span></div>
     <div class="ph done"><span class="num">14</span><span class="txt">MediaSession, Bluetooth y Android Auto<span class="st">hecha · CI · sin coche ni coche real donde probarla</span></span></div>
     <div class="ph done"><span class="num">15</span><span class="txt">Optimización<span class="st">hecha · CI · falta perfilado en un móvil real</span></span></div>
-    <div class="ph part"><span class="num">16</span><span class="txt">Pruebas<span class="st">la batería completa: 97 pruebas</span></span></div>
-    <div class="ph todo"><span class="num">17</span><span class="txt">Release<span class="st">pendiente</span></span></div>
+    <div class="ph done"><span class="num">16</span><span class="txt">Pruebas<span class="st">hecha · 97 pruebas, 0 fallos</span></span></div>
+    <div class="ph done"><span class="num">17</span><span class="txt">Release<span class="st">hecha · 0.17.0-alpha publicada</span></span></div>
   </div>
 
-  <h3>Entregado en esta iteración (fases 14 y 15)</h3>
+  <h3>Entregado en esta iteración (fases 16 y 17)</h3>
+  <ul class="plain">
+    <li><b>Las pruebas de las afirmaciones de calidad</b>: 14 pruebas nuevas que fijan lo que la app
+      puede decir. Bit-perfect solo se anuncia cuando está activo de verdad; pedirlo con efectos
+      encendidos dice «DSP ACTIVE», no «BIT-PERFECT». El aviso de saturación aparece exactamente
+      cuando la cadena puede saturar y desaparece con un preamp negativo. Una salida que no respondió
+      al sondeo dice «sin datos de capacidad todavía» en lugar de rellenar con un dato plausible.
+      Hi-res significa por encima de calidad CD y nada más.</li>
+    <li><b>Release 0.17.0-alpha</b>: APK de release compilado con R8, recursos reducidos y los
+      registros de depuración apagados en el código fuente. Se publica aquí y en el <i>release</i> de
+      GitHub, junto con estas notas.</li>
+    <li><b>La numeración sigue diciendo la verdad</b>: 0.17 corresponde a las 17 fases implementadas y
+      verificadas por CI. La versión no sube a 1.0.0 mientras no haya una prueba en hardware real; lo
+      que falta está enumerado, sin adornos, en las notas de la versión.</li>
+  </ul>
+
+  <h3>Entregado en la iteración anterior (fases 14 y 15)</h3>
   <ul class="plain">
     <li><b>Notificación y pantalla de bloqueo con datos reales</b>: hasta ahora el reproductor enviaba
       a Media3 el archivo y nada más, así que el sistema mostraba «Unknown artist» y ningún arte.
@@ -359,14 +375,14 @@
   <h2><span class="n">06</span>Despliegue</h2>
   <p class="lead">El canal de entrega es GitHub: APK adjunto al <i>release</i> y este panel publicado con
   GitHub Pages. Al empujar una etiqueta <code>v*</code>, el workflow compila el APK de release con R8 y lo
-  publica solo: no hay pasos manuales ni artefactos que caduquen. La versión <code>0.6.0-alpha</code> corresponde
-  a las fases 1-7 y sigue siendo la última publicada: las fases 8 a 13 están en <code>main</code> y pasan por CI,
-  pero no se etiqueta nada nuevo hasta terminar el pliego (fases 14 a 17). La 1.0.0 llegará solo cuando todo
-  esté hecho y probado en dispositivos reales.</p>
+  publica solo: no hay pasos manuales ni artefactos que caduquen. La versión <code>0.17.0-alpha</code> corresponde
+  a las 17 fases del pliego. La 1.0.0 no se declara aquí ni se declara en la app: exige probar el
+  reproductor en hardware real (DAC USB, bit-perfect confirmado, Android Auto, auriculares Bluetooth),
+  y eso no se puede hacer desde esta máquina. Lo que falta está enumerado en las notas de la versión.</p>
   <div class="grid cols-3">
     <div class="card">
       <h3>APK instalable</h3>
-      <p style="margin:6px 0 0"><a href="https://github.com/donovan-hue/donovan-hue/releases/tag/v0.6.0-alpha">release v0.6.0-alpha</a> ·
+      <p style="margin:6px 0 0"><a href="https://github.com/donovan-hue/donovan-hue/releases/tag/v0.17.0-alpha">release 0.17.0-alpha</a> ·
       <a href="https://github.com/donovan-hue/donovan-hue/releases">todos los releases</a></p>
       <p style="margin:8px 0 0;color:var(--on-var);font-size:13px"><b>app-release.apk</b>, compilado
       con R8 y recursos reducidos. <b>Firmado con la clave de depuración</b> mientras no haya keystore de

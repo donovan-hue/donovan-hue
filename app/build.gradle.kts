@@ -15,15 +15,16 @@ android {
         applicationId = "com.hifiplayer"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        // Versionado honesto: 0.5.x corresponde a las fases 1-5 del plan (motor de audio y
-        // reproducción funcionando, biblioteca aún sin pantalla). La 1.0.0 se alcanza cuando el
-        // pliego esté completo y probado en dispositivos reales.
+        // Versionado honesto: 0.17.x corresponde a las fases 1-17 del plan, todas implementadas y
+        // verificadas por compilador y pruebas. La 1.0.0 no es una fase más: se alcanza cuando el
+        // pliego esté además probado en dispositivos reales (DAC USB, bit-perfect, Android Auto,
+        // auriculares Bluetooth), cosa que CI no puede hacer.
         //
         // Al desplegar desde una etiqueta (v1.2.3) el workflow pasa -PversionNameOverride=v1.2.3,
         // de modo que el APK publicado y la etiqueta no pueden discrepar.
         val versionOverride = (project.findProperty("versionNameOverride") as String?)?.removePrefix("v")
-        versionCode = 6
-        versionName = versionOverride ?: "0.6.0-alpha"
+        versionCode = 17
+        versionName = versionOverride ?: "0.17.0-alpha"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }

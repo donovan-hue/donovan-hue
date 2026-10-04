@@ -47,26 +47,26 @@ presentation/*           Compose: navigation, library, playback, settings
 
 ## Estado real del proyecto
 
-Verificado con compilador y tests (no por inspección visual):
+Verificado con compilador y pruebas, no por inspección visual. **97 pruebas, 0 fallos** (31 de DSP,
+21 de biblioteca, 14 de reproductor, 12 de ajustes, 10 del modelo de dominio, 6 de audio, 3 de
+navegación), y CI las ejecuta en cada push.
 
-- ✅ `native:dsp` — 31 tests JUnit/Truth en verde (EQ, ReplayGain, crossfeed, ganancia, pipeline).
-- ✅ `domain:*` — modelos, contratos y casos de uso.
-- ✅ `core:database` (Room + KSP), `core:storage`, `core:metadata`, `core:permissions`,
-  `core:usb`, `core:audio` — compilan.
-- ✅ **Fase 2 — datos**: `data:local` (ajustes en DataStore), `data:metadata` (lectura de tags y
-  artwork con caché en disco) y `data:repository` (escáner de biblioteca, biblioteca, playlists,
-  favoritos, cola persistente, búsqueda y dispositivos de audio) — compilan.
-- 🚧 Pendiente: motor de reproducción y `PlaybackService` (fase 3), toda la UI Compose,
-  `res/` de la app, tests instrumentados, release.
+- ✅ **Fases 1-17 implementadas**: arquitectura y proyecto, biblioteca y escáner, motor de audio,
+  Now Playing, cola y Up Next, listas, metadatos y portadas, información de audio, salidas y USB DAC,
+  bit-perfect, ReplayGain, ecualizador paramétrico de 10 bandas, crossfeed, sesión de biblioteca
+  (notificación, bloqueo, Bluetooth y Android Auto), optimización, pruebas y release.
+- ⚠️ **Lo que falta para decir 1.0.0**: probarlo en dispositivos reales. Aquí no hay móvil, ni DAC
+  USB, ni coche: todo lo que depende del hardware (que el bit-perfect se confirme, qué formatos
+  acepta un DAC concreto, el comportamiento en Android Auto) está implementado y se presenta con lo
+  que el dispositivo responda, pero **no está verificado en hardware**.
 
 Comandos del día a día (el toolchain del sandbox no se conserva entre sesiones):
 
 ```bash
 sh scripts/install-toolchain.sh   # JDK 17 + Android SDK (solo si hace falta)
-sh scripts/build.sh --all         # compila núcleo + datos y corre los tests de DSP
+sh scripts/build.sh --all         # compila los módulos y corre las pruebas
+sh scripts/build.sh :presentation:playback:testDebugUnitTest --max-workers=1
 ```
-
-Este README no declara nada como terminado si no está compilado o probado.
 
 ## Principios de honestidad técnica
 
@@ -82,18 +82,19 @@ El canal de entrega es GitHub, sin pasos manuales:
 
 | Disparador | Qué ocurre |
 |---|---|
-| push a `main` | compila los 14 módulos verificados, corre los 31 tests de DSP y sube los APK (debug y release) como artefactos |
+| push a `main` | compila los 22 módulos, ejecuta las 97 pruebas y sube los APK (debug y release) como artefactos |
 | etiqueta `v*` | además publica el APK de release en el *release* de GitHub |
+| push a `main` (rama del panel) | republica el panel de `docs/` en GitHub Pages |
 
 ```sh
-git tag v0.5.0-alpha && git push origin v0.5.0-alpha
+git tag v0.17.0-alpha && git push origin v0.17.0-alpha
 ```
 
 El panel de estado del proyecto se publica con GitHub Pages desde `docs/`.
 
-**Versión actual: 0.5.0-alpha** — fases 1-5 del plan (arquitectura, biblioteca y escáner, motor de
-audio y reproducción, pantalla Now Playing, cola con reordenación). La 1.0.0 llega cuando el pliego
-esté completo y probado en dispositivos reales.
+**Versión actual: 0.17.0-alpha** — las 17 fases del pliego, implementadas y verificadas con CI.
+La numeración sigue a las fases a propósito: **1.0.0 no es «todo hecho», es «todo hecho y probado en
+hardware real»**, y eso no se puede afirmar desde una máquina sin dispositivo.
 
 **Firma:** el APK se firma con la clave de depuración mientras no exista un keystore de producción
 (`keystore.properties` o las variables `HIFI_KEYSTORE_FILE`, `HIFI_KEYSTORE_PASSWORD`, `HIFI_KEY_ALIAS`,
