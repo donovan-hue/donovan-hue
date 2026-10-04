@@ -60,12 +60,23 @@ def find_all(root: ET.Element, wanted: str, exact: bool = False):
     return sorted(result, key=lambda n: len((n.get("text") or "")))
 
 
+def scroll_up(times: int = 1) -> None:
+    for _ in range(times):
+        sh(f"adb shell input swipe {SCREEN_W // 2} 200 {SCREEN_W // 2} 520 250")
+        time.sleep(1.0)
+
+
 def scroll_until(wanted: str, max_swipes: int = 12, exact: bool = False) -> bool:
-    """Baja hasta encontrar el texto. Evita depender de cuántas pantallas hay de por medio."""
-    for _ in range(max_swipes):
-        if find_all(dump(), wanted, exact=exact):
-            return True
-        scroll_down(1)
+    """Busca el texto bajando y, si no está, subiendo.
+
+    Hay secciones por encima de otras (Crossfeed está antes que Apariencia en Ajustes), así que
+    buscar solo hacia abajo dejaba pantallas sin visitar.
+    """
+    for direction in (scroll_down, scroll_up):
+        for _ in range(max_swipes):
+            if find_all(dump(), wanted, exact=exact):
+                return True
+            direction(1)
     return False
 
 
