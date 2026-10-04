@@ -183,6 +183,41 @@ class DspViewModelTest {
         assertThat(formatFrequency(3200.0)).isEqualTo("3.2 kHz")
         assertThat(formatFrequency(20000.0)).isEqualTo("20 kHz")
     }
+    // ---------------------------------------------------------------------------------------
+    // Los avisos de bit-perfect. La app decía «el ecualizador no se aplica» con solo estar
+    // pedido, aunque el sistema no lo hubiera concedido y el ecualizador estuviera sonando.
+    // ---------------------------------------------------------------------------------------
+
+    @Test
+    fun `pedir bit-perfect sin que el sistema lo conceda no marca los efectos como anulados`() = runTest {
+        val playback = FakePlayback()
+        val vm = collecting(viewModel(playback))
+
+        assertThat(vm.state.value.bitPerfectRequested).isTrue()
+        assertThat(vm.state.value.bitPerfectActive).isFalse()
+        // Lo importante: los efectos SÍ se aplican, y la pantalla no puede decir lo contrario.
+        assertThat(vm.state.value.effectsBypassed).isFalse()
+        assertThat(vm.state.value.bitPerfectUnavailable).isTrue()
+    }
+
+    @Test
+    fun `con bit-perfect concedido de verdad los efectos quedan anulados`() = runTest {
+        val playback = FakePlayback()
+        playback.setBitPerfectActive(true)
+        val vm = collecting(viewModel(playback))
+
+        assertThat(vm.state.value.effectsBypassed).isTrue()
+        assertThat(vm.state.value.bitPerfectUnavailable).isFalse()
+    }
+
+    @Test
+    fun `desactivar bit-perfect desde el aviso escribe el ajuste`() = runTest {
+        val vm = collecting(viewModel())
+
+        vm.onBitPerfectChange(false)
+
+        assertThat(settings.current.playback.bitPerfectEnabled).isFalse()
+    }
 }
 
 // ---------------------------------------------------------------------------------- test doubles
@@ -279,40 +314,4 @@ private class FakePlayback : PlaybackRepository {
 
     private fun unreachable(): Outcome<Nothing> =
         throw AssertionError("the DSP screens must not touch the transport")
-
-    // ---------------------------------------------------------------------------------------
-    // Los avisos de bit-perfect. La app decía «el ecualizador no se aplica» con solo estar
-    // pedido, aunque el sistema no lo hubiera concedido y el ecualizador estuviera sonando.
-    // ---------------------------------------------------------------------------------------
-
-    @Test
-    fun `pedir bit-perfect sin que el sistema lo conceda no marca los efectos como anulados`() = runTest {
-        val playback = FakePlayback()
-        val vm = collecting(viewModel(playback))
-
-        assertThat(vm.state.value.bitPerfectRequested).isTrue()
-        assertThat(vm.state.value.bitPerfectActive).isFalse()
-        // Lo importante: los efectos SÍ se aplican, y la pantalla no puede decir lo contrario.
-        assertThat(vm.state.value.effectsBypassed).isFalse()
-        assertThat(vm.state.value.bitPerfectUnavailable).isTrue()
-    }
-
-    @Test
-    fun `con bit-perfect concedido de verdad los efectos quedan anulados`() = runTest {
-        val playback = FakePlayback()
-        playback.setBitPerfectActive(true)
-        val vm = collecting(viewModel(playback))
-
-        assertThat(vm.state.value.effectsBypassed).isTrue()
-        assertThat(vm.state.value.bitPerfectUnavailable).isFalse()
-    }
-
-    @Test
-    fun `desactivar bit-perfect desde el aviso escribe el ajuste`() = runTest {
-        val vm = collecting(viewModel())
-
-        vm.onBitPerfectChange(false)
-
-        assertThat(settings.current.playback.bitPerfectEnabled).isFalse()
-    }
 }
