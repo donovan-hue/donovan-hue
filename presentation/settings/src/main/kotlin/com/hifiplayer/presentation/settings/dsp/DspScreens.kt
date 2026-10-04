@@ -71,6 +71,7 @@ fun EqScreen(
     onDeletePreset: (String) -> Unit,
     onPreampChange: (Double) -> Unit,
     onDismissMessage: () -> Unit,
+    onBitPerfectChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val dimens = LocalHiFiDimens.current
