@@ -130,11 +130,10 @@ jobs:
           if-no-files-found: warn
 
       # Aquí se arranca la aplicación de verdad, con el manifest y los recursos reales, en dos
-      # versiones de Android. Es la prueba que faltaba cuando la 0.17.0 se cerraba al abrir.
-      # Va al final y con `continue-on-error` a propósito: mientras se estabiliza, no debe impedir
-      # que se suba el APK. El resultado se lee en el registro y en los informes de tests.
+      # versiones de Android. Es la prueba que faltaba cuando la 0.17.0 se cerraba al abrir: encontró
+      # la avería de la 0.17.1 (una llamada a ExoPlayer desde un hilo de fondo) el mismo día que se
+      # escribió. Bloquea el pipeline a propósito: si el arranque se rompe, no se publica nada.
       - name: Pruebas de arranque de la app (Robolectric)
-        continue-on-error: true
         run: ./gradlew :app:testDebugUnitTest --console=plain
 
       - name: Guardar informes de tests
@@ -151,14 +150,14 @@ jobs:
   # abrirlo. Un APK que compila, se instala y se cierra al abrir es exactamente el fallo que se
   # escapó dos veces, porque ninguna comprobación estática lo ve.
   #
-  # Mientras se estabiliza no bloquea nada: si el emulador no arranca, el aviso queda en el registro
-  # y el APK se publica igual.
+  # Bloquea a propósito: es la única comprobación que distingue «compila» de «funciona», y ya ha
+  # demostrado que merece la pena (encontró el cierre al abrir de la 0.17.1 en su primera ejecución).
+  # No bloquea la entrega: los trabajos que publican el APK y el panel dependen de `build`, no de este.
   # --------------------------------------------------------------------------------------------
   arranque:
     name: El APK de release abre de verdad (emulador)
     needs: build
     runs-on: ubuntu-latest
-    continue-on-error: true
     timeout-minutes: 40
 
     steps:

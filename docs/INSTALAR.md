@@ -1,6 +1,10 @@
 # Cómo instalar HiFi Player en tu móvil
 
-Versión: **0.17.2-alpha** · Android 8.0 o superior · archivo: `hifi-player.apk` (unos 3 MB)
+Versión: **0.17.2-alpha** · Android 8.0 o superior · archivo: `hifi-player.apk` (3,0 MB)
+
+Esta versión **corrige el cierre al abrir** de la 0.17.1: el reproductor se consultaba desde un hilo de
+fondo y Android mataba el proceso por ello. La causa se encontró abriendo el APK de release en un
+emulador, no adivinando; desde ahora CI hace esa comprobación en cada cambio.
 
 ## 1. Descarga
 
@@ -11,8 +15,9 @@ Desde el móvil, abre este enlace y toca **Download**/descargar:
 Es la última compilación de la rama `main`: no hace falta cuenta de GitHub ni descomprimir nada.
 (La misma pantalla del panel de estado tiene este enlace en *Cómo probarlo hoy*.)
 
-> No instales ninguna versión anterior a la **0.17.1**: sus APK no arrancaban. Si tienes una de esas
-> instalada, desinstálala antes de continuar.
+> No instales ninguna versión anterior a la **0.17.2**: la 0.17.0 y la 0.17.1 no arrancaban. Si tienes
+> una de esas instalada, desinstálala antes de continuar. Desde la 0.17.1 la firma es la misma, así que
+> esta se instala encima y conserva tus ajustes.
 
 ## 2. Permite la instalación
 

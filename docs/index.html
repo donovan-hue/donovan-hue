@@ -145,6 +145,23 @@
     <div class="ph done"><span class="num">17</span><span class="txt">Release<span class="st">hecha · 0.17.1-alpha publicada</span></span></div>
   </div>
 
+  <h3>Corrección 0.17.2 (en curso, sin release)</h3>
+  <ul class="plain">
+    <li><b>La 0.17.1 se cerraba al abrir, en un teléfono real.</b> Causa encontrada con el emulador de CI,
+      no supuesta: 505 ms después de tocar el icono, el proceso moría con
+      <code>IllegalStateException: Player is accessed on the wrong thread</code>. El repositorio de
+      reproducción le pedía el tema actual a ExoPlayer desde un hilo de fondo, y una excepción no
+      capturada en un hilo de fondo se lleva por delante el proceso entero. No era R8.</li>
+    <li><b>Cómo se encontró:</b> la aplicación ahora escribe su propio informe de fallo (versión, Android,
+      modelo, error y rastro) en su almacenamiento interno y en la carpeta Descargas, y CI abre el APK
+      <b>de release</b> en un emulador Android 14 y comprueba que sigue vivo 20 segundos después. El
+      propio test de arranque reprodujo la excepción en su primera ejecución.</li>
+    <li><b>Arreglado en el motor:</b> <code>publish()</code> se reenvía al hilo principal; <code>currentTrack()</code>
+      lee una copia refrescada en ese hilo en lugar de preguntarle a ExoPlayer; el aviso del hilo de audio
+      se atiende en el principal; y la cola pasa a una lista segura para lecturas concurrentes, porque
+      <code>queueSnapshot()</code> se lee desde hilos de fondo y era otra carrera esperando a pasar.</li>
+  </ul>
+
   <h3>Corrección 0.17.1 (después de publicar la 0.17.0)</h3>
   <ul class="plain">
     <li><b>La 0.17.0-alpha no arrancaba.</b> El manifest nombraba el Application y la actividad con el
@@ -261,12 +278,17 @@
       <tr><td>Selector de listas: añadir y crear-y-añadir escriben de verdad; el fallo de almacenamiento se informa</td><td class="m">4 tests verdes</td></tr>
       <tr><td>Rutas de colección con títulos que llevan «/», «?» y acentos</td><td class="m">3 tests verdes</td></tr>
       <tr><td>Aplicación completa ensamblada</td><td class="m">:app:assembleDebug en CI → APK</td></tr>
+      <tr><td>El APK <b>de release</b> abre y sigue vivo 20 s después (Android 14)</td><td class="m">emulador en CI, en cada push</td></tr>
+      <tr><td>La aplicación arranca en Android 8 y 14 y la pantalla de inicio no se cierra</td><td class="m">:app:testDebugUnitTest (Robolectric)</td></tr>
+      <tr><td>El arranque no deja ninguna excepción, tampoco en los hilos de fondo</td><td class="m">6 tests verdes</td></tr>
     </tbody>
   </table>
   <div class="note">Pendiente conocido de esta iteración: en los estantes de álbumes la portada se busca en el
   archivo representativo del álbum (incrustada o junto a él). Un álbum cuyo único arte sea un cover.jpg en una
   carpeta de MediaStore sin acceso directo mostrará el marcador neutro hasta abrir una de sus pistas.</div>
-  <div class="note">Lo que <b>no</b> está comprobado todavía: el comportamiento en un teléfono real. Ninguna
+  <div class="note">Lo que <b>no</b> está comprobado todavía: el comportamiento en un teléfono real con
+  música y un DAC conectado. El emulador de CI demuestra que la aplicación abre, no que reproduzca.
+  Ninguna
   afirmación de bit-perfect se muestra como verificada hasta que el sistema lo confirme en el dispositivo
   (fase 10). Los textos de la app dicen «no verificado» mientras tanto.</div>
 
