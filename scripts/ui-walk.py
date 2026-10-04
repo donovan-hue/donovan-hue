@@ -1,17 +1,19 @@
 #!/usr/bin/env python3
-"""Recorre la aplicación instalada en un emulador y guarda capturas y volcados de la interfaz.
+"""Recorre la aplicación instalada en un emulador y **verifica lo que afirma** sobre la pantalla.
 
-Por qué existe: hay fallos que solo se ven mirando la pantalla (botones sin texto, avisos pintados
-como errores, un tema que no cambia). Esta máquina no tiene pantalla ni dispositivo, así que el
-recorrido corre en CI sobre el **APK de release** y sube las capturas como artefacto: así se puede
-comprobar con los ojos lo que se afirma, en vez de darlo por bueno porque compila.
+Por qué existe: hay fallos que solo se ven mirando (un título dibujado letra a letra, botones sin
+texto, un tema que no cambia). Esta máquina no tiene pantalla ni dispositivo, así que el recorrido
+corre en CI sobre el **APK de release**, guarda capturas y además mide: si se elige «Claro», la
+pantalla tiene que iluminarse de verdad; si no cambia, el recorrido falla.
 
 Uso:  python3 scripts/ui-walk.py <carpeta-de-salida>
 Requiere: adb en el PATH y la aplicación instalada (el workflow la instala antes).
 """
 
+import hashlib
 import os
 import re
+import struct
 import subprocess
 import sys
 import time
@@ -19,6 +21,7 @@ import xml.etree.ElementTree as ET
 
 PACKAGE = "com.hifiplayer"
 ACTIVITY = f"{PACKAGE}/com.hifiplayer.ui.MainActivity"
+SCREEN_W, SCREEN_H = 320, 640  # emulador de CI; solo se usa para gestos y muestreo
 
 out_dir = sys.argv[1] if len(sys.argv) > 1 else "ui-shots"
 os.makedirs(out_dir, exist_ok=True)
@@ -38,50 +41,81 @@ def dump() -> ET.Element:
     return ET.parse("/tmp/ui.xml").getroot()
 
 
-def texts(root: ET.Element) -> list[str]:
-    return [n.get("text", "") for n in root.iter("node") if n.get("text")]
+def nodes(root: ET.Element):
+    return list(root.iter("node"))
 
 
-def find(root: ET.Element, wanted: str):
-    """Nodo cuyo texto contiene el buscado (la interfaz usa etiquetas largas)."""
-    for node in root.iter("node"):
-        if wanted.lower() in (node.get("text") or "").lower():
-            return node
-    return None
+def find_all(root: ET.Element, wanted: str, exact: bool = False):
+    """Nodos cuyo texto coincide. `exact=True` para no confundir «Ajustes» con la pestaña."""
+    result = []
+    for node in nodes(root):
+        text = (node.get("text") or "").strip()
+        if (text == wanted) if exact else (wanted.lower() in text.lower()):
+            result.append(node)
+    return result
 
 
-def tap(node) -> None:
+def tap_node(node) -> None:
     x1, y1, x2, y2 = (int(v) for v in re.findall(r"\d+", node.get("bounds")))
     sh(f"adb shell input tap {(x1 + x2) // 2} {(y1 + y2) // 2}")
-    time.sleep(1.5)
+    time.sleep(1.6)
 
 
-def tap_text(wanted: str) -> bool:
-    node = find(dump(), wanted)
-    if node is None:
-        failures.append(f"no encontré «{wanted}» en la pantalla")
+def tap_text(wanted: str, index: int = 0, exact: bool = False) -> bool:
+    found = find_all(dump(), wanted, exact=exact)
+    if len(found) <= index:
+        failures.append(f"no encontré «{wanted}» (posición {index}) en la pantalla")
         return False
-    tap(node)
+    tap_node(found[index])
     return True
 
 
 def scroll_down(times: int = 1) -> None:
     for _ in range(times):
-        sh("adb shell input swipe 540 1600 540 600 250")
+        sh(f"adb shell input swipe {SCREEN_W // 2} 520 {SCREEN_W // 2} 200 250")
         time.sleep(1.0)
 
 
-def screenshot(name: str) -> None:
-    sh(f"adb exec-out screencap -p > {out_dir}/{name}.png")
+def screenshot(name: str) -> str:
+    path = f"{out_dir}/{name}.png"
+    sh(f"adb exec-out screencap -p > {path}")
     notes.append(f"captura {name}.png")
+    return path
 
 
 def save_dump(name: str) -> list[str]:
     root = dump()
-    all_texts = texts(root)
+    all_texts = [t for t in ((n.get("text") or "").strip() for n in root.iter("node")) if t]
     with open(f"{out_dir}/{name}.txt", "w") as handle:
         handle.write("\n".join(all_texts))
     return all_texts
+
+
+def mean_brightness() -> float:
+    """Brillo medio de la franja central de la pantalla, leído del fotograma en bruto.
+
+    Se usa el fotograma en bruto (no el PNG) porque no hace falta ninguna biblioteca: `screencap`
+    devuelve ancho, alto, formato y los píxeles. La franja central evita la barra de estado (donde
+    está el reloj, que cambia solo) y la barra de navegación.
+    """
+    raw = subprocess.run("adb exec-out screencap", shell=True, capture_output=True).stdout
+    width, height, _format = struct.unpack("<III", raw[:12])
+    pixels = raw[12:]
+    start_row, end_row = height // 3, (height * 2) // 3
+    total = 0
+    count = 0
+    for y in range(start_row, end_row):
+        row_start = y * width * 4
+        for x in range(0, width, 4):  # una de cada cuatro columnas basta para la media
+            offset = row_start + x * 4
+            total += pixels[offset + 1]  # canal verde
+            count += 1
+    return total / max(count, 1)
+
+
+def file_digest(path: str) -> str:
+    with open(path, "rb") as handle:
+        return hashlib.sha256(handle.read()).hexdigest()[:12]
 
 
 # ------------------------------------------------------------------ recorrido
@@ -89,52 +123,84 @@ sh(f"adb shell am start -W -n {ACTIVITY} > /dev/null")
 time.sleep(6)
 screenshot("01-inicio")
 
-# --- Ajustes ---
-if tap_text("Ajustes"):
+dark_brightness = None
+light_brightness = None
+
+# --- Ajustes (la pestaña de abajo, texto exacto) ---
+if tap_text("Ajustes", exact=True):
     time.sleep(1)
     screenshot("02-ajustes")
     save_dump("02-ajustes")
 
-    # --- Apariencia: la fila del tema y sus botones ---
-    scroll_down(2)
-    time.sleep(1)
-    screenshot("03-apariencia")
-    visible = save_dump("03-apariencia")
-
-    # El fallo reportado: botones de tema dibujados pero SIN TEXTO.
-    theme_options = ["Negro puro", "Oscuro", "Claro", "Seguir al sistema"]
-    missing = [option for option in theme_options if not any(option.lower() in t.lower() for t in visible)]
-    if missing:
-        failures.append(f"las opciones de tema no tienen texto en pantalla: {missing}")
+    # --- Apariencia: hay que bajar hasta ella ---
+    reached = False
+    for step in range(6):
+        if find_all(dump(), "Apariencia"):
+            reached = True
+            break
+        scroll_down(1)
+    if not reached:
+        failures.append("no llegué a la sección «Apariencia»")
     else:
-        notes.append("las cuatro opciones de tema tienen texto: " + ", ".join(theme_options))
+        screenshot("03-apariencia")
+        visible = save_dump("03-apariencia")
 
-    # --- Cambiar a claro y comprobar que la pantalla cambia de verdad ---
-    if tap_text("Claro"):
-        time.sleep(2)
-        screenshot("04-tema-claro")
-        save_dump("04-tema-claro")
-        notes.append("pulsé «Claro»: comparar 03 y 04 para ver si el fondo cambió")
-    if tap_text("Negro puro"):
-        time.sleep(2)
-        screenshot("05-tema-negro-puro")
-        notes.append("pulsé «Negro puro (OLED)»")
+        # El fallo reportado: botones de tema dibujados pero SIN TEXTO.
+        theme_options = ["Negro puro", "Oscuro", "Claro", "Seguir al sistema"]
+        missing = [o for o in theme_options if not any(o.lower() in t.lower() for t in visible)]
+        if missing:
+            failures.append(f"las opciones de tema no tienen texto en pantalla: {missing}")
+        else:
+            notes.append("las cuatro opciones de tema tienen texto")
 
-# --- Crossfeed (contiene Balance y era donde salían los avisos en rojo) ---
-scroll_down(3)
-if tap_text("Crossfeed"):
+        # --- El tema tiene que cambiar DE VERDAD, medido en píxeles ---
+        if tap_text("Oscuro", exact=True):
+            time.sleep(1.5)
+            dark_brightness = mean_brightness()
+            screenshot("04-tema-oscuro")
+
+        if tap_text("Claro", exact=True):
+            time.sleep(1.5)
+            light_brightness = mean_brightness()
+            screenshot("05-tema-claro")
+
+        if dark_brightness is not None and light_brightness is not None:
+            notes.append(f"brillo medio: oscuro {dark_brightness:.1f} · claro {light_brightness:.1f}")
+            if light_brightness - dark_brightness < 30:
+                failures.append(
+                    "elegir «Claro» NO ilumina la pantalla "
+                    f"(oscuridad {dark_brightness:.1f} vs claridad {light_brightness:.1f}): el tema no cambia",
+                )
+            else:
+                notes.append("«Claro» cambia el tema de verdad")
+
+        # --- Negro puro tiene que ser distinto de Oscuro ---
+        if tap_text("Negro puro", exact=True) and dark_brightness is not None:
+            time.sleep(1.5)
+            pure = mean_brightness()
+            screenshot("06-tema-negro-puro")
+            notes.append(f"brillo medio con negro puro: {pure:.1f}")
+            if abs(pure - dark_brightness) < 1.0:
+                failures.append("«Negro puro (OLED)» no cambia nada respecto a «Oscuro»")
+            else:
+                notes.append("«Negro puro» es distinto de «Oscuro»")
+            tap_text("Oscuro", exact=True)  # se deja el tema del producto
+
+# --- Crossfeed: ahí viven Balance y los avisos que salían en rojo ---
+scroll_down(6)
+if tap_text("Crossfeed", exact=True, index=0):
     time.sleep(1)
-    screenshot("06-crossfeed")
-    save_dump("06-crossfeed")
+    screenshot("07-crossfeed")
+    save_dump("07-crossfeed")
     sh("adb shell input keyevent KEYCODE_BACK")
     time.sleep(1)
 
 # --- Ecualizador ---
-scroll_down(2)
-if tap_text("Ecualizador"):
+scroll_down(4)
+if tap_text("Ecualizador paramétrico", exact=True):
     time.sleep(1)
-    screenshot("07-ecualizador")
-    save_dump("07-ecualizador")
+    screenshot("08-ecualizador")
+    save_dump("08-ecualizador")
     sh("adb shell input keyevent KEYCODE_BACK")
     time.sleep(1)
 
@@ -147,4 +213,4 @@ if failures:
     for failure in failures:
         print("  ✗", failure)
     sys.exit(1)
-print("\nSin fallos de interfaz en los puntos comprobados.")
+print("\nSin fallos: lo comprobado en pantalla coincide con lo que la app dice.")

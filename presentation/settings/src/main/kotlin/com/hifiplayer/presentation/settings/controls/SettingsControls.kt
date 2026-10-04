@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -223,11 +224,19 @@ fun SettingsNavRow(
             }
         }
         if (!value.isNullOrBlank()) {
+            // Ancho máximo y una sola línea: en una fila, Compose mide primero los hijos sin peso, y
+            // un valor largo se comía el ancho entero dejando el título con una columna de un
+            // carácter («Información de audio» dibujado letra a letra, visto en una captura del
+            // emulador). El valor informa, nunca manda sobre el nombre de la fila.
             Text(
                 text = value,
                 style = TechLabelStyle,
                 color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(end = 8.dp),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier
+                    .widthIn(max = VALUE_MAX_WIDTH)
+                    .padding(start = 8.dp, end = 8.dp),
             )
         }
         Icon(
@@ -263,9 +272,27 @@ fun SettingsValueRow(
                 )
             }
         }
-        Text(text = value, style = TechLabelStyle, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(
+            text = value,
+            style = TechLabelStyle,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier
+                .widthIn(max = VALUE_MAX_WIDTH)
+                .padding(start = 8.dp),
+        )
     }
 }
+
+/**
+ * Cuánto puede ocupar un valor antes de recortarse.
+ *
+ * Es la mitad del ancho de una pantalla corriente menos el botón de atrás: el nombre de la fila
+ * siempre se queda con sitio. Un valor que no cabe se recorta con puntos suspensivos y el detalle
+ * completo vive en la pantalla que abre la fila.
+ */
+private val VALUE_MAX_WIDTH = 160.dp
 
 /**
  * How loud a note is. It matters: painting a fact about the phone in the error colour makes the user

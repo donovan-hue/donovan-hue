@@ -110,7 +110,13 @@ fun SettingsScreen(
                 SettingsNavRow(
                     title = "Información de audio",
                     subtitle = "SOURCE y OUTPUT medidos, decodificadores y comprobación del formato actual.",
-                    value = state.bitPerfect.bannerTitle,
+                    // Un valor de fila es una etiqueta corta, no la frase del cartel. La frase completa
+                    // («DSP DESACTIVADO (bit-perfect apagado)») se lee dentro, en la propia pantalla.
+                    value = when {
+                        state.bitPerfect.isActive -> "bit-perfect"
+                        state.bitPerfect.requested -> "solicitado"
+                        else -> "con DSP"
+                    },
                     onClick = onOpenAudioInfo,
                 )
             }
