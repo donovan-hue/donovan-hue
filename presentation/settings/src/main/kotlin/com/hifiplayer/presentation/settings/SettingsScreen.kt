@@ -371,6 +371,16 @@ fun SettingsScreen(
                     onClick = onClearCache,
                 )
             }
+            // ---------------------------------------------------------------- Experimental
+            item(key = "labs-header") { SettingsSectionHeader(title = "Experimental (IA)") }
+            item(key = "labs-knowledge") {
+                SettingsNavRow(
+                    title = "Grafo de Conocimiento (Catálogo)",
+                    subtitle = "Red neuronal para experiencias y proyectos.",
+                    value = "Beta",
+                    onClick = { onNavigate("knowledge_graph") }
+                )
+            }
 
             // ---------------------------------------------------------------- Acerca de
             item(key = "about-header") { SettingsSectionHeader(title = "Acerca de") }

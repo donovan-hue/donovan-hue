@@ -52,6 +52,7 @@ import com.hifiplayer.presentation.settings.SettingsViewModel
 import com.hifiplayer.presentation.settings.audio.AudioSettingsViewModel
 import com.hifiplayer.presentation.settings.audio.BitPerfectScreen
 import com.hifiplayer.presentation.settings.audio.OutputDevicesScreen
+import com.hifiplayer.presentation.library.knowledge.KnowledgeGraphScreen
 import com.hifiplayer.presentation.settings.dsp.CrossfeedScreen
 import com.hifiplayer.presentation.settings.dsp.DspViewModel
 import com.hifiplayer.presentation.settings.dsp.EqScreen
@@ -547,6 +548,11 @@ fun HiFiApp(
                     )
                 }
 
+                composable(HiFiDestination.KnowledgeGraph.route) {
+                    KnowledgeGraphScreen(
+                        onBackClick = { navController.popBackStack() }
+                    )
+                }
                 composable(HiFiDestination.Crossfeed.route) {
                     val viewModel: DspViewModel = viewModel(
                         factory = viewModelFactory { initializer { createDspViewModel() } },

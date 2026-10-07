@@ -52,6 +52,8 @@ sealed class HiFiDestination(val route: String) {
     /** Crossfeed: OFF / LOW / MEDIUM / HIGH, plus balance and app gain (phase 13). */
     data object Crossfeed : HiFiDestination("settings/audio/crossfeed")
 
+    data object KnowledgeGraph : HiFiDestination("knowledge_graph")
+
     /** Tabs shown in the bottom bar, in order. Now Playing is not a tab: it opens over them. */
     companion object {
         val tabs: List<HiFiDestination> = listOf(Home, Library, Playlists, Settings)
@@ -72,6 +74,7 @@ sealed class HiFiDestination(val route: String) {
             Eq.route,
             ReplayGain.route,
             Crossfeed.route,
+            KnowledgeGraph.route,
             Search.route,
             Collection.route,
             PlaylistDetail.route,
