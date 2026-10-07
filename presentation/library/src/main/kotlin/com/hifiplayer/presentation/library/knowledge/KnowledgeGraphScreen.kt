@@ -122,4 +122,3 @@ fun TemplateSelector(
     }
 }
 
-@Composable
