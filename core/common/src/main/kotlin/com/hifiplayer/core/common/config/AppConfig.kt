@@ -12,7 +12,7 @@ object AppConfig {
     const val INTERNAL_NAME: String = "hifi_player"
 
     const val DATABASE_NAME: String = "hifi_player.db"
-    const val DATABASE_VERSION: Int = 1
+    const val DATABASE_VERSION: Int = 2
 
     /** Search debounce (requirement: never query on every keystroke). */
     const val SEARCH_DEBOUNCE_MS: Long = 300L
