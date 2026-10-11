@@ -25,11 +25,23 @@ jobs:
       - name: Verificar tipos
         run: npm run typecheck
 
+      - name: Auditoría de dependencias
+        run: npm audit --audit-level=high
+
       - name: Pruebas unitarias y de integración
         run: npm test
 
       - name: Compilar
         run: npm run build
+
+      - name: Humo del paquete tal como lo instala npm
+        run: |
+          npm pack --pack-destination /tmp
+          mkdir -p /tmp/instalado && cd /tmp/instalado && npm init -y > /dev/null
+          npm install /tmp/mcp-suite-mx-*.tgz --no-audit --no-fund > /dev/null
+          test "$(./node_modules/.bin/mcp-suite-mx --version)" = "$(node -p "require('$GITHUB_WORKSPACE/package.json').version")"
+          ./node_modules/.bin/mcp-suite-mx --help | grep -q 'mcp-suite-mx-cli'
+          DATA_DIR=/tmp/instalado/datos ./node_modules/.bin/mcp-suite-mx-cli keys create --nombre ci-paquete --scopes negocio:ro | grep -q 'Clave creada'
 
       - name: Humo del servidor compilado (stdio)
         run: |
@@ -41,7 +53,7 @@ jobs:
       - name: Humo del CLI de seguridad (crear y verificar claves)
         run: |
           mkdir -p "$DATA_DIR"
-          SALIDA=$(node dist/cli.js keys create --nombre ci --scopes negocio:ro)
+          SALIDA=$(node dist/cli.js keys create --nombre ci-demo --scopes negocio:ro)
           echo "$SALIDA" | grep -q 'Clave creada'
           CLAVE=$(echo "$SALIDA" | grep -Eo 'mcp_[0-9a-f]{8}_[A-Za-z0-9_-]+' | head -1)
           test -n "$CLAVE"
@@ -66,6 +78,12 @@ jobs:
           # Métricas y auditoría disponibles
           curl -sf http://127.0.0.1:8791/metrics | grep -q 'mcp_suite_http_peticiones_total'
           curl -sf -H 'authorization: Bearer clave-ci-123' http://127.0.0.1:8791/api/auditoria | grep -q 'total'
+          # Módulo nuevo de multi-empresa: la empresa por defecto ya existe
+          curl -sf -X POST http://127.0.0.1:8791/mcp \
+            -H 'authorization: Bearer clave-ci-123' \
+            -H 'content-type: application/json' -H 'accept: application/json, text/event-stream' \
+            -d '{\"jsonrpc\":\"2.0\",\"id\":4,\"method\":\"tools/call\",\"params\":{\"name\":\"empresas_listar\",\"arguments\":{}}}' \
+            | grep -q 'EMP-principal'
           # Herramientas de facturación (CFDI): retenciones de honorarios
           curl -sf -X POST http://127.0.0.1:8791/mcp \
             -H 'authorization: Bearer clave-ci-123' \

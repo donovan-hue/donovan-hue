@@ -1,7 +1,7 @@
 services:
   mcp-suite:
     build: .
-    image: mcp-suite-mx:0.1.0
+    image: mcp-suite-mx:0.2.0
     container_name: mcp-suite-mx
     restart: unless-stopped
     ports:

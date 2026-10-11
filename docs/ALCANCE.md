@@ -1,7 +1,7 @@
 # Documento de alcance y dimensionamiento — Suite MCP MX
 
 **Proyecto:** `mcp-suite-mx` — plataforma MCP (Model Context Protocol) con 11 módulos de herramientas (incluye multi-empresa, facturación CFDI 4.0, el taller de análisis de código, centinela de seguridad y el pack dev: parche, orquesta y rúter).
-**Estado:** v0.1.0 · **Fase 1 entregada** (herramientas + doble transporte) · **Fase 2 entregada** (auth, rate limiting, auditoría, métricas, SQLite) · **Fase 3 entregada** (CFDI 4.0, HTTPS, respaldos).
+**Estado:** v0.2.0 · **Fases 1–4 entregadas** (herramientas y doble transporte · auth, tasa, auditoría, métricas y SQLite · CFDI 4.0, HTTPS y respaldos · pack dev: taller, centinela, parche, orquesta y rúter) · **Fase 5A entregada** (multi-empresa).
 **Fecha:** 11 de octubre de 2026.
 
 ---

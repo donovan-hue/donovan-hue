@@ -53,6 +53,12 @@ mcp-publisher publish
 
 Ojo: el registro exige que el paquete **ya esté publicado en npm** y que el repositorio sea el declarado, así que este paso va después del 2.
 
+## Dos fallos que iban a romper el primer `push`
+
+1. **El paquete instalado no arrancaba** (binario enlazado por npm + guard de arranque). Arreglado y con pruebas.
+2. **`package-lock.json` desincronizado** (le faltaba el bin `mcp-suite-mx-cli` en la raíz): `npm ci` habría fallado en la primera ejecución de CI. Corregido.
+3. De paso, en el propio CI el paso de claves usaba `--nombre ci` (dos letras) y el CLI exige tres: ahora usa `ci-demo`. Y la auditoría de dependencias quedó como paso obligatorio.
+
 ## Lo que ya verifiqué con el paquete empaquetado
 
 | Comprobación | Resultado |
@@ -64,5 +70,6 @@ Ojo: el registro exige que el paquete **ya esté publicado en npm** y que el rep
 | `tools/list` del paquete instalado | 68 herramientas, módulo `empresas` incluido |
 | Servidor stdio instalado (initialize por stdin) | responde `serverInfo` correcto |
 | `mcp-suite-mx-cli keys create` | emite clave y la lista después |
+| CI de GitHub, paso a paso en local | los 8 pasos pasan (tipos, auditoría, pruebas, build, paquete instalado, stdio, CLI, HTTP, respaldos, HTTPS) |
 
 Durante esta revisión apareció (y se arregló, con prueba) un fallo serio de empaquetado: npm enlaza los binarios en `node_modules/.bin/`, y el servidor solo se auto-arrancaba cuando se ejecutaba por ruta real, así que **el paquete instalado no hacía nada**. Ahora la comprobación resuelve la ruta real (`realpath`) y hay tres pruebas que espían ese camino (`tests/bin.test.ts`), además de `--version`/`--help`.
