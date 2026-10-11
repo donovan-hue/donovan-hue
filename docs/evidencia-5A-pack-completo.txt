@@ -1,0 +1,84 @@
+
+═══ 1 · SERVIDOR
+   mcp-suite-mx v0.2.0 · 68 herramientas · 11 módulos + núcleo
+   módulos: core, negocio, facturacion, documentos, analisis, devops, taller, centinela, parche, orquesta, ruter, empresas
+   transporte: http · autenticación: required · datos: /tmp/demo5a2
+
+═══ 2 · EMPRESAS: varios negocios en un solo servidor
+   empresa nueva: EMP-415bd6 · Ferretería El Tornillo · RFC FER950101AB1 · serie FERR
+   importación: Simulación: 2 producto(s) se cargarían en «Ferretería El Tornillo». Nada se escribió.
+   importación: 2 producto(s) cargados en «Ferretería El Tornillo». El inventario de esa empresa tiene ahora 2 artículo(s).
+   Pedido P-0001 creado en «Ferretería El Tornillo» y stock descontado. total $707.60 (folio P-0001)
+   CFDI FERR0001 · emisor FER950101AB1 · listo para timbrar: True
+   otra empresa: su MISMO SKU TOR-001 es una concha de chocolate, y arranca su propio folio P-0001
+   · Ferretería El Tornillo   productos 2 · pedidos 1 · ventas $707.60
+   · Mi negocio               productos 8 · pedidos 2 · ventas $40,901.60
+   · Panadería La Espiga      productos 1 · pedidos 1 · ventas $208.80
+
+═══ 2b · UNA CLAVE ATADA A UNA EMPRESA (el despacho y su cliente)
+   esa clave ve: «Ferretería El Tornillo» con 2 productos ['PIN-001', 'TOR-001']
+   intenta ver otra empresa: Error en "empresa_actual": Esta clave está atada a la empresa EMP-415bd6: no puede cambiar de em
+   intenta comparar empresas: Error en "empresas_comparar": Esta clave ve una sola empresa (EMP-415bd6). Para comparar varias,
+   CLI `empresas`: Empresa activa: EMP-481530 · «Panadería La Espiga» | EMP-415bd6  Ferretería El Tornillo       serie FERR  FER950101AB1 · régimen 626 · CP 44100 | EMP-
+   CLI `empresas --comparar`: · Ferretería El Tornillo       productos   2 · pedidos   1 · ventas $707.6 · bajo mínimo 0 | · Mi negocio                   productos   8 · pedidos   2 · ventas $40,901.6
+   GET /api/empresas?comparar=1 (con clave global): {"activa": {"id": "EMP-481530", "nombre": "Panadería La Espiga"}, "total": 3, "empresas": [{"id": "EMP-415bd6", "nombre": "Ferretería El Tornillo", "r
+
+═══ 3 · PARCHE: de la falla reportada al arreglo verificado
+   el cliente reporta (repro.js): «TypeError: Cannot read properties of undefined (reading 'nombre')»
+   diagnóstico: tipo excepcion · causa: Se accede a una propiedad de un valor vacío (undefined/null), señalado en /home/user/demos/tienda-api/repro.js:11 (confianza alta)
+   archivo señalado: /home/user/demos/tienda-api/repro.js
+   pruebas del proyecto: «FALLO: eval sigue presente en src/db.js | la consulta SQL no está parametrizada | repro.js sigue fallando con el error r»
+   centinela: puntaje 0 (rojo) · {'critica': 4, 'alta': 4, 'media': 2, 'baja': 0, 'info': 0}
+   parche PR-583d9a · huella 0be7372ce9022418… · 35 líneas de diff
+   pruebas en copia aislada: ARREGLA — Arregla la falla: las pruebas pasan de rojo a verde (fallidas: n/d → 0).
+   aprobación AP-ebfbc9 abierta (pendiente): el modelo no puede aplicarla por su cuenta
+   intento de aplicar con la aprobación aún pendiente: «Error en "parche_aplicar": La aprobación AP-ebfbc9 sigue pendiente. Apruébala con: node dist/cli…»
+
+═══ 4 · EL PANEL: el humano aprueba en el navegador
+   GET /api/aprobaciones → pendientes: 1 · ['AP-ebfbc9']
+   sin clave: HTTP 401
+   POST (botón Aprobar) → {'id': 'AP-ebfbc9', 'estado': 'aprobada', 'titulo': 'Aplicar el parche PR-583d9a: Parametrizar la consulta, quitar eval() y guardar el caso vacío', 'resuelta_en': '2026-10-11T20:04:42.661Z', 'resuelta_por': 'panel-demo'}
+   aplicado: {"archivos": ["src/db.js", "repro.js"], "respaldo": "/tmp/demo5a2/parche/respaldos/PR-583d9a"}
+   verificación en disco: 0 usos de eval (debe ser 0)
+   pruebas después de aplicar: pruebas OK: 5 de 5
+   reversión: {"archivos_restaurados": ["src/db.js", "repro.js"]}
+   pruebas tras revertir: FALLO: eval sigue presente en src/db.js | la consulta SQL no está parametrizada | repro.js sigue fal
+   historial: PR-583d9a · revertido  · Parametrizar la consulta, quitar eval() y gu
+
+═══ 5 · CENTINELA: seguridad del proyecto con hallazgos reales
+   puntaje 0 · semáforo rojo · 10 hallazgos por categoría {"secreto": 4, "config": 5, "higiene": 1}
+   · [critica] SEC003 en .env:1 → sk_live_51…6789 (redactado, 51 caracteres)
+   · [critica] SEC001 en src/config.js:2 → AKIAI…MPLE (redactado, 20 caracteres)
+   · [critica] SEC004 en src/config.js:4 → sk-proj-a1…u1v2 (redactado, 52 caracteres)
+   · [critica] SEC005 en src/config.js:5 → ghp_ABCDEF…6789 (redactado, 40 caracteres)
+   rutas sin guard: 2 de 2 · src/api.js:6 → GET /reportes/:id: no encontré guard; agrega el middleware de autenticación o már
+   dependencias: fuente npm-audit · avisos 0 · []
+   (la propia suite: fuente npm-audit · avisos 3 · [('@vitest/mocker', 'media'), ('tinypool', 'critica'), ('vitest', 'critica')])
+
+═══ 6 · ORQUESTA: flujos con acta (dry-run antes de tocar nada)
+   5 flujos de batalla probada: verificar_despliegue, respaldo_rotacion, auditoria_dependencias, preparar_release, post_mortem
+   plan (dry-run) de «Verificar un despliegue»: Plan de "Verificar un despliegue" con 2 paso(s) (no se ejecutó nada).
+     · Salud de las URLs        ok     1 de 2 URL(s) con problemas
+     · Estado del repositorio   ok     0 archivo(s) con cambios sin confirmar
+   resultado: "Verificar un despliegue" completo: 2 paso(s) en 30 ms.
+
+═══ 7 · RÚTER: modelo por tarea y coste por resultado útil
+   nivel 2 (tarea de trabajo normal (toca lógica, pruebas o documentación))
+     1. Modelo local grande      suficiente para nivel 2 y el más barato de los candidatos (coste
+     2. Modelo de nube económico escalón si el anterior no resuelve (fuerza 2, coste 1)
+     3. Modelo de nube frontera  escalón si el anterior no resuelve (fuerza 3, coste 10)
+   coste por resultado útil (lo que de verdad importa):
+     · local-grande   tareas 1 · éxito 100% · coste por éxito $0
+     · nube-rapida    tareas 1 · éxito 0% · coste por éxito sin éxitos aún
+   recomendación: Hay 2 modelo(s) con datos, pero menos de 3 tareas cada uno: sigue registrando antes de decidir.
+   política por tipo de tarea: {"legal": {"presupuesto_max": 0, "solo_local": true, "nota": "El contenido de expedientes no sale de la máquina."}}
+   con esa política, ¿qué modelo? local-rapido → local-grande — 
+
+═══ 8 · LA BITÁCORA: lo sensible queda escrito
+   {"tool_destructiva": 21, "aprobacion_solicitada": 1, "parche_probado": 1, "aprobacion_aprobada": 1, "parche_aplicado": 1, "parche_revertido": 1, "flujo_ejecutado": 1}
+   · tool_destructiva       empresa_actual         [empresas]
+   · tool_destructiva       empresa_crear          [empresas]
+   · tool_destructiva       cfdi_desde_pedido      [facturacion]
+   · tool_destructiva       pedido_crear           [negocio]
+   · tool_destructiva       inventario_importar    [negocio]
+   · tool_destructiva       inventario_importar    [negocio]

@@ -72,7 +72,9 @@ empresas_comparar → los dos negocios lado a lado, sin mezclar cifras
 - Suite: **181 pruebas en verde**, 11 de ellas específicas de multi-empresa (mismo SKU en dos empresas, mismo folio en dos empresas, CFDI con emisor propio, migración de base vieja con índices incluidos, clave atada, resumen y comparativa, archivar sin borrar).
 - Dos fallos reales aparecieron y quedaron cubiertos con prueba: los índices de empresa no podían crearse antes de migrar la columna, y los conceptos de un pedido se leían sin filtrar por empresa.
 
-La corrida completa, tal cual salió, está guardada en `docs/evidencia-5A-demo.txt` (servidor recién instalado, sin datos previos): empresa nueva → catálogo por CSV → pedido P-0001 → CFDI `FERR0001` con emisor propio → segunda empresa con su propio P-0001 → la original intacta → comparativa → clave atada → resumen → archivar sin borrar.
+La corrida completa del módulo, tal cual salió, está en `docs/evidencia-5A-demo.txt` (servidor recién instalado, sin datos previos): empresa nueva → catálogo por CSV → pedido P-0001 → CFDI `FERR0001` con emisor propio → segunda empresa con su propio P-0001 → la original intacta → comparativa → clave atada → resumen → archivar sin borrar.
+
+Y la corrida de todo el pack sobre la versión 0.2.0 está en `docs/evidencia-5A-pack-completo.txt`: 68 herramientas, 11 módulos; empresas con clave atada (que no puede ver ni comparar otras); ciclo de parche real sobre un proyecto de ejemplo (diagnóstico del TypeError reportado → parche con huella → pruebas rojo→verde en copia aislada → bloqueo por aprobación pendiente → aprobación desde el panel por HTTP → aplicación con respaldo → reversión y pruebas en rojo otra vez); centinela con 10 hallazgos y 2 rutas sin guard; orquesta con dry-run y corrida real con acta; rúter con cascada, coste por resultado útil y política «solo local» para un tipo de tarea; y la bitácora con cada paso sensible.
 
 ---
 

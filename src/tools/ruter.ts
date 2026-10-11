@@ -135,6 +135,15 @@ export function ruterToolDefs(defs: ToolDef[], ctx: ServerCtx): void {
     },
     handler: async (args: { tipo: string; presupuesto_max?: number; modelos_preferidos?: string[]; solo_local?: boolean; nota?: string; eliminar?: boolean }) => {
       const actuales = await leerPolitica(ctx);
+      const defineAlgo =
+        args.presupuesto_max !== undefined ||
+        args.modelos_preferidos !== undefined ||
+        args.solo_local !== undefined ||
+        args.nota !== undefined;
+      // Solo con `tipo` la llamada es una consulta: no borra la regla existente.
+      if (!args.eliminar && !defineAlgo) {
+        return { guardado: false, tipo: args.tipo, politica: actuales, regla: actuales[args.tipo] ?? null };
+      }
       if (args.eliminar) {
         delete actuales[args.tipo];
       } else {

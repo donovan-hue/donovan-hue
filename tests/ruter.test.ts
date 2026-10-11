@@ -140,6 +140,12 @@ describe('RÚTER — política por tipo', () => {
     expect(j.cascada.every((c: { id: string }) => c.id.startsWith('local'))).toBe(true);
     expect(j.politica_aplicada.tipo).toBe('documentacion');
 
+    // Consultar la regla (solo el tipo) no la borra: la devuelve tal cual.
+    const consulta = await llamar('politica_modelos', { tipo: 'documentacion' });
+    expect(consulta.json().guardado).toBe(false);
+    expect(consulta.json().regla.solo_local).toBe(true);
+    expect(consulta.json().regla.presupuesto_max).toBe(1);
+
     const borrado = await llamar('politica_modelos', { tipo: 'documentacion', eliminar: true });
     expect(borrado.json().politica.documentacion).toBeUndefined();
   });
