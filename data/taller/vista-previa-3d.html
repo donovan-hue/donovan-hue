@@ -1,0 +1,767 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mapa vivo 3D — Taller · mcp-suite-mx</title>
+<style>
+  :root {
+    --fondo: #0a0f1a; --panel: #131c2c; --panel2: #182334; --borde: #24344e;
+    --texto: #e6edf3; --suave: #8fa3c8; --acento: #4ec3e0;
+    --ok: #22d3a7; --mal: #f2547d; --aviso: #ffb648; --info: #5b8cff;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--fondo); color: var(--texto);
+    font: 14px/1.5 ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif; }
+  a { color: var(--acento); text-decoration: none; }
+  header { padding: 16px 22px 8px; display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
+  h1 { font-size: 19px; margin: 0; font-weight: 650; }
+  h1 small { color: var(--suave); font-weight: 400; font-size: 13px; margin-left: 8px; }
+  .vivo { display: inline-flex; align-items: center; gap: 7px; color: var(--ok); font-size: 12px;
+    border: 1px solid rgba(34,211,167,.35); padding: 3px 10px; border-radius: 999px; }
+  .punto { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); animation: latido 1.6s infinite; }
+  @keyframes latido { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: .35; transform: scale(.8); } }
+  .barra { display: flex; gap: 9px; flex-wrap: wrap; padding: 0 22px 12px; align-items: center; }
+  button, select, input[type=search] {
+    background: var(--panel2); color: var(--texto); border: 1px solid var(--borde);
+    border-radius: 8px; padding: 7px 12px; font: inherit; font-size: 13px;
+  }
+  button { cursor: pointer; }
+  button:hover { border-color: var(--acento); }
+  button.activo { border-color: var(--acento); color: var(--acento); }
+  .sep { width: 1px; height: 24px; background: var(--borde); margin: 0 4px; }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; padding: 0 22px 12px; }
+  .chip { background: var(--panel); border: 1px solid var(--borde); border-radius: 10px; padding: 7px 13px; min-width: 86px; }
+  .chip b { display: block; font-size: 18px; font-weight: 700; }
+  .chip span { color: var(--suave); font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+  .chip.al b { color: var(--mal); } .chip.av b { color: var(--aviso); }
+  .chip.ok b { color: var(--ok); } .chip.in b { color: var(--info); }
+  main { display: grid; grid-template-columns: minmax(0,1fr) 370px; gap: 14px; padding: 0 22px 20px; }
+  @media (max-width: 1080px) { main { grid-template-columns: 1fr; } }
+  .tarjeta { background: var(--panel); border: 1px solid var(--borde); border-radius: 14px; overflow: hidden; }
+  .tarjeta > h2 { margin: 0; padding: 11px 16px; font-size: 12.5px; letter-spacing: .04em;
+    text-transform: uppercase; color: var(--suave); border-bottom: 1px solid var(--borde);
+    display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .tarjeta > h2 .acciones { display: flex; gap: 6px; }
+  .tarjeta > h2 .acciones button { padding: 4px 9px; font-size: 12px; }
+
+  /* ── Escena 3D ── */
+  #escena3d { position: relative; height: 540px; background: #060a12; }
+  #lienzo3d { width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
+  #lienzo3d.arrastrando { cursor: grabbing; }
+  .hud { position: absolute; left: 12px; bottom: 10px; color: #6d86a8; font-size: 11.5px;
+    background: rgba(6,10,18,.66); border: 1px solid rgba(36,52,78,.7); border-radius: 9px; padding: 6px 10px; backdrop-filter: blur(3px); }
+  .leyenda { position: absolute; right: 12px; top: 10px; display: flex; flex-direction: column; gap: 4px;
+    background: rgba(6,10,18,.66); border: 1px solid rgba(36,52,78,.7); border-radius: 9px; padding: 8px 11px; backdrop-filter: blur(3px); }
+  .leyenda div { display: flex; align-items: center; gap: 7px; font-size: 11.5px; color: var(--suave); }
+  .leyenda i { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
+  .insignia { position: absolute; right: 12px; bottom: 10px; font-size: 11px; color: #6d86a8;
+    background: rgba(6,10,18,.66); border: 1px solid rgba(36,52,78,.7); border-radius: 9px; padding: 5px 9px; }
+  .insignia b { color: var(--acento); }
+
+  /* ── Mapa 2D (vista alternativa) ── */
+  #lienzo { position: relative; height: 540px; overflow: auto; background:
+    radial-gradient(circle at 26% 18%, rgba(78,195,224,.07), transparent 42%); display: none; }
+  .caja { position: absolute; border: 1.5px solid var(--borde); border-radius: 12px; background: var(--panel2);
+    padding: 10px 12px; cursor: pointer; transition: border-color .15s, transform .15s, box-shadow .15s; }
+  .caja:hover { border-color: var(--acento); transform: translateY(-1px); }
+  .caja.sel { border-color: var(--acento); box-shadow: 0 0 0 3px rgba(78,195,224,.18); }
+  .caja .nombre { font-weight: 650; font-size: 13px; }
+  .caja .meta { color: var(--suave); font-size: 11.5px; margin-top: 3px; }
+  .caja .alertas { margin-top: 5px; display: flex; gap: 5px; flex-wrap: wrap; }
+  .mini { font-size: 10.5px; border-radius: 999px; padding: 1px 7px; border: 1px solid; }
+  .mini.rojo { color: var(--mal); border-color: rgba(242,84,125,.45); }
+  .mini.naranja { color: var(--aviso); border-color: rgba(255,182,72,.45); }
+  .mini.verde { color: var(--ok); border-color: rgba(34,211,167,.45); }
+  #flechas { position: absolute; inset: 0; pointer-events: none; }
+
+  .lista { max-height: 470px; overflow: auto; }
+  .fila { display: flex; gap: 10px; align-items: baseline; padding: 8px 16px; border-bottom: 1px solid rgba(36,52,78,.55); cursor: pointer; }
+  .fila:hover { background: var(--panel2); }
+  .fila.sel { background: rgba(78,195,224,.1); }
+  .fila .ruta { font-family: ui-monospace, monospace; font-size: 12.5px; word-break: break-all; }
+  .fila .der { margin-left: auto; color: var(--suave); font-size: 11.5px; white-space: nowrap; }
+  .fila .ico { width: 8px; height: 8px; border-radius: 50%; flex: none; margin-top: 5px; }
+  .ico.entrada { background: var(--ok); } .ico.prueba { background: var(--info); }
+  .ico.huerfano { background: var(--mal); } .ico.dup { background: var(--aviso); }
+  .ico.normal { background: #3d5a80; }
+  .detalle { padding: 14px 16px; }
+  .detalle h3 { margin: 0 0 4px; font-size: 14px; font-family: ui-monospace, monospace; word-break: break-all; }
+  .detalle .sub { color: var(--suave); font-size: 12px; margin-bottom: 10px; }
+  .bloque { margin-top: 12px; }
+  .bloque h4 { margin: 0 0 5px; font-size: 11.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--suave); }
+  .pill { display: inline-block; font-family: ui-monospace, monospace; font-size: 11.5px; background: var(--panel2);
+    border: 1px solid var(--borde); border-radius: 7px; padding: 2px 8px; margin: 2px 4px 2px 0; cursor: pointer; }
+  .pill.rojo { color: var(--mal); border-color: rgba(242,84,125,.4); }
+  .pill.naranja { color: var(--aviso); border-color: rgba(255,182,72,.4); }
+  .pill.verde { color: var(--ok); border-color: rgba(34,211,167,.4); }
+  .marca { padding: 6px 0; border-bottom: 1px dashed rgba(36,52,78,.6); font-size: 12px; }
+  .marca b { color: var(--aviso); font-family: ui-monospace, monospace; }
+  #bitacora .evento { display: flex; gap: 9px; padding: 7px 16px; border-bottom: 1px solid rgba(36,52,78,.5); font-size: 12.5px; align-items: baseline; }
+  #bitacora .evento .hora { color: var(--suave); font-family: ui-monospace, monospace; font-size: 11px; white-space: nowrap; }
+  #bitacora .evento.nuevo { animation: entra .5s ease; }
+  @keyframes entra { from { background: rgba(78,195,224,.16); } to { background: transparent; } }
+  .vacio { padding: 18px 16px; color: var(--suave); font-size: 13px; }
+  .error { margin: 0 22px 14px; padding: 10px 14px; border: 1px solid rgba(242,84,125,.5); border-radius: 10px;
+    color: var(--mal); background: rgba(242,84,125,.07); font-size: 13px; display: none; }
+  footer { padding: 0 22px 24px; color: var(--suave); font-size: 12px; }
+</style>
+</head>
+<body>
+<header>
+  <h1 id="titulo">Mapa vivo <small id="sub"></small></h1>
+  <span class="vivo"><span class="punto"></span>en vivo · <span id="hace">—</span></span>
+</header>
+
+<div class="barra">
+  <button id="btnReanalizar">↻ Re-analizar ahora</button>
+  <button id="btnAuto" class="activo">⏸ Pausar auto (4 s)</button>
+  <select id="selRaiz" title="Proyecto analizado"></select>
+  <input type="search" id="buscar" placeholder="Buscar… (cfdi, tools, http)" style="min-width:200px">
+  <button id="btnHuerfanos">Solo huérfanos</button>
+  <span class="sep"></span>
+  <button id="btn3d" class="activo">🧊 3D en vivo</button>
+  <button id="btn2d">🗺️ Mapa 2D</button>
+</div>
+
+<div class="chips" id="chips"></div>
+<div class="error" id="error"></div>
+
+<main>
+  <section class="tarjeta">
+    <h2>
+      <span>Gemelo digital <span id="rev" style="font-family:ui-monospace,monospace"></span></span>
+      <span class="acciones">
+        <button id="btnGirar" class="activo" title="Rotación automática">🌀 auto-girar</button>
+        <button id="btnFog" class="activo" title="Profundidad atmosférica">🌫️ neblina</button>
+        <button id="btnReencuadre" title="Volver al centro">⌖ encuadrar</button>
+      </span>
+    </h2>
+    <div id="escena3d">
+      <canvas id="lienzo3d"></canvas>
+      <div class="leyenda" id="leyenda"></div>
+      <div class="hud">🖱️ arrastra para girar · rueda para acercar · click selecciona · doble click: auto-girar</div>
+      <div class="insignia" id="insignia"></div>
+    </div>
+    <div id="lienzo"><svg id="flechas"></svg></div>
+  </section>
+
+  <section class="tarjeta">
+    <h2 id="tituloPanel">Archivos <span id="conteoArchivos"></span></h2>
+    <div class="lista" id="lista"></div>
+    <div class="detalle" id="detalle" style="display:none"></div>
+  </section>
+</main>
+
+<section class="tarjeta" style="margin:0 22px 18px">
+  <h2>Cambios en vivo <span class="vivo" style="font-size:11px"><span class="punto"></span>se detectan solos al guardar código</span></h2>
+  <div id="bitacora"><div class="vacio">Aún sin cambios desde que se abrió esta página. Edita, guarda y aquí aparecerá — y la esfera correspondiente va a latir en la escena 3D.</div></div>
+</section>
+
+<footer>
+  Taller · GEMELO — <a href="/panel">← volver al panel</a> · motor 3D propio (sin librerías ni conexiones externas) ·
+  auto-refresco cada 4 s mientras la pestaña está visible.
+</footer>
+
+<script>
+  const INICIAL = {"estado":{"raiz":"/home/user/mcp-suite-mx","proyecto":"mcp-suite-mx","version":"0.1.0","revision":3,"generado_en":"2026-10-11T11:29:37.885Z","huella":"scripts/certificado-autofirmado.mjs:1351:1791716493510|scripts/generar-datasets.mjs:6563:1791716493510|src/auth/keys.ts:5998:1791717207675|src/auth/politica.ts:1524:1791716493510|src/cli.ts:8269:1791716493510|src/config.ts:5586:1791717612906|src/context.ts:922:1791716493510|src/data-seed.ts:5238:1791716493510|src/db/index.ts:9683:1791716493510|src/db/negocio.ts:8756:1791716493510|src/db/plantillas.ts:2721:1791716493510|src/http.ts:14449:1791717612910|src/index.ts:3827:1791716493510|src/lib/audit.ts:3043:1791716493510|src/lib/backup.ts:5146:1791716493510|src/lib/cfdi.ts:24262:1791716493510|src/lib/csv.ts:5575:1791716493510|src/lib/finance.ts:7016:1791716493510|src/lib/grafo.ts:21229:1791718168722|src/lib/metrics.ts:3610:1791716493510|src/lib/rate-limit.ts:2746:1791716493510|src/lib/rescate.ts:12256:1791717370315|src/lib/result.ts:5784:1791716493510|src/lib/stats.ts:4925:1791716493510|src/lib/store.ts:2801:1791716493510|src/lib/taller-vivo.ts:10684:1791717653418|src/lib/text.ts:6148:1791716493510|src/logger.ts:997:1791716493510|src/seed.ts:633:1791716493514|src/server.ts:11007:1791717207679|src/tools/analisis.ts:18318:1791716493514|src/tools/devops.ts:17341:1791716493514|src/tools/documentos.ts:6282:1791716493514|src/tools/facturacion.ts:16921:1791716493514|src/tools/negocio.ts:12236:1791716493514|src/tools/taller.ts:18917:1791717202247|src/version.ts:119:1791716493514|tests/backup.test.ts:3314:1791716493514|tests/cfdi.test.ts:10342:1791716493514|tests/csv-text.test.ts:3342:1791716493514|tests/finance.test.ts:3466:1791716493514|tests/helpers.ts:1229:1791716493514|tests/http.test.ts:9194:1791716493514|tests/security.test.ts:9454:1791716493514|tests/server.test.ts:12178:1791716493514|tests/stats.test.ts:2014:1791716493514|tests/taller-vivo.test.ts:6481:1791717869574|tests/taller.test.ts:12318:1791717256303|tests/tls.test.ts:2771:1791716493514","totales":{"archivos":49,"lineas":8737,"rutas":17,"pruebas":11,"entradas":4,"huerfanos":0,"duplicados":0,"pendientes":16,"servicios":4},"modulos":[{"modulo":"src/lib","archivos":14,"lineas":3052,"rutas":0},{"modulo":"src/tools","archivos":6,"lineas":1844,"rutas":0},{"modulo":"tests","archivos":12,"lineas":1701,"rutas":5},{"modulo":"src","archivos":10,"lineas":1203,"rutas":12},{"modulo":"src/db","archivos":3,"lineas":569,"rutas":0},{"modulo":"src/auth","archivos":2,"lineas":216,"rutas":0},{"modulo":"scripts","archivos":2,"lineas":152,"rutas":0}],"aristas":[{"desde":"src/auth/keys.ts","hacia":"src/context.ts","peso":1},{"desde":"src/cli.ts","hacia":"src/config.ts","peso":1},{"desde":"src/cli.ts","hacia":"src/logger.ts","peso":1},{"desde":"src/cli.ts","hacia":"src/index.ts","peso":1},{"desde":"src/cli.ts","hacia":"src/auth/keys.ts","peso":1},{"desde":"src/cli.ts","hacia":"src/lib/backup.ts","peso":1},{"desde":"src/context.ts","hacia":"src/config.ts","peso":1},{"desde":"src/context.ts","hacia":"src/lib/audit.ts","peso":1},{"desde":"src/context.ts","hacia":"src/lib/metrics.ts","peso":1},{"desde":"src/context.ts","hacia":"src/lib/rate-limit.ts","peso":1},{"desde":"src/context.ts","hacia":"src/db/index.ts","peso":1},{"desde":"src/data-seed.ts","hacia":"src/db/negocio.ts","peso":1},{"desde":"src/data-seed.ts","hacia":"src/db/plantillas.ts","peso":1},{"desde":"src/db/index.ts","hacia":"src/data-seed.ts","peso":1},{"desde":"src/db/index.ts","hacia":"src/logger.ts","peso":1},{"desde":"src/db/negocio.ts","hacia":"src/db/index.ts","peso":1},{"desde":"src/db/negocio.ts","hacia":"src/lib/finance.ts","peso":1},{"desde":"src/db/plantillas.ts","hacia":"src/db/index.ts","peso":1},{"desde":"src/db/plantillas.ts","hacia":"src/lib/text.ts","peso":1},{"desde":"src/http.ts","hacia":"src/context.ts","peso":1},{"desde":"src/http.ts","hacia":"src/server.ts","peso":1},{"desde":"src/http.ts","hacia":"src/config.ts","peso":1},{"desde":"src/http.ts","hacia":"src/lib/taller-vivo.ts","peso":1},{"desde":"src/http.ts","hacia":"src/version.ts","peso":1},{"desde":"src/http.ts","hacia":"src/logger.ts","peso":1},{"desde":"src/http.ts","hacia":"src/auth/keys.ts","peso":1},{"desde":"src/index.ts","hacia":"src/config.ts","peso":1},{"desde":"src/index.ts","hacia":"src/logger.ts","peso":1},{"desde":"src/index.ts","hacia":"src/server.ts","peso":1},{"desde":"src/index.ts","hacia":"src/http.ts","peso":1},{"desde":"src/index.ts","hacia":"src/seed.ts","peso":1},{"desde":"src/index.ts","hacia":"src/version.ts","peso":1},{"desde":"src/index.ts","hacia":"src/lib/metrics.ts","peso":1},{"desde":"src/index.ts","hacia":"src/lib/audit.ts","peso":1},{"desde":"src/index.ts","hacia":"src/lib/rate-limit.ts","peso":1},{"desde":"src/index.ts","hacia":"src/auth/keys.ts","peso":1},{"desde":"src/index.ts","hacia":"src/db/index.ts","peso":1},{"desde":"src/index.ts","hacia":"src/context.ts","peso":1},{"desde":"src/lib/audit.ts","hacia":"src/logger.ts","peso":1},{"desde":"src/lib/backup.ts","hacia":"src/context.ts","peso":1},{"desde":"src/lib/backup.ts","hacia":"src/logger.ts","peso":1},{"desde":"src/lib/rescate.ts","hacia":"src/lib/grafo.ts","peso":1},{"desde":"src/lib/result.ts","hacia":"src/context.ts","peso":1},{"desde":"src/lib/result.ts","hacia":"src/logger.ts","peso":1},{"desde":"src/lib/result.ts","hacia":"src/lib/audit.ts","peso":1},{"desde":"src/lib/result.ts","hacia":"src/auth/politica.ts","peso":1},{"desde":"src/lib/taller-vivo.ts","hacia":"src/lib/grafo.ts","peso":1},{"desde":"src/logger.ts","hacia":"src/config.ts","peso":1},{"desde":"src/seed.ts","hacia":"src/context.ts","peso":1},{"desde":"src/seed.ts","hacia":"src/db/index.ts","peso":1},{"desde":"src/seed.ts","hacia":"src/logger.ts","peso":1},{"desde":"src/server.ts","hacia":"src/context.ts","peso":1},{"desde":"src/server.ts","hacia":"src/lib/result.ts","peso":1},{"desde":"src/server.ts","hacia":"src/tools/negocio.ts","peso":1},{"desde":"src/server.ts","hacia":"src/tools/documentos.ts","peso":1},{"desde":"src/server.ts","hacia":"src/tools/devops.ts","peso":1},{"desde":"src/server.ts","hacia":"src/tools/analisis.ts","peso":1},{"desde":"src/server.ts","hacia":"src/tools/facturacion.ts","peso":1},{"desde":"src/server.ts","hacia":"src/tools/taller.ts","peso":1},{"desde":"src/server.ts","hacia":"src/version.ts","peso":1},{"desde":"src/server.ts","hacia":"src/auth/politica.ts","peso":1},{"desde":"src/tools/analisis.ts","hacia":"src/context.ts","peso":1},{"desde":"src/tools/analisis.ts","hacia":"src/lib/result.ts","peso":1},{"desde":"src/tools/analisis.ts","hacia":"src/lib/store.ts","peso":1},{"desde":"src/tools/analisis.ts","hacia":"src/lib/csv.ts","peso":1},{"desde":"src/tools/analisis.ts","hacia":"src/lib/stats.ts","peso":1},{"desde":"src/tools/analisis.ts","hacia":"src/logger.ts","peso":1},{"desde":"src/tools/devops.ts","hacia":"src/context.ts","peso":1},{"desde":"src/tools/devops.ts","hacia":"src/lib/result.ts","peso":1},{"desde":"src/tools/devops.ts","hacia":"src/lib/store.ts","peso":1},{"desde":"src/tools/devops.ts","hacia":"src/logger.ts","peso":1},{"desde":"src/tools/documentos.ts","hacia":"src/context.ts","peso":1},{"desde":"src/tools/documentos.ts","hacia":"src/lib/result.ts","peso":1},{"desde":"src/tools/documentos.ts","hacia":"src/lib/store.ts","peso":1},{"desde":"src/tools/documentos.ts","hacia":"src/db/plantillas.ts","peso":1},{"desde":"src/tools/documentos.ts","hacia":"src/lib/text.ts","peso":1},{"desde":"src/tools/documentos.ts","hacia":"src/logger.ts","peso":1},{"desde":"src/tools/facturacion.ts","hacia":"src/context.ts","peso":1},{"desde":"src/tools/facturacion.ts","hacia":"src/lib/result.ts","peso":1},{"desde":"src/tools/facturacion.ts","hacia":"src/db/negocio.ts","peso":1},{"desde":"src/tools/facturacion.ts","hacia":"src/lib/cfdi.ts","peso":1},{"desde":"src/tools/facturacion.ts","hacia":"src/logger.ts","peso":1},{"desde":"src/tools/negocio.ts","hacia":"src/context.ts","peso":1},{"desde":"src/tools/negocio.ts","hacia":"src/lib/result.ts","peso":1},{"desde":"src/tools/negocio.ts","hacia":"src/db/negocio.ts","peso":1},{"desde":"src/tools/negocio.ts","hacia":"src/lib/finance.ts","peso":1},{"desde":"src/tools/negocio.ts","hacia":"src/logger.ts","peso":1},{"desde":"src/tools/taller.ts","hacia":"src/context.ts","peso":1},{"desde":"src/tools/taller.ts","hacia":"src/lib/result.ts","peso":1},{"desde":"src/tools/taller.ts","hacia":"src/lib/grafo.ts","peso":1},{"desde":"src/tools/taller.ts","hacia":"src/lib/rescate.ts","peso":1},{"desde":"tests/backup.test.ts","hacia":"src/lib/backup.ts","peso":1},{"desde":"tests/backup.test.ts","hacia":"src/db/index.ts","peso":1},{"desde":"tests/backup.test.ts","hacia":"src/seed.ts","peso":1},{"desde":"tests/backup.test.ts","hacia":"tests/helpers.ts","peso":1},{"desde":"tests/backup.test.ts","hacia":"src/context.ts","peso":1},{"desde":"tests/cfdi.test.ts","hacia":"src/lib/cfdi.ts","peso":1},{"desde":"tests/csv-text.test.ts","hacia":"src/lib/csv.ts","peso":1},{"desde":"tests/csv-text.test.ts","hacia":"src/lib/text.ts","peso":1},{"desde":"tests/finance.test.ts","hacia":"src/lib/finance.ts","peso":1},{"desde":"tests/helpers.ts","hacia":"src/config.ts","peso":1},{"desde":"tests/helpers.ts","hacia":"src/db/index.ts","peso":1},{"desde":"tests/helpers.ts","hacia":"src/lib/audit.ts","peso":1},{"desde":"tests/helpers.ts","hacia":"src/lib/metrics.ts","peso":1},{"desde":"tests/helpers.ts","hacia":"src/lib/rate-limit.ts","peso":1},{"desde":"tests/helpers.ts","hacia":"src/context.ts","peso":1},{"desde":"tests/http.test.ts","hacia":"src/config.ts","peso":1},{"desde":"tests/http.test.ts","hacia":"src/http.ts","peso":1},{"desde":"tests/http.test.ts","hacia":"src/seed.ts","peso":1},{"desde":"tests/http.test.ts","hacia":"src/auth/keys.ts","peso":1},{"desde":"tests/http.test.ts","hacia":"tests/helpers.ts","peso":1},{"desde":"tests/http.test.ts","hacia":"src/context.ts","peso":1},{"desde":"tests/security.test.ts","hacia":"src/auth/keys.ts","peso":1},{"desde":"tests/security.test.ts","hacia":"src/auth/politica.ts","peso":1},{"desde":"tests/security.test.ts","hacia":"src/lib/rate-limit.ts","peso":1},{"desde":"tests/security.test.ts","hacia":"src/lib/metrics.ts","peso":1},{"desde":"tests/security.test.ts","hacia":"src/lib/audit.ts","peso":1},{"desde":"tests/security.test.ts","hacia":"tests/helpers.ts","peso":1},{"desde":"tests/security.test.ts","hacia":"src/context.ts","peso":1},{"desde":"tests/server.test.ts","hacia":"src/config.ts","peso":1},{"desde":"tests/server.test.ts","hacia":"src/server.ts","peso":1},{"desde":"tests/server.test.ts","hacia":"src/seed.ts","peso":1},{"desde":"tests/server.test.ts","hacia":"tests/helpers.ts","peso":1},{"desde":"tests/server.test.ts","hacia":"src/context.ts","peso":1},{"desde":"tests/stats.test.ts","hacia":"src/lib/stats.ts","peso":1},{"desde":"tests/taller-vivo.test.ts","hacia":"src/lib/taller-vivo.ts","peso":1},{"desde":"tests/taller-vivo.test.ts","hacia":"tests/helpers.ts","peso":1},{"desde":"tests/taller-vivo.test.ts","hacia":"src/http.ts","peso":1},{"desde":"tests/taller-vivo.test.ts","hacia":"src/context.ts","peso":1},{"desde":"tests/taller.test.ts","hacia":"src/config.ts","peso":1},{"desde":"tests/taller.test.ts","hacia":"src/server.ts","peso":1},{"desde":"tests/taller.test.ts","hacia":"tests/helpers.ts","peso":1},{"desde":"tests/taller.test.ts","hacia":"src/auth/politica.ts","peso":1},{"desde":"tests/taller.test.ts","hacia":"src/auth/keys.ts","peso":1},{"desde":"tests/taller.test.ts","hacia":"src/context.ts","peso":1},{"desde":"tests/tls.test.ts","hacia":"src/http.ts","peso":1},{"desde":"tests/tls.test.ts","hacia":"src/seed.ts","peso":1},{"desde":"tests/tls.test.ts","hacia":"tests/helpers.ts","peso":1}],"aristas_modulo":[{"desde":"src/auth","hacia":"src","peso":1},{"desde":"src","hacia":"src/auth","peso":4},{"desde":"src","hacia":"src/lib","peso":9},{"desde":"src","hacia":"src/db","peso":5},{"desde":"src/db","hacia":"src","peso":2},{"desde":"src/db","hacia":"src/lib","peso":2},{"desde":"src/lib","hacia":"src","peso":5},{"desde":"src/lib","hacia":"src/auth","peso":1},{"desde":"src","hacia":"src/tools","peso":6},{"desde":"src/tools","hacia":"src","peso":11},{"desde":"src/tools","hacia":"src/lib","peso":16},{"desde":"src/tools","hacia":"src/db","peso":3},{"desde":"tests","hacia":"src/lib","peso":13},{"desde":"tests","hacia":"src/db","peso":2},{"desde":"tests","hacia":"src","peso":20},{"desde":"tests","hacia":"src/auth","peso":5}],"archivos":[{"ruta":"scripts/certificado-autofirmado.mjs","modulo":"scripts","lineas":49,"bytes":1351,"es_prueba":false,"es_entrada":true,"rutas":[],"imports":[],"dependientes":[],"exports":[],"paquetes":[],"marcadores":[],"huerfano":false,"duplicado":false},{"ruta":"scripts/generar-datasets.mjs","modulo":"scripts","lineas":103,"bytes":6563,"es_prueba":false,"es_entrada":true,"rutas":[],"imports":[],"dependientes":[],"exports":[],"paquetes":[],"marcadores":[],"huerfano":false,"duplicado":false},{"ruta":"src/auth/keys.ts","modulo":"src/auth","lineas":168,"bytes":5998,"es_prueba":false,"es_entrada":false,"rutas":[],"imports":["src/context.ts"],"dependientes":["src/cli.ts","src/http.ts","src/index.ts","tests/http.test.ts","tests/security.test.ts","tests/taller.test.ts"],"exports":["ApiKey","ResultadoVerificacion","ResultadoCreacion","SCOPES_VALIDOS","validarScopes","crearClave","verificarClave","listarClaves","revocarClave","contarClavesActivas"],"paquetes":[],"marcadores":[],"huerfano":false,"duplicado":false},{"ruta":"src/auth/politica.ts","modulo":"src/auth","lineas":48,"bytes":1524,"es_prueba":false,"es_entrada":false,"rutas":[],"imports":[],"dependientes":["src/lib/result.ts","src/server.ts","tests/security.test.ts","tests/taller.test.ts"],"exports":["ToolInfoPolitica","politicaDesdeScopes","describirScopes"],"paquetes":[],"marcadores":[],"huerfano":false,"duplicado":false},{"ruta":"src/cli.ts","modulo":"src","lineas":195,"bytes":8269,"es_prueba":false,"es_entrada":true,"rutas":[],"imports":["src/config.ts","src/logger.ts","src/index.ts","src/auth/keys.ts","src/lib/backup.ts"],"dependientes":[],"exports":[],"paquetes":[],"marcadores":[],"huerfano":false,"duplicado":false},{"ruta":"src/config.ts","modulo":"src","lineas":133,"bytes":5586,"es_prueba":false,"es_entrada":false,"rutas":[],"imports":[],"dependientes":["src/cli.ts","src/context.ts","src/http.ts","src/index.ts","src/logger.ts","tests/helpers.ts","tests/http.test.ts","tests/server.test.ts","tests/taller.test.ts"],"exports":["LogLevelName","AuthMode","Config","projectRoot","loadConfig"],"paquetes":[],"marcadores":[],"huerfano":false,"duplicado":false},{"ruta":"src/context.ts","modulo":"src","lineas":27,"bytes":922,"es_prueba":false,"es_entrada":false,"rutas":[],"imports":["src/config.ts","src/lib/audit.ts","src/lib/metrics.ts","src/lib/rate-limit.ts","src/db/index.ts"],"dependientes":["src/auth/keys.ts","src/http.ts","src/index.ts","src/lib/backup.ts","src/lib/result.ts","src/seed.ts","src/server.ts","src/tools/analisis.ts","src/tools/devops.ts","src/tools/documentos.ts","src/tools/facturacion.ts","src/tools/negocio.ts","src/tools/taller.ts","tests/backup.test.ts","tests/helpers.ts","tests/http.test.ts","tests/security.test.ts","tests/server.test.ts","tests/taller-vivo.test.ts","tests/taller.test.ts"],"exports":["IdentidadCliente","ServerCtx"],"paquetes":[],"marcadores":[],"huerfano":false,"duplicado":false},{"ruta":"src/data-seed.ts","modulo":"src","lineas":91,"bytes":5238,"es_prueba":false,"es_entrada":false,"rutas":[],"imports":["src/db/negocio.ts","src/db/plantillas.ts"],"dependientes":["src/db/index.ts"],"exports":["INVENTARIO_SEED","PEDIDOS_SEED","PLANTILLAS_SEED"],"paquetes":[],"marcadores":[],"huerfano":false,"duplicado":false},{"ruta":"src/db/index.ts","modulo":"src/db","lineas":233,"bytes":9683,"es_prueba":false,"es_entrada":false,"rutas":[],"imports":["src/data-seed.ts","src/logger.ts"],"dependientes":["src/context.ts","src/db/negocio.ts","src/db/plantillas.ts","src/index.ts","src/seed.ts","tests/backup.test.ts","tests/helpers.ts"],"exports":["DB","ESQUEMA","abrirDb","migrarDesdeJson","sembrarSiVacio","leerMeta","escribirMeta"],"paquetes":["better-sqlite3"],"marcadores":[],"huerfano":false,"duplicado":false},{"ruta":"src/db/negocio.ts","modulo":"src/db","lineas":255,"bytes":8756,"es_prueba":false,"es_entrada":false,"rutas":[],"imports":["src/db/index.ts","src/db/index.ts","src/lib/finance.ts"],"dependientes":["src/data-seed.ts","src/tools/facturacion.ts","src/tools/negocio.ts"],"exports":["ItemInventario","InventarioData","PedidoItem","EntradaHistorial","Pedido","PedidosData","FiltrosInventario","InventarioRepo","FiltrosPedidos","PedidosRepo"],"paquetes":[],"marcadores":[],"huerfano":false,"duplicado":false},{"ruta":"src/db/plantillas.ts","modulo":"src/db","lineas":81,"bytes":2721,"es_prueba":false,"es_entrada":false,"rutas":[],"imports":["src/db/index.ts","src/lib/text.ts"],"dependientes":["src/data-seed.ts","src/tools/documentos.ts"],"exports":["Plantilla","PlantillasData","PlantillasRepo"],"paquetes":[],"marcadores":[],"huerfano":false,"duplicado":false},{"ruta":"src/http.ts","modulo":"src","lineas":353,"bytes":14449,"es_prueba":false,"es_entrada":false,"rutas":[{"metodo":"ANY","ruta":"/mcp","linea":148},{"metodo":"ANY","ruta":"/health","linea":189},{"metodo":"ANY","ruta":"/metrics","linea":199},{"metodo":"ANY","ruta":"/api/config","linea":204},{"metodo":"ANY","ruta":"/api/catalogo","linea":218},{"metodo":"ANY","ruta":"/api/herramientas","linea":227},{"metodo":"ANY","ruta":"/","linea":233},{"metodo":"ANY","ruta":"/panel","linea":233},{"metodo":"ANY","ruta":"/taller","linea":254},{"metodo":"ANY","ruta":"/api/taller/mapa","linea":254},{"metodo":"ANY","ruta":"/api/taller/mapa","linea":272},{"metodo":"ANY","ruta":"/api/auditoria","linea":299}],"imports":["src/context.ts","src/server.ts","src/config.ts","src/lib/taller-vivo.ts","src/version.ts","src/logger.ts","src/auth/keys.ts"],"dependientes":["src/index.ts","tests/http.test.ts","tests/taller-vivo.test.ts","tests/tls.test.ts"],"exports":["startHttp"],"paquetes":["@modelcontextprotocol/sdk"],"marcadores":[],"huerfano":false,"duplicado":false},{"ruta":"src/index.ts","modulo":"src","lineas":101,"bytes":3827,"es_prueba":false,"es_entrada":true,"rutas":[],"imports":["src/config.ts","src/logger.ts","src/server.ts","src/http.ts","src/seed.ts","src/version.ts","src/lib/metrics.ts","src/lib/audit.ts","src/lib/rate-limit.ts","src/auth/keys.ts","src/db/index.ts","src/context.ts"],"dependientes":["src/cli.ts"],"exports":["crearContexto","run"],"paquetes":["@modelcontextprotocol/sdk"],"marcadores":[],"huerfano":false,"duplicado":false},{"ruta":"src/lib/audit.ts","modulo":"src/lib","lineas":95,"bytes":3043,"es_prueba":false,"es_entrada":false,"rutas":[],"imports":["src/logger.ts"],"dependientes":["src/context.ts","src/index.ts","src/lib/result.ts","tests/helpers.ts","tests/security.test.ts"],"exports":["TipoEvento","EventoAuditoria","resumirArgs","Auditoria"],"paquetes":[],"marcadores":[],"huerfano":false,"duplicado":false},{"ruta":"src/lib/backup.ts","modulo":"src/lib","lineas":138,"bytes":5146,"es_prueba":false,"es_entrada":false,"rutas":[],"imports":["src/context.ts","src/logger.ts"],"dependientes":["src/cli.ts","tests/backup.test.ts"],"exports":["ArchivoBackup","ResultadoBackup","crearBackup","listarBackups"],"paquetes":[],"marcadores":[],"huerfano":false,"duplicado":false},{"ruta":"src/lib/cfdi.ts","modulo":"src/lib","lineas":544,"bytes":24262,"es_prueba":false,"es_entrada":false,"rutas":[],"imports":[],"dependientes":["src/tools/facturacion.ts","tests/cfdi.test.ts"],"exports":["CATALOGO_REGIMENES","CATALOGO_USOS_CFDI","CATALOGO_FORMAS_PAGO","CATALOGO_METODOS_PAGO","CATALOGO_MONEDAS","CATALOGO_UNIDADES","CATALOGO_EXPORTACION","RFC_PUBLICO_GENERAL","RFC_EXTRANJERO","CP_PUBLICO_GENERAL","CLAVE_PRODSERV_COMODIN","DatosFiscales","ConceptoEntrada","OpcionesCfdi","Validacion","ConceptoCalculado","TotalesCfdi","BorradorCfdi","validarFormatoRfc","esPersonaFisica","generarBorradorCfdi","renderXmlCfdi","conceptosDesdePedido"],"paquetes":[],"marcadores":[{"tipo":"XXX","linea":67,"texto":"', descripcion: 'Los códigos asignados para las transacciones en que no canalice moneda (solo tipo P)' },"}],"huerfano":false,"duplicado":false},{"ruta":"src/lib/csv.ts","modulo":"src/lib","lineas":180,"bytes":5575,"es_prueba":false,"es_entrada":false,"rutas":[],"imports":[],"dependientes":["src/tools/analisis.ts","tests/csv-text.test.ts"],"exports":["detectDelimiter","parseCsv","toCsv","toMarkdownTable","Table","csvToRecords","jsonToTable","guessNumber","ColumnProfile","profileTable"],"paquetes":[],"marcadores":[],"huerfano":false,"duplicado":false},{"ruta":"src/lib/finance.ts","modulo":"src/lib","lineas":226,"bytes":7016,"es_prueba":false,"es_entrada":false,"rutas":[],"imports":[],"dependientes":["src/db/negocio.ts","src/tools/negocio.ts","tests/finance.test.ts"],"exports":["LineaCotizacion","ItemCotizacion","OpcionesCotizacion","TotalesCotizacion","calcularCotizacion","ImpuestosDesglose","calcularImpuestos","Margen","calcularMargen","PuntoEquilibrio","puntoEquilibrio","aplicarMovimiento","ESTADOS_PEDIDO","EstadoPedido","validarTransicion"],"paquetes":[],"marcadores":[],"huerfano":false,"duplicado":false},{"ruta":"src/lib/grafo.ts","modulo":"src/lib","lineas":564,"bytes":21229,"es_prueba":false,"es_entrada":false,"rutas":[],"imports":[],"dependientes":["src/lib/rescate.ts","src/lib/taller-vivo.ts","src/tools/taller.ts"],"exports":["DIRS_IGNORADOS","Importacion","Exportacion","RutaDetectada","Marcador","FuncionDetectada","ArchivoInfo","PaqueteJson","Grafo","analizarProyecto","DetalleImpacto","Impacto","localizarObjetivo","calcularImpacto","ArchivoDesconectado","archivosDesconectados","DuplicadoFuncion","funcionesDuplicadas","exportsRepetidos"],"paquetes":[],"marcadores":[{"tipo":"TODO","linea":66,"texto":"' | 'FIXME' | 'HACK' | 'XXX' | 'STUB';"},{"tipo":"TODO","linea":159,"texto":"|FIXME|HACK|XXX)\\b[:：]?\\s*(.{0,120})/;"}],"huerfano":false,"duplicado":false},{"ruta":"src/lib/metrics.ts","modulo":"src/lib","lineas":89,"bytes":3610,"es_prueba":false,"es_entrada":false,"rutas":[],"imports":[],"dependientes":["src/context.ts","src/index.ts","tests/helpers.ts","tests/security.test.ts"],"exports":["BUCKETS_POR_DEFECTO","Metricas"],"paquetes":[],"marcadores":[],"huerfano":false,"duplicado":false},{"ruta":"src/lib/rate-limit.ts","modulo":"src/lib","lineas":75,"bytes":2746,"es_prueba":false,"es_entrada":false,"rutas":[],"imports":[],"dependientes":["src/context.ts","src/index.ts","tests/helpers.ts","tests/security.test.ts"],"exports":["ResultadoLimite","LimitadorTasas"],"paquetes":[],"marcadores":[],"huerfano":false,"duplicado":false},{"ruta":"src/lib/rescate.ts","modulo":"src/lib","lineas":326,"bytes":12256,"es_prueba":false,"es_entrada":false,"rutas":[],"imports":["src/lib/grafo.ts"],"dependientes":["src/tools/taller.ts"],"exports":["Hueco","ItemPlan","ModuloReconstruido","ReclamoDoc","Diagnostico","diagnosticarRescate"],"paquetes":[],"marcadores":[{"tipo":"TODO","linea":193,"texto":"en pruebas no aporta al plan"},{"tipo":"FIXME","linea":197,"texto":"') {"},{"tipo":"FIXME","linea":198,"texto":"${m.texto}`, gravedad: 'media' });"},{"tipo":"TODO","linea":199,"texto":"') {"},{"tipo":"TODO","linea":200,"texto":"${m.texto}`, gravedad: 'media' });"}],"huerfano":false,"duplicado":false},{"ruta":"src/lib/result.ts","modulo":"src/lib","lineas":169,"bytes":5784,"es_prueba":false,"es_entrada":false,"rutas":[],"imports":["src/context.ts","src/logger.ts","src/lib/audit.ts","src/auth/politica.ts"],"dependientes":["src/server.ts","src/tools/analisis.ts","src/tools/devops.ts","src/tools/documentos.ts","src/tools/facturacion.ts","src/tools/negocio.ts","src/tools/taller.ts"],"exports":["ToolInfo","ToolDef","ToolMeta","json","aInfo","registerTool","registerModuloTools"],"paquetes":["@modelcontextprotocol/sdk","zod"],"marcadores":[],"huerfano":false,"duplicado":false},{"ruta":"src/lib/stats.ts","modulo":"src/lib","lineas":152,"bytes":4925,"es_prueba":false,"es_entrada":false,"rutas":[],"imports":[],"dependientes":["src/tools/analisis.ts","tests/stats.test.ts"],"exports":["suma","media","mediana","cuantil","desviacion","Resumen","resumir","pearson","Regresion","regresionLineal","mediaMovil","cambioPct","cagr"],"paquetes":[],"marcadores":[],"huerfano":false,"duplicado":false},{"ruta":"src/lib/store.ts","modulo":"src/lib","lineas":85,"bytes":2801,"es_prueba":false,"es_entrada":false,"rutas":[],"imports":[],"dependientes":["src/tools/analisis.ts","src/tools/devops.ts","src/tools/documentos.ts"],"exports":["JsonStore","readTextFile","resolveAllowedPath"],"paquetes":[],"marcadores":[],"huerfano":false,"duplicado":false},{"ruta":"src/lib/taller-vivo.ts","modulo":"src/lib","lineas":278,"bytes":10684,"es_prueba":false,"es_entrada":false,"rutas":[],"imports":["src/lib/grafo.ts"],"dependientes":["src/http.ts","tests/taller-vivo.test.ts"],"exports":["ArchivoVivo","EstadoVivo","CambioVivo","calcularCambios","ResultadoVivo","obtenerEstadoVivo","limpiarCacheVivo"],"paquetes":[],"marcadores":[{"tipo":"TODO","linea":148,"texto":"' || m.tipo === 'FIXME' || m.tipo === 'STUB').length,"},{"tipo":"TODO","linea":207,"texto":"' || m.tipo === 'FIXME' || m.tipo === 'STUB').length;"},{"tipo":"TODO","linea":229,"texto":"' || m.tipo === 'FIXME' || m.tipo === 'STUB').length;"}],"huerfano":false,"duplicado":false},{"ruta":"src/lib/text.ts","modulo":"src/lib","lineas":131,"bytes":6148,"es_prueba":false,"es_entrada":false,"rutas":[],"imports":[],"dependientes":["src/db/plantillas.ts","src/tools/documentos.ts","tests/csv-text.test.ts"],"exports":["ResumenTexto","resumirTexto","DatosExtraidos","extraerDatos","ResultadoPlantilla","renderPlantilla","variablesDePlantilla"],"paquetes":[],"marcadores":[],"huerfano":false,"duplicado":false},{"ruta":"src/logger.ts","modulo":"src","lineas":24,"bytes":997,"es_prueba":false,"es_entrada":false,"rutas":[],"imports":["src/config.ts"],"dependientes":["src/cli.ts","src/db/index.ts","src/http.ts","src/index.ts","src/lib/audit.ts","src/lib/backup.ts","src/lib/result.ts","src/seed.ts","src/tools/analisis.ts","src/tools/devops.ts","src/tools/documentos.ts","src/tools/facturacion.ts","src/tools/negocio.ts"],"exports":["setLogLevel","log"],"paquetes":[],"marcadores":[],"huerfano":false,"duplicado":false},{"ruta":"src/seed.ts","modulo":"src","lineas":18,"bytes":633,"es_prueba":false,"es_entrada":false,"rutas":[],"imports":["src/context.ts","src/db/index.ts","src/logger.ts"],"dependientes":["src/index.ts","tests/backup.test.ts","tests/http.test.ts","tests/server.test.ts","tests/tls.test.ts"],"exports":["ensureSeedData"],"paquetes":[],"marcadores":[],"huerfano":false,"duplicado":false},{"ruta":"src/server.ts","modulo":"src","lineas":257,"bytes":11007,"es_prueba":false,"es_entrada":false,"rutas":[],"imports":["src/context.ts","src/lib/result.ts","src/lib/result.ts","src/tools/negocio.ts","src/tools/documentos.ts","src/tools/devops.ts","src/tools/analisis.ts","src/tools/facturacion.ts","src/tools/taller.ts","src/version.ts","src/auth/politica.ts"],"dependientes":["src/http.ts","src/index.ts","tests/server.test.ts","tests/taller.test.ts"],"exports":["ServerSuite","toolDefsDeTodosLosModulos","buildServer"],"paquetes":["@modelcontextprotocol/sdk","zod"],"marcadores":[],"huerfano":false,"duplicado":false},{"ruta":"src/tools/analisis.ts","modulo":"src/tools","lineas":355,"bytes":18318,"es_prueba":false,"es_entrada":false,"rutas":[],"imports":["src/context.ts","src/lib/result.ts","src/lib/store.ts","src/lib/csv.ts","src/lib/stats.ts","src/logger.ts"],"dependientes":["src/server.ts"],"exports":["analisisToolDefs"],"paquetes":["zod"],"marcadores":[],"huerfano":false,"duplicado":false},{"ruta":"src/tools/devops.ts","modulo":"src/tools","lineas":379,"bytes":17341,"es_prueba":false,"es_entrada":false,"rutas":[],"imports":["src/context.ts","src/lib/result.ts","src/lib/store.ts","src/logger.ts"],"dependientes":["src/server.ts"],"exports":["devopsToolDefs"],"paquetes":["zod"],"marcadores":[],"huerfano":false,"duplicado":false},{"ruta":"src/tools/documentos.ts","modulo":"src/tools","lineas":132,"bytes":6282,"es_prueba":false,"es_entrada":false,"rutas":[],"imports":["src/context.ts","src/lib/result.ts","src/lib/store.ts","src/db/plantillas.ts","src/lib/text.ts","src/logger.ts"],"dependientes":["src/server.ts"],"exports":["documentosToolDefs"],"paquetes":["zod"],"marcadores":[],"huerfano":false,"duplicado":false},{"ruta":"src/tools/facturacion.ts","modulo":"src/tools","lineas":335,"bytes":16921,"es_prueba":false,"es_entrada":false,"rutas":[],"imports":["src/context.ts","src/lib/result.ts","src/db/negocio.ts","src/lib/cfdi.ts","src/logger.ts"],"dependientes":["src/server.ts"],"exports":["facturacionToolDefs"],"paquetes":["zod"],"marcadores":[],"huerfano":false,"duplicado":false},{"ruta":"src/tools/negocio.ts","modulo":"src/tools","lineas":251,"bytes":12236,"es_prueba":false,"es_entrada":false,"rutas":[],"imports":["src/context.ts","src/lib/result.ts","src/db/negocio.ts","src/lib/finance.ts","src/lib/finance.ts","src/logger.ts"],"dependientes":["src/server.ts"],"exports":["negocioToolDefs"],"paquetes":["zod"],"marcadores":[],"huerfano":false,"duplicado":false},{"ruta":"src/tools/taller.ts","modulo":"src/tools","lineas":392,"bytes":18917,"es_prueba":false,"es_entrada":false,"rutas":[],"imports":["src/context.ts","src/lib/result.ts","src/lib/grafo.ts","src/lib/rescate.ts"],"dependientes":["src/server.ts"],"exports":["tallerToolDefs"],"paquetes":["zod"],"marcadores":[{"tipo":"TODO","linea":339,"texto":"/FIXME, código que lanza \"no implementado\", archivos vacíos), lo desconectado (módulos huérfanos, rutas sin montar), dup"},{"tipo":"TODO","linea":365,"texto":", FIXME, código sin implementar y archivos vacíos) ordenado por impacto real: primero lo que está en archivos de los que"}],"huerfano":false,"duplicado":false},{"ruta":"src/version.ts","modulo":"src","lineas":4,"bytes":119,"es_prueba":false,"es_entrada":false,"rutas":[],"imports":[],"dependientes":["src/http.ts","src/index.ts","src/server.ts"],"exports":["SERVER_NAME","SERVER_TITLE","VERSION"],"paquetes":[],"marcadores":[],"huerfano":false,"duplicado":false},{"ruta":"tests/backup.test.ts","modulo":"tests","lineas":71,"bytes":3314,"es_prueba":true,"es_entrada":false,"rutas":[],"imports":["src/lib/backup.ts","src/db/index.ts","src/seed.ts","tests/helpers.ts","src/context.ts"],"dependientes":[],"exports":[],"paquetes":["vitest"],"marcadores":[],"huerfano":false,"duplicado":false},{"ruta":"tests/cfdi.test.ts","modulo":"tests","lineas":201,"bytes":10342,"es_prueba":true,"es_entrada":false,"rutas":[],"imports":["src/lib/cfdi.ts"],"dependientes":[],"exports":[],"paquetes":["vitest"],"marcadores":[],"huerfano":false,"duplicado":false},{"ruta":"tests/csv-text.test.ts","modulo":"tests","lineas":70,"bytes":3342,"es_prueba":true,"es_entrada":false,"rutas":[],"imports":["src/lib/csv.ts","src/lib/text.ts"],"dependientes":[],"exports":[],"paquetes":["vitest"],"marcadores":[],"huerfano":false,"duplicado":false},{"ruta":"tests/finance.test.ts","modulo":"tests","lineas":97,"bytes":3466,"es_prueba":true,"es_entrada":false,"rutas":[],"imports":["src/lib/finance.ts"],"dependientes":[],"exports":[],"paquetes":["vitest"],"marcadores":[],"huerfano":false,"duplicado":false},{"ruta":"tests/helpers.ts","modulo":"tests","lineas":32,"bytes":1229,"es_prueba":false,"es_entrada":false,"rutas":[],"imports":["src/config.ts","src/db/index.ts","src/lib/audit.ts","src/lib/metrics.ts","src/lib/rate-limit.ts","src/context.ts"],"dependientes":["tests/backup.test.ts","tests/http.test.ts","tests/security.test.ts","tests/server.test.ts","tests/taller-vivo.test.ts","tests/taller.test.ts","tests/tls.test.ts"],"exports":["dataDirTemporal","contextoDePrueba"],"paquetes":[],"marcadores":[],"huerfano":false,"duplicado":false},{"ruta":"tests/http.test.ts","modulo":"tests","lineas":236,"bytes":9194,"es_prueba":true,"es_entrada":false,"rutas":[],"imports":["src/config.ts","src/http.ts","src/seed.ts","src/auth/keys.ts","tests/helpers.ts","src/context.ts"],"dependientes":[],"exports":[],"paquetes":["vitest"],"marcadores":[],"huerfano":false,"duplicado":false},{"ruta":"tests/security.test.ts","modulo":"tests","lineas":205,"bytes":9454,"es_prueba":true,"es_entrada":false,"rutas":[],"imports":["src/auth/keys.ts","src/auth/politica.ts","src/lib/rate-limit.ts","src/lib/metrics.ts","src/lib/audit.ts","tests/helpers.ts","src/context.ts"],"dependientes":[],"exports":[],"paquetes":["vitest"],"marcadores":[],"huerfano":false,"duplicado":false},{"ruta":"tests/server.test.ts","modulo":"tests","lineas":266,"bytes":12178,"es_prueba":true,"es_entrada":false,"rutas":[],"imports":["src/config.ts","src/server.ts","src/seed.ts","tests/helpers.ts","src/context.ts"],"dependientes":[],"exports":[],"paquetes":["vitest","@modelcontextprotocol/sdk"],"marcadores":[],"huerfano":false,"duplicado":false},{"ruta":"tests/stats.test.ts","modulo":"tests","lineas":59,"bytes":2014,"es_prueba":true,"es_entrada":false,"rutas":[],"imports":["src/lib/stats.ts"],"dependientes":[],"exports":[],"paquetes":["vitest"],"marcadores":[],"huerfano":false,"duplicado":false},{"ruta":"tests/taller-vivo.test.ts","modulo":"tests","lineas":138,"bytes":6481,"es_prueba":true,"es_entrada":false,"rutas":[{"metodo":"GET","ruta":"/api/pedidos","linea":32},{"metodo":"GET","ruta":"/api/reportes","linea":67}],"imports":["src/lib/taller-vivo.ts","tests/helpers.ts","src/http.ts","src/context.ts"],"dependientes":[],"exports":[],"paquetes":["vitest"],"marcadores":[{"tipo":"TODO","linea":67,"texto":"conectar al servidor\\nfunction montar(app) {\\n  app.get('/api/reportes', (req, res) => res.json([]));\\n}\\nmodule.exports"}],"huerfano":false,"duplicado":false},{"ruta":"tests/taller.test.ts","modulo":"tests","lineas":244,"bytes":12318,"es_prueba":true,"es_entrada":false,"rutas":[{"metodo":"GET","ruta":"/api/pedidos","linea":39},{"metodo":"GET","ruta":"/api/reportes","linea":40},{"metodo":"POST","ruta":"/api/reportes/exportar","linea":40}],"imports":["src/config.ts","src/server.ts","tests/helpers.ts","src/auth/politica.ts","src/auth/keys.ts","src/context.ts"],"dependientes":[],"exports":[],"paquetes":["vitest","@modelcontextprotocol/sdk"],"marcadores":[{"tipo":"TODO","linea":38,"texto":"conectar el módulo de reportes\\nmodule.exports = { rutas };\\n\");"},{"tipo":"FIXME","linea":40,"texto":"nunca se conectó al servidor principal\\nfunction montar(app) {\\n  app.get('/api/reportes', (req, res) => res.json([]));\\"},{"tipo":"STUB","linea":41,"texto":"código sin implementar (lanza error de pendiente)"}],"huerfano":false,"duplicado":false},{"ruta":"tests/tls.test.ts","modulo":"tests","lineas":82,"bytes":2771,"es_prueba":true,"es_entrada":false,"rutas":[],"imports":["src/http.ts","src/seed.ts","tests/helpers.ts"],"dependientes":[],"exports":[],"paquetes":["vitest"],"marcadores":[],"huerfano":false,"duplicado":false}],"entradas":["src/index.ts","src/cli.ts","scripts/certificado-autofirmado.mjs","scripts/generar-datasets.mjs"],"servicios":[{"paquete":"vitest","descripcion":"paquete externo","usos":11},{"paquete":"zod","descripcion":"validación de datos","usos":8},{"paquete":"@modelcontextprotocol/sdk","descripcion":"SDK de MCP","usos":6},{"paquete":"better-sqlite3","descripcion":"SQLite local","usos":1}]}};
+  const CONFIG = {"raices":["/home/user/mcp-suite-mx"],"taller_publico":true};
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  let estado = INICIAL.estado || null;
+  let raiz = (estado && estado.raiz) || (CONFIG.raices && CONFIG.raices[0]) || '';
+  let seleccion = null, moduloSel = null, soloHuerfanos = false, auto = true;
+  let ultimaVez = Date.now();
+  let bitacora = [];
+
+  const COLORES = ['#5b8cff', '#4ec3e0', '#22d3a7', '#ffb648', '#c17aff', '#f2547d', '#8fa3c8', '#ff8a5c', '#7de0b3', '#b8c4ff'];
+  const colorModulo = {};
+  const COLOR = (a) => a.huerfano ? 'huerfano' : a.duplicado ? 'dup' : a.es_entrada ? 'entrada' : a.es_prueba ? 'prueba' : 'normal';
+
+  /* ═══════════════ ESCENA 3D (motor propio: proyección + sombreado + niebla) ═══════════════ */
+  const tresD = (() => {
+    const canvas = $('lienzo3d');
+    const cv = canvas.getContext('2d');
+    const nodos = [];                 // {ruta, modulo, lineas, ... , x,y,z, r, pulso, aparece}
+    const porRuta = new Map();
+    let aristas = [];                 // [{a: nodo, b: nodo, peso}]
+    let centroModulos = new Map();    // modulo → {x,y,z}
+    let yaw = 0.72, pitch = -0.30, dist = 1250;
+    let velYaw = 0, velPitch = 0, arrastrando = false, movido = false;
+    let autoGirar = true, neblina = true;
+    let W = 0, H = 0, DPR = 1;
+    const F = 980;                    // distancia focal
+
+    const hash = (s) => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return Math.abs(h); };
+    const mzx = (a, b, t) => a + (b - a) * t;
+    const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+    const hex2rgb = (h) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+    const mezclar = (c1, c2, t) => c1.map((v, i) => Math.round(mzx(v, c2[i], t)));
+    const FONDO = [6, 10, 18];
+
+    function ajustar() {
+      DPR = Math.min(window.devicePixelRatio || 1, 2);
+      W = canvas.clientWidth; H = canvas.clientHeight;
+      canvas.width = W * DPR; canvas.height = H * DPR;
+      cv.setTransform(DPR, 0, 0, DPR, 0, 0);
+    }
+
+    /** Centro 3D de un módulo (anillo determinista). */
+    function centroDe(m, i, total) {
+      const ang = (i / Math.max(1, total)) * Math.PI * 2 + (i % 2 ? 0.16 : -0.16);
+      const radio = 560;
+      // alturas alternadas (arriba/abajo) para que los cúmulos no se encimen
+      const signo = i % 2 ? 1 : -1;
+      const y = signo * (110 + (hash(m) % 130));
+      return { x: Math.cos(ang) * radio, y, z: Math.sin(ang) * radio };
+    }
+
+    /** Posición de un archivo dentro del cúmulo de su módulo (determinista). */
+    function colocarEnModulo(n) {
+      const c = centroModulos.get(n.modulo) || { x: 0, y: 0, z: 0 };
+      const h = hash(n.ruta);
+      const th = (h % 628) / 100, ph = ((h >> 7) % 628) / 100;
+      const rd = 66 + (h % 74);
+      n.x = c.x + Math.cos(th) * Math.sin(ph) * rd;
+      n.y = c.y + Math.cos(ph) * rd * 0.62;
+      n.z = c.z + Math.sin(th) * Math.sin(ph) * rd;
+    }
+
+    /** Una sola pasada de relajación al inicio para que nada quede encimado. */
+    function relajar() {
+      for (let it = 0; it < 60; it++) {
+        for (let i = 0; i < nodos.length; i++) {
+          for (let j = i + 1; j < nodos.length; j++) {
+            const a = nodos[i], b = nodos[j];
+            const dx = b.x - a.x, dy = b.y - a.y, dz = b.z - a.z;
+            const d = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1;
+            if (d < 42) {
+              const f = (42 - d) / d * 0.5;
+              a.x -= dx * f; a.y -= dy * f; a.z -= dz * f;
+              b.x += dx * f; b.y += dy * f; b.z += dz * f;
+            }
+          }
+        }
+      }
+    }
+
+    /**
+     * Actualiza la escena con el estado vivo. Las posiciones PERSISTEN entre
+     * refrescos: solo los nodos nuevos se colocan (cerca del centro de su
+     * módulo) y los desaparecidos se desvanecen. Nada "brinca" cada 4 s.
+     */
+    function actualizar(est, cambios) {
+      estado = est;
+      const primera = nodos.length === 0;
+      const mods = est.modulos.map((m) => m.modulo);
+      mods.forEach((m, i) => {
+        if (!colorModulo[m]) colorModulo[m] = COLORES[i % COLORES.length];
+        if (!centroModulos.has(m)) centroModulos.set(m, centroDe(m, i, mods.length));
+      });
+
+      const nuevas = [];
+      for (const a of est.archivos) {
+        let n = porRuta.get(a.ruta);
+        if (!n) {
+          n = { ruta: a.ruta, aparece: performance.now() };
+          nodos.push(n); porRuta.set(a.ruta, n); nuevas.push(n);
+        }
+        Object.assign(n, {
+          modulo: a.modulo, lineas: a.lineas, huerfano: a.huerfano, duplicado: a.duplicado,
+          es_entrada: a.es_entrada, es_prueba: a.es_prueba, rutas: a.rutas.length,
+          dependientes: a.dependientes.length, marcadores: a.marcadores.length,
+          exports: a.exports.length, paquetes: a.paquetes.length,
+        });
+      }
+
+      if (primera) {
+        for (const n of nodos) colocarEnModulo(n);
+        relajar();
+        elegirYawOptimo();
+        encuadrarVista();
+      }
+      else for (const n of nuevas) colocarEnModulo(n);
+
+      // nodos que ya no existen: desvanecer y olvidar
+      const vigentes = new Set(est.archivos.map((a) => a.ruta));
+      for (const n of [...nodos]) {
+        if (!vigentes.has(n.ruta)) {
+          if (!n.muere) n.muere = performance.now();
+          if (performance.now() - n.muere > 900) {
+            const i = nodos.indexOf(n); if (i >= 0) nodos.splice(i, 1);
+            porRuta.delete(n.ruta);
+          }
+        }
+      }
+
+      aristas = est.aristas.map((e) => ({ a: porRuta.get(e.desde), b: porRuta.get(e.hacia) })).filter((e) => e.a && e.b);
+      (cambios || []).forEach((c) => { const n = c.archivo && porRuta.get(c.archivo); if (n) n.pulso = performance.now(); });
+      pintarInsignia();
+    }
+
+    function pintarInsignia() {
+      const n = porRuta.size;
+      $('insignia').innerHTML = `<b>${n}</b> esferas · <b>${aristas.length}</b> enlaces · revisión <b>${estado?.revision ?? '-'}</b>`;
+    }
+
+    /** Proyecta el mundo 3D a la pantalla. */
+    function proyectar(n, cos = cYaw, sin = sYaw, cosP = cPitch, sinP = sPitch) {
+      const x1 = n.x * cos - n.z * sin;
+      const z1 = n.x * sin + n.z * cos;
+      const y2 = n.y * cosP - z1 * sinP;
+      const z2 = n.y * sinP + z1 * cosP;
+      const s = F / Math.max(120, z2 + dist);
+      return { x: W / 2 + x1 * s, y: H / 2 + y2 * s, s, z: z2 };
+    }
+
+    let cYaw = 0, sYaw = 0, cPitch = 0, sPitch = 0, t0 = performance.now();
+
+    function cuadro(ahora) {
+      const dt = Math.min(48, ahora - t0); t0 = ahora;
+      if (autoGirar && !arrastrando) yaw += 0.00022 * dt;
+      yaw += velYaw * dt * 0.02; pitch += velPitch * dt * 0.02;
+      velYaw *= 0.93; velPitch *= 0.93;
+      pitch = clamp(pitch, -1.35, 1.35);
+      cYaw = Math.cos(yaw); sYaw = Math.sin(yaw); cPitch = Math.cos(pitch); sPitch = Math.sin(pitch);
+
+      const grd = cv.createRadialGradient(W / 2, H / 2, 40, W / 2, H / 2, Math.max(W, H) * 0.75);
+      grd.addColorStop(0, '#0b1424'); grd.addColorStop(1, '#05080f');
+      cv.fillStyle = grd; cv.fillRect(0, 0, W, H);
+
+      // ── proyectar y ordenar por profundidad (lejos primero) ──
+      const lista = [];
+      for (const n of nodos) {
+        if (n.muere && ahora - n.muere > 700) continue;
+        const p = proyectar(n);
+        const r = clamp((6.5 + Math.log2((n.lineas || 2) + 1) * 2.1) * p.s * 1.35, 3.5, 52);
+        lista.push({ n, p, r, fade: n.muere ? clamp(1 - (ahora - n.muere) / 700, 0, 1) : 1 });
+      }
+      lista.sort((a, b) => b.p.z - a.p.z);
+
+      const sel = seleccion;
+      // ¿sobre qué esfera está el mouse? (para etiqueta en hover)
+      let hoverRuta = null;
+      if (!arrastrando && mouseDentro) {
+        let mejorD = 17;
+        for (const n of nodos) {
+          if (n._px === undefined) continue;
+          const d = Math.hypot(n._px - mx, n._py - my);
+          if (d < mejorD) { mejorD = d; hoverRuta = n.ruta; }
+        }
+      }
+      const qBuscar = $('buscar').value.trim().toLowerCase();
+      const matchBusqueda = (n) => Boolean(qBuscar) && n.ruta.toLowerCase().includes(qBuscar);
+      const resalta = (n) => !sel && !moduloSel && !qBuscar && !soloHuerfanos ? null :
+        (n.ruta === sel) ? 'sel' : moduloSel && n.modulo === moduloSel ? 'mod' : matchBusqueda(n) ? 'busca' : soloHuerfanos ? 'fuera' : (sel || moduloSel ? 'fuera' : null);
+
+      // ── enlaces (se dibujan antes que las esferas, atenuados por profundidad) ──
+      const proy = new Map(lista.map((l) => [l.n, l]));
+      for (const e of aristas) {
+        const A = proy.get(e.a), B = proy.get(e.b);
+        if (!A || !B) continue;
+        const zm = (A.p.z + B.p.z) / 2;
+        const prof = clamp((zm + 700) / 1700, 0, 1);
+        let alfa = (neblina ? 0.5 - prof * 0.42 : 0.34) * Math.min(A.fade, B.fade);
+        const toca = (sel && (e.a.ruta === sel || e.b.ruta === sel)) || (moduloSel && e.a.modulo === moduloSel && e.b.modulo === moduloSel);
+        if (sel || moduloSel) alfa *= toca ? 2.6 : 0.16;
+        if (alfa <= 0.015) continue;
+        const col = toca ? [126, 214, 238] : mezclar(hex2rgb(colorModulo[e.a.modulo] || '#3d5a80'), FONDO, neblina ? prof * 0.85 : 0.25);
+        cv.strokeStyle = `rgba(${col[0]},${col[1]},${col[2]},${clamp(alfa, 0, 0.92)})`;
+        cv.lineWidth = clamp(1.15 * Math.min(A.p.s, B.p.s) * 1.15, 0.35, 2.6);
+        cv.beginPath(); cv.moveTo(A.p.x, A.p.y); cv.lineTo(B.p.x, B.p.y); cv.stroke();
+      }
+
+      // ── esferas con sombreado, especular y niebla ──
+      for (const l of lista) {
+        const { n, p, r } = l;
+        const prof = clamp((p.z + 700) / 1700, 0, 1);
+        const base = hex2rgb(colorModulo[n.modulo] || '#5b8cff');
+        const atenuado = mezclar(base, FONDO, neblina ? prof * 0.72 : 0.2);
+        const alfa = (neblina ? 1 - prof * 0.45 : 1) * l.fade;
+        const estadoR = resalta(n);
+        const alfas = estadoR === 'fuera' ? alfa * 0.16 : alfa;
+        if (alfas < 0.03) continue;
+
+        // halo (estados especiales)
+        if (n.huerfano || n.duplicado || estadoR === 'sel' || n.pulso) {
+          const colorHalo = estadoR === 'sel' ? '78,195,224' : n.huerfano ? '242,84,125' : n.duplicado ? '255,182,72' : '78,195,224';
+          const g = cv.createRadialGradient(p.x, p.y, r * 0.4, p.x, p.y, r * 2.6);
+          g.addColorStop(0, `rgba(${colorHalo},${0.30 * alfas})`);
+          g.addColorStop(1, `rgba(${colorHalo},0)`);
+          cv.fillStyle = g;
+          cv.beginPath(); cv.arc(p.x, p.y, r * 2.6, 0, 6.2832); cv.fill();
+        }
+
+        // esfera: gradiente radial desplazado (luz desde arriba-izquierda) + borde oscuro
+        const luz = cv.createRadialGradient(p.x - r * 0.36, p.y - r * 0.42, r * 0.08, p.x, p.y, r * 1.06);
+        luz.addColorStop(0, `rgba(${Math.min(255, atenuado[0] + 105)},${Math.min(255, atenuado[1] + 105)},${Math.min(255, atenuado[2] + 105)},${alfas})`);
+        luz.addColorStop(0.42, `rgba(${atenuado[0]},${atenuado[1]},${atenuado[2]},${alfas})`);
+        luz.addColorStop(1, `rgba(${Math.round(atenuado[0] * 0.28)},${Math.round(atenuado[1] * 0.28)},${Math.round(atenuado[2] * 0.28)},${alfas})`);
+        cv.fillStyle = luz;
+        cv.beginPath(); cv.arc(p.x, p.y, r, 0, 6.2832); cv.fill();
+
+        // punto especular
+        if (r > 7) {
+          cv.fillStyle = `rgba(255,255,255,${0.5 * alfas})`;
+          cv.beginPath(); cv.arc(p.x - r * 0.3, p.y - r * 0.36, Math.max(0.9, r * 0.14), 0, 6.2832); cv.fill();
+        }
+        // anillo para entradas / selección / coincidencia de búsqueda
+        if (n.es_entrada || estadoR === 'sel' || estadoR === 'busca') {
+          cv.strokeStyle = estadoR === 'sel' ? `rgba(126,214,238,${0.95 * alfas})`
+            : estadoR === 'busca' ? `rgba(255,182,72,${0.9 * alfas})` : `rgba(34,211,167,${0.75 * alfas})`;
+          cv.lineWidth = estadoR === 'sel' ? 2.4 : 1.4;
+          cv.beginPath(); cv.arc(p.x, p.y, r + 4, 0, 6.2832); cv.stroke();
+        }
+        // latido del cambio (anillo que se expande 1.6 s)
+        if (n.pulso) {
+          const t = (ahora - n.pulso) / 1600;
+          if (t < 1) {
+            cv.strokeStyle = `rgba(126,214,238,${0.85 * (1 - t)})`;
+            cv.lineWidth = 2.2 * (1 - t) + 0.6;
+            cv.beginPath(); cv.arc(p.x, p.y, r + 6 + t * 46, 0, 6.2832); cv.stroke();
+          } else n.pulso = null;
+        }
+        n._px = p.x; n._py = p.y; n._pr = r;
+      }
+
+      // ── nombres de módulos (reservados primero para que las etiquetas de archivo los eviten) ──
+      const colisiones = [];
+      cv.textAlign = 'center';
+      cv.font = '600 13px ui-sans-serif, system-ui, sans-serif';
+      // los módulos con más líneas etiquetan primero (los grandes mandan)
+      const ordenMods = [...centroModulos.entries()].sort((a, b) => (estado?.modulos.find((x) => x.modulo === b[0])?.lineas ?? 0) - (estado?.modulos.find((x) => x.modulo === a[0])?.lineas ?? 0));
+      for (const [m, c] of ordenMods) {
+        const p = proyectar(c);
+        const prof = clamp((p.z + 700) / 1700, 0, 1);
+        const ancho = cv.measureText(m).width;
+        const rect = { x: p.x - ancho / 2 - 4, y: p.y - 24, w: ancho + 8, h: 19 };
+        const choca = colisiones.some((x) => !(rect.x + rect.w < x.x || rect.x > x.x + x.w || rect.y + rect.h < x.y || rect.y > x.y + x.h));
+        if (choca && !(moduloSel === m)) { c._rect = null; continue; }
+        colisiones.push(rect);
+        c._rect = rect;
+        const col = colorModulo[m] || '#888';
+        const alfa = (neblina ? 0.85 - prof * 0.35 : 0.7) * (moduloSel && moduloSel !== m ? 0.22 : 1);
+        // fondo tenue para legibilidad
+        cv.fillStyle = 'rgba(6,10,18,0.55)';
+        cv.fillRect(rect.x, rect.y, rect.w, rect.h);
+        cv.fillStyle = hexRgba(col, alfa);
+        cv.fillText(m, p.x, p.y - 8);
+      }
+
+      // ── pase de etiquetas: prioridad (selección/hover/búsqueda primero) + tope de 14 + anti-colisión ──
+      const candidatas = [];
+      for (const n of nodos) {
+        if (n._px === undefined) continue;
+        const esSel = n.ruta === sel, esHover = n.ruta === hoverRuta, esBusca = matchBusqueda(n);
+        const prioridad = esSel || esHover ? 0 : esBusca ? 1 : 2;
+        candidatas.push({ n, prioridad, radio: n._pr || 4 });
+      }
+      candidatas.sort((a, b) => a.prioridad - b.prioridad || b.radio - a.radio);
+      let dibujadas = 0;
+      for (const c of candidatas) {
+        if (dibujadas >= 14) break;
+        if (c.prioridad === 2 && c.radio < 20) continue;         // sin prioridad: solo esferas grandes
+        if (moduloSel && c.n.modulo !== moduloSel && c.prioridad === 2) continue;
+        const n = c.n;
+        const tam = clamp(10 + (n._pr || 4) * 0.12, 10, 12.5);
+        cv.font = `${tam.toFixed(0)}px ui-monospace, monospace`;
+        const corto = n.ruta.length > 30 ? '…' + n.ruta.slice(-29) : n.ruta;
+        const ancho = cv.measureText(corto).width;
+        const rect = { x: n._px - ancho / 2 - 2, y: n._py + (n._pr || 4) + 3, w: ancho + 4, h: tam + 5 };
+        const choca = colisiones.some((x) => !(rect.x + rect.w < x.x || rect.x > x.x + x.w || rect.y + rect.h < x.y || rect.y > x.y + x.h));
+        if (choca) continue;
+        colisiones.push(rect); dibujadas++;
+        cv.fillStyle = 'rgba(6,10,18,0.68)';
+        cv.fillRect(rect.x - 2, rect.y - 1, rect.w + 4, rect.h);
+        cv.fillStyle = c.prioridad <= 1 ? 'rgba(126,214,238,0.98)' : 'rgba(220,230,240,0.82)';
+        cv.textAlign = 'center';
+        cv.fillText(corto, n._px, rect.y + rect.h - 3.5);
+      }
+
+      // viñeta
+      const vg = cv.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.35, W / 2, H / 2, Math.max(W, H) * 0.72);
+      vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,0.5)');
+      cv.fillStyle = vg; cv.fillRect(0, 0, W, H);
+
+      requestAnimationFrame(cuadro);
+    }
+
+    const hexRgba = (h, a) => { const c = hex2rgb(h); return `rgba(${c[0]},${c[1]},${c[2]},${clamp(a, 0, 1)})`; };
+
+    /* ── interacción ── */
+    let px = 0, py = 0, mx = -999, my = -999, mouseDentro = false;
+    canvas.addEventListener('pointermove', (e) => {
+      const r = canvas.getBoundingClientRect();
+      mx = e.clientX - r.left; my = e.clientY - r.top; mouseDentro = true;
+    });
+    canvas.addEventListener('pointerleave', () => { mouseDentro = false; mx = -999; my = -999; });
+    canvas.addEventListener('pointerdown', (e) => {
+      arrastrando = true; movido = false; px = e.clientX; py = e.clientY;
+      canvas.classList.add('arrastrando'); canvas.setPointerCapture(e.pointerId);
+    });
+    canvas.addEventListener('pointermove', (e) => {
+      if (!arrastrando) return;
+      const dx = e.clientX - px, dy = e.clientY - py;
+      if (Math.abs(dx) + Math.abs(dy) > 3) movido = true;
+      yaw += dx * 0.0068; pitch = clamp(pitch + dy * 0.0055, -1.35, 1.35);
+      velYaw = dx * 0.34; velPitch = dy * 0.22;
+      px = e.clientX; py = e.clientY;
+    });
+    canvas.addEventListener('pointerup', (e) => {
+      arrastrando = false; canvas.classList.remove('arrastrando');
+      if (!movido) elegirEn(e.offsetX, e.offsetY);
+    });
+    canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      dist = clamp(dist + e.deltaY * 0.9, 430, 2600);
+    }, { passive: false });
+    canvas.addEventListener('dblclick', () => { autoGirar = !autoGirar; $('btnGirar').classList.toggle('activo', autoGirar); });
+
+    function elegirEn(x, y) {
+      let mejor = null, mejorD = 22;
+      for (const n of nodos) {
+        if (n._px === undefined) continue;
+        const d = Math.hypot(n._px - x, n._py - y);
+        if (d < mejorD) { mejorD = d; mejor = n; }
+      }
+      if (mejor) { seleccion = mejor.ruta; moduloSel = null; pintarLista(); }
+      else { seleccion = null; pintarLista(); }
+    }
+
+    /** Encuadre exacto: proyecta la escena y ajusta la distancia al bbox real. */
+    function encuadrarVista() {
+      if (!W || !H || nodos.length === 0) return;
+      const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
+      const mx = W / 2 - 48, my = H / 2 - 48;   // margen
+      let necesario = 700;
+      for (const n of nodos) {
+        const x1 = n.x * cy - n.z * sy, z1 = n.x * sy + n.z * cy;
+        const y2 = n.y * cp - z1 * sp, z2 = n.y * sp + z1 * cp;
+        // proyección: px = x1 * F/(z2+dist) → requiere |x1|*F/(z2+dist) ≤ mx
+        necesario = Math.max(necesario, (F * Math.abs(x1)) / mx - z2, (F * Math.abs(y2)) / my - z2);
+      }
+      dist = clamp(necesario * 1.06, 700, 4200);
+    }
+
+    function reencuadrar() { elegirYawOptimo(); pitch = -0.30; encuadrarVista(); velYaw = velPitch = 0; }
+
+    /** Prueba 48 ángulos y se queda con el que más separa los cúmulos en pantalla. */
+    function elegirYawOptimo() {
+      let mejor = yaw, mejorPunt = -Infinity;
+      const cp0 = Math.cos(pitch), sp0 = Math.sin(pitch);
+      for (let k = 0; k < 48; k++) {
+        const y0 = (k / 48) * Math.PI * 2;
+        const cy = Math.cos(y0), sy = Math.sin(y0);
+        const pts = [...centroModulos.values()].map((c) => {
+          const x1 = c.x * cy - c.z * sy, z1 = c.x * sy + c.z * cy;
+          const y2 = c.y * cp0 - z1 * sp0, z2 = c.y * sp0 + z1 * cp0;
+          const sc = 1 / Math.max(120, z2 + dist);
+          return { x: x1 * sc, y: y2 * sc };
+        });
+        let minD = Infinity;
+        for (let i = 0; i < pts.length; i++) for (let j = i + 1; j < pts.length; j++) {
+          minD = Math.min(minD, Math.hypot(pts[i].x - pts[j].x, pts[i].y - pts[j].y));
+        }
+        if (minD > mejorPunt) { mejorPunt = minD; mejor = y0; }
+      }
+      yaw = mejor;
+    }
+
+    ajustar();
+    let ajustes = 0;
+    new ResizeObserver(() => { ajustar(); if (ajustes++ < 2 && nodos.length) encuadrarVista(); }).observe($('escena3d'));
+    requestAnimationFrame(cuadro);
+
+    return {
+      actualizar, reencuadrar,
+      set autoGirar(v) { autoGirar = v; }, get autoGirar() { return autoGirar; },
+      set neblina(v) { neblina = v; }, get neblina() { return neblina; },
+      ultimo: () => ({ yaw, pitch, dist }),
+    };
+  })();
+
+  /* ═══════════════ Panel: cabecera, lista, detalle, bitácora ═══════════════ */
+  function pintarCabecera() {
+    if (!estado) return;
+    $('sub').textContent = `${estado.proyecto}${estado.version ? ' v' + estado.version : ''} · ${estado.raiz}`;
+    const t = estado.totales;
+    $('chips').innerHTML = [
+      ['ok', t.archivos, 'archivos'], ['in', t.lineas.toLocaleString('es-MX'), 'líneas'],
+      ['', t.rutas, 'rutas'], ['', t.pruebas, 'pruebas'],
+      [t.huerfanos ? 'al' : 'ok', t.huerfanos, 'huérfanos'],
+      [t.pendientes ? 'av' : 'ok', t.pendientes, 'pendientes'],
+      [t.duplicados ? 'av' : 'ok', t.duplicados, 'duplicados'],
+      ['', t.entradas, 'entradas'],
+    ].map(([c, v, n]) => `<div class="chip ${c}"><b>${v}</b><span>${n}</span></div>`).join('');
+    $('rev').textContent = `· rev ${estado.revision} · ${new Date(estado.generado_en).toLocaleTimeString('es-MX')}`;
+    $('selRaiz').innerHTML = (CONFIG.raices || []).map((r) => `<option value="${esc(r)}" ${r === raiz ? 'selected' : ''}>${esc(r)}</option>`).join('') || `<option>${esc(raiz)}</option>`;
+    document.title = `Mapa 3D — ${estado.proyecto} · rev ${estado.revision}`;
+  }
+
+  function pintarLista() {
+    if (!estado) return;
+    const q = $('buscar').value.trim().toLowerCase();
+    let archivos = estado.archivos.slice();
+    if (moduloSel) archivos = archivos.filter((a) => a.modulo === moduloSel);
+    if (soloHuerfanos) archivos = archivos.filter((a) => a.huerfano);
+    if (q) archivos = archivos.filter((a) => a.ruta.toLowerCase().includes(q) || a.exports.some((e) => e.toLowerCase().includes(q)));
+    archivos.sort((a, b) => (COLOR(a) === COLOR(b) ? b.lineas - a.lineas : COLOR(a) === 'normal' ? 1 : -1));
+    $('tituloPanel').firstChild.textContent = moduloSel ? `Archivos de ${moduloSel} ` : 'Archivos ';
+    $('conteoArchivos').textContent = `${archivos.length} de ${estado.archivos.length}`;
+    $('lista').innerHTML = archivos.map((a) => `
+      <div class="fila ${seleccion === a.ruta ? 'sel' : ''}" data-ruta="${esc(a.ruta)}">
+        <span class="ico ${COLOR(a)}"></span>
+        <span>
+          <div class="ruta">${esc(a.ruta)}</div>
+          <div style="font-size:11px;color:var(--suave)">${a.rutas.length ? a.rutas.length + ' ruta(s) · ' : ''}${a.dependientes.length} dependiente(s) · ${a.lineas} líneas${a.huerfano ? ' · desconectado' : ''}${a.duplicado ? ' · duplicado' : ''}</div>
+        </span>
+        <span class="der">${a.es_entrada ? 'entrada' : a.es_prueba ? 'prueba' : ''}</span>
+      </div>`).join('') || '<div class="vacio">Sin coincidencias.</div>';
+    $('lista').querySelectorAll('.fila').forEach((f) => { f.onclick = () => { seleccion = f.dataset.ruta; moduloSel = null; pintarLista(); pintarMapa2D(); }; });
+    pintarDetalle();
+  }
+
+  function pintarDetalle() {
+    const a = estado?.archivos.find((x) => x.ruta === seleccion);
+    if (!a) { $('detalle').style.display = 'none'; return; }
+    $('detalle').style.display = 'block';
+    const pill = (r) => `<span class="pill" data-ir="${esc(r)}">${esc(r)}</span>`;
+    $('detalle').innerHTML = `
+      <h3>${esc(a.ruta)}</h3>
+      <div class="sub">${esc(a.modulo)} · ${a.lineas} líneas · ${(a.bytes / 1024).toFixed(1)} KB ${a.huerfano ? '· <span style="color:var(--mal)">desconectado</span>' : ''} ${a.duplicado ? '· <span style="color:var(--aviso)">duplicado</span>' : ''}</div>
+      ${a.rutas.length ? `<div class="bloque"><h4>Rutas que expone</h4>${a.rutas.map((r) => `<span class="pill verde">${r.metodo} ${esc(r.ruta)}</span>`).join('')}</div>` : ''}
+      <div class="bloque"><h4>Depende de (${a.imports.length})</h4>${a.imports.map(pill).join('') || '<span style="color:var(--suave);font-size:12px">nada interno</span>'}</div>
+      <div class="bloque"><h4>Lo usan (${a.dependientes.length})</h4>${a.dependientes.map(pill).join('') || '<span style="color:var(--suave);font-size:12px">nadie</span>'}</div>
+      ${a.paquetes.length ? `<div class="bloque"><h4>Paquetes externos</h4>${a.paquetes.map((p) => `<span class="pill">${esc(p)}</span>`).join('')}</div>` : ''}
+      ${a.marcadores.length ? `<div class="bloque"><h4>Pendientes en el archivo (${a.marcadores.length})</h4>${a.marcadores.map((m) => `<div class="marca"><b>${m.tipo}</b> línea ${m.linea}: ${esc(m.texto) || '—'}</div>`).join('')}</div>` : ''}
+      ${a.exports.length ? `<div class="bloque"><h4>Exporta (${a.exports.length})</h4>${a.exports.slice(0, 18).map((e) => `<span class="pill">${esc(e)}</span>`).join('')}</div>` : ''}`;
+    $('detalle').querySelectorAll('[data-ir]').forEach((el) => {
+      el.onclick = () => { seleccion = el.dataset.ir; moduloSel = null; pintarLista(); pintarMapa2D(); };
+    });
+  }
+
+  /* ── mapa 2D (vista alternativa, misma data) ── */
+  function pintarMapa2D() {
+    if (!estado) return;
+    const lienzo = $('lienzo'), svg = $('flechas');
+    [...lienzo.querySelectorAll('.caja')].forEach((e) => e.remove());
+    svg.innerHTML = '';
+    const mods = estado.modulos;
+    const cols = Math.max(1, Math.ceil(Math.sqrt(mods.length)));
+    const W = 210, H = 78, GX = 58, GY = 46, MX = 20, MY = 16;
+    const filas = Math.ceil(mods.length / cols);
+    const ancho = MX * 2 + cols * W + (cols - 1) * GX;
+    const alto = MY * 2 + filas * H + (filas - 1) * GY;
+    lienzo.style.minWidth = ancho + 'px';
+    svg.setAttribute('width', ancho); svg.setAttribute('height', Math.max(470, alto));
+    svg.setAttribute('viewBox', `0 0 ${ancho} ${Math.max(470, alto)}`);
+    const pos = {};
+    mods.forEach((m, i) => {
+      const col = i % cols, fila = Math.floor(i / cols);
+      pos[m.modulo] = { x: MX + col * (W + GX), y: MY + fila * (H + GY) };
+    });
+    for (const a of estado.aristas_modulo) {
+      const p1 = pos[a.desde], p2 = pos[a.hacia];
+      if (!p1 || !p2) continue;
+      const x1 = p1.x + W / 2, y1 = p1.y + H / 2, x2 = p2.x + W / 2, y2 = p2.y + H / 2;
+      const resalta = moduloSel && (a.desde === moduloSel || a.hacia === moduloSel);
+      const l = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      Object.entries({ x1, y1, x2, y2 }).forEach(([k, v]) => l.setAttribute(k, v));
+      l.setAttribute('stroke', resalta ? '#4ec3e0' : '#3d5a80');
+      l.setAttribute('stroke-width', resalta ? Math.min(1.2 + a.peso / 2, 5) : Math.min(0.8 + a.peso / 4, 3.5));
+      l.setAttribute('opacity', moduloSel && !resalta ? 0.22 : 0.62);
+      svg.appendChild(l);
+    }
+    for (const m of mods) {
+      const p = pos[m.modulo];
+      const archivos = estado.archivos.filter((a) => a.modulo === m.modulo);
+      const huer = archivos.filter((a) => a.huerfano).length;
+      const pend = archivos.reduce((acc, a) => acc + a.marcadores.filter((x) => ['TODO', 'FIXME', 'STUB'].includes(x.tipo)).length, 0);
+      const caja = document.createElement('div');
+      caja.className = 'caja' + (moduloSel === m.modulo ? ' sel' : '');
+      caja.style.cssText = `left:${p.x}px; top:${p.y}px; width:${W}px; height:${H}px`;
+      caja.innerHTML = `<div class="nombre">${esc(m.modulo)}</div>
+        <div class="meta">${m.archivos} archivos · ${m.lineas.toLocaleString('es-MX')} líneas · ${m.rutas} rutas</div>
+        <div class="alertas">${huer ? `<span class="mini rojo">${huer} huérfano${huer > 1 ? 's' : ''}</span>` : ''}${pend ? `<span class="mini naranja">${pend} pendiente${pend > 1 ? 's' : ''}</span>` : ''}</div>`;
+      caja.onclick = () => { moduloSel = moduloSel === m.modulo ? null : m.modulo; seleccion = null; pintarMapa2D(); pintarLista(); };
+      lienzo.appendChild(caja);
+    }
+  }
+
+  /* ── bitácora ── */
+  const ICONO = { archivo_nuevo: '🟢', archivo_eliminado: '⚪', lineas: '✏️', ruta_nueva: '🔗', ruta_eliminada: '✂️',
+    huerfano_nuevo: '🔴', huerfano_resuelto: '✅', pendiente_nuevo: '🟡', pendiente_resuelto: '✅', duplicado_nuevo: '🟠' };
+  function apuntarCambios(cambios) {
+    const reales = (cambios || []).filter((c) => c.tipo !== 'sin_cambios');
+    if (!reales.length) return;
+    const hora = new Date().toLocaleTimeString('es-MX');
+    reales.forEach((c) => bitacora.unshift({ hora, ...c }));
+    bitacora = bitacora.slice(0, 40);
+    $('bitacora').innerHTML = bitacora.map((c, i) => `
+      <div class="evento ${i < reales.length ? 'nuevo' : ''}">
+        <span class="hora">${c.hora}</span><span>${ICONO[c.tipo] || '•'}</span><span>${esc(c.detalle)}</span>
+      </div>`).join('');
+  }
+
+  /* ── refresco en vivo ── */
+  async function refrescar(forzar) {
+    try {
+      const r = await fetch(`/api/taller/mapa?raiz=${encodeURIComponent(raiz)}${forzar ? '&forzar=1' : ''}`);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const d = await r.json();
+      const cambios = (d.cambios || []).filter((c) => c.tipo !== 'sin_cambios');
+      estado = d.estado; ultimaVez = Date.now();
+      $('error').style.display = 'none';
+      pintarCabecera();
+      tresD.actualizar(estado, cambios);
+      pintarLista();
+      if ($('lienzo').style.display !== 'none') pintarMapa2D();
+      apuntarCambios(d.cambios || []);
+    } catch (e) {
+      if (estado) { $('hace').textContent = 'vista estática (sin conexión al servidor)'; $('hace').style.color = 'var(--aviso)'; return; }
+      $('error').style.display = 'block';
+      $('error').textContent = `No se pudo actualizar el mapa: ${e.message}.` + (CONFIG.taller_publico === false ? ' Este despliegue tiene el mapa protegido: requiere API key.' : '');
+    }
+  }
+
+  /* ── controles ── */
+  setInterval(() => {
+    if (document.hidden) return;
+    const s = Math.round((Date.now() - ultimaVez) / 1000);
+    $('hace').textContent = s < 2 ? 'actualizado ahora' : `actualizado hace ${s} s`;
+  }, 1000);
+  setInterval(() => { if (auto && !document.hidden) refrescar(false); }, 4000);
+
+  $('btnReanalizar').onclick = () => refrescar(true);
+  $('btnAuto').onclick = () => { auto = !auto; $('btnAuto').textContent = auto ? '⏸ Pausar auto (4 s)' : '▶ Activar auto (4 s)'; $('btnAuto').classList.toggle('activo', auto); };
+  $('btnHuerfanos').onclick = () => { soloHuerfanos = !soloHuerfanos; $('btnHuerfanos').classList.toggle('activo', soloHuerfanos); pintarLista(); };
+  $('buscar').oninput = () => { pintarLista(); if ($('lienzo').style.display !== 'none') pintarMapa2D(); };
+  $('selRaiz').onchange = (e) => { raiz = e.target.value; seleccion = null; moduloSel = null; refrescar(true); };
+  $('btnGirar').onclick = () => { tresD.autoGirar = !tresD.autoGirar; $('btnGirar').classList.toggle('activo', tresD.autoGirar); };
+  $('btnFog').onclick = () => { tresD.neblina = !tresD.neblina; $('btnFog').classList.toggle('activo', tresD.neblina); };
+  $('btnReencuadre').onclick = () => tresD.reencuadrar();
+  $('btn3d').onclick = () => {
+    $('escena3d').style.display = 'block'; $('lienzo').style.display = 'none';
+    $('btn3d').classList.add('activo'); $('btn2d').classList.remove('activo');
+  };
+  $('btn2d').onclick = () => {
+    $('escena3d').style.display = 'none'; $('lienzo').style.display = 'block';
+    $('btn2d').classList.add('activo'); $('btn3d').classList.remove('activo');
+    pintarMapa2D();
+  };
+
+  // leyenda por módulo
+  function pintarLeyenda() {
+    if (!estado) return;
+    $('leyenda').innerHTML = estado.modulos.slice(0, 8).map((m) =>
+      `<div><i style="background:${colorModulo[m.modulo] || '#888'}"></i>${esc(m.modulo)}</div>`).join('')
+      + `<div><i style="background:var(--mal)"></i>huérfano</div><div><i style="background:var(--aviso)"></i>duplicado</div>`;
+  }
+
+  pintarCabecera(); pintarLeyenda(); pintarLista();
+  if (estado) tresD.actualizar(estado, []);
+  if (!estado) refrescar(true); else setInterval(pintarLeyenda, 200);
+</script>
+</body>
+</html>

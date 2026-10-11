@@ -1,0 +1,12 @@
+{
+  "name": "proy-inspeccion",
+  "version": "0.3.0",
+  "private": true,
+  "dependencies": {
+    "express": "4.18.2",
+    "jsonwebtoken": "8.5.1",
+    "lodash": "4.17.10",
+    "request": "2.88.2",
+    "sqlite3": "5.1.5"
+  }
+}

@@ -1,0 +1,83 @@
+{
+  "version": 1,
+  "consecutivo": 2,
+  "pedidos": [
+    {
+      "folio": "P-0001",
+      "cliente": "Distribuidora Jalisco SA de CV",
+      "estado": "enviado",
+      "items": [
+        {
+          "sku": "TEC-001",
+          "descripcion": "Teclado mecánico RGB",
+          "cantidad": 10,
+          "precio_unitario": 1290,
+          "importe": 12900
+        },
+        {
+          "sku": "LAM-006",
+          "descripcion": "Lámpara LED de escritorio",
+          "cantidad": 20,
+          "precio_unitario": 420,
+          "importe": 8400
+        }
+      ],
+      "subtotal": 21300,
+      "iva": 3408,
+      "total": 24708,
+      "notas": "Entrega en bodega Tlaquepaque.",
+      "creado_en": "2026-09-20T16:00:00.000Z",
+      "actualizado_en": "2026-09-25T18:30:00.000Z",
+      "historial": [
+        {
+          "estado": "borrador",
+          "fecha": "2026-09-20T16:00:00.000Z"
+        },
+        {
+          "estado": "confirmado",
+          "fecha": "2026-09-21T10:00:00.000Z"
+        },
+        {
+          "estado": "en_produccion",
+          "fecha": "2026-09-22T09:00:00.000Z"
+        },
+        {
+          "estado": "enviado",
+          "fecha": "2026-09-25T18:30:00.000Z",
+          "nota": "Guía DHL 1234567890"
+        }
+      ]
+    },
+    {
+      "folio": "P-0002",
+      "cliente": "Coworking Chapultepec",
+      "estado": "confirmado",
+      "items": [
+        {
+          "sku": "SIL-004",
+          "descripcion": "Silla ergonómica malla",
+          "cantidad": 4,
+          "precio_unitario": 3490,
+          "importe": 13960
+        }
+      ],
+      "subtotal": 13960,
+      "iva": 2233.6,
+      "total": 16193.6,
+      "notas": "",
+      "creado_en": "2026-10-02T15:00:00.000Z",
+      "actualizado_en": "2026-10-03T11:00:00.000Z",
+      "historial": [
+        {
+          "estado": "borrador",
+          "fecha": "2026-10-02T15:00:00.000Z"
+        },
+        {
+          "estado": "confirmado",
+          "fecha": "2026-10-03T11:00:00.000Z",
+          "nota": "Anticipo 50% recibido"
+        }
+      ]
+    }
+  ]
+}

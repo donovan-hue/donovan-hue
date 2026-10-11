@@ -1,0 +1,55 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.donovan-hue/mcp-suite-mx",
+  "title": "Suite MCP MX",
+  "description": "Plataforma MCP para la operación de empresas mexicanas: negocio e inventario con IVA/retenciones, CFDI 4.0 (borrador y XML sin sellar), documentos, análisis de datos, DevOps, taller digital del proyecto, centinela de seguridad con plan comprobable, parche con pruebas y reversión, orquesta de flujos y rúter de modelos por coste por resultado útil. 61 herramientas, local-first, SQLite, en español.",
+  "repository": {
+    "url": "https://github.com/donovan-hue/donovan-hue",
+    "source": "github"
+  },
+  "version": "0.1.0",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "mcp-suite-mx",
+      "version": "0.1.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "DATA_DIR",
+          "description": "Carpeta de datos (SQLite, auditoría, artefactos). Por defecto ./data",
+          "isRequired": false,
+          "format": "string"
+        },
+        {
+          "name": "AUTH_MODE",
+          "description": "off | optional | required. Solo aplica al transporte HTTP; el uso local por stdio no pide clave.",
+          "isRequired": false,
+          "format": "string"
+        },
+        {
+          "name": "ALLOWED_GIT_ROOTS",
+          "description": "Rutas separadas por ':' donde las herramientas de proyecto pueden leer y escribir (taller, centinela, parche, orquesta).",
+          "isRequired": false,
+          "format": "string"
+        }
+      ]
+    }
+  ],
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://TU-DOMINIO/mcp",
+      "headers": [
+        {
+          "name": "Authorization",
+          "description": "Bearer <api key> emitida con: node dist/cli.js keys create --nombre equipo --scopes negocio,analisis",
+          "isRequired": true,
+          "isSecret": true
+        }
+      ]
+    }
+  ]
+}

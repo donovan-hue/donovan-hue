@@ -1,0 +1,48 @@
+{
+  "modelos": [
+    {
+      "id": "local-rapido",
+      "nombre": "Modelo local pequeño",
+      "donde": "local",
+      "fuerza": 1,
+      "coste_relativo": 0,
+      "latencia": "baja",
+      "nota": "Corre en tu máquina (p. ej. Ollama). Ideal: formato, renombrados, resúmenes cortos."
+    },
+    {
+      "id": "local-grande",
+      "nombre": "Modelo local grande",
+      "donde": "local",
+      "fuerza": 2,
+      "coste_relativo": 0,
+      "latencia": "media",
+      "nota": "Sin costo por uso; pide más máquina. Ideal cuando el código no puede salir."
+    },
+    {
+      "id": "nube-rapida",
+      "nombre": "Modelo de nube económico",
+      "donde": "nube",
+      "fuerza": 2,
+      "coste_relativo": 1,
+      "latencia": "baja"
+    },
+    {
+      "id": "nube-media",
+      "nombre": "Modelo de nube intermedio",
+      "donde": "nube",
+      "fuerza": 2,
+      "coste_relativo": 3,
+      "latencia": "media"
+    },
+    {
+      "id": "nube-fuerte",
+      "nombre": "Modelo de nube frontera",
+      "donde": "nube",
+      "fuerza": 3,
+      "coste_relativo": 10,
+      "latencia": "alta",
+      "nota": "Para lo complejo o lo crítico: migraciones, arquitectura, seguridad."
+    }
+  ],
+  "nota": "Costes en unidades relativas: edítalos con tus precios reales."
+}

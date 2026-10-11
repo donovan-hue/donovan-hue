@@ -1,0 +1,49 @@
+mes,sucursal,vendedor,sku,producto,categoria,unidades,precio_unitario,venta_neta,costo_total
+2024-01,Guadalajara,Ana Ruiz,TEC-001,Teclado mecánico RGB,Electrónica,6,1290,7740,2941
+2024-01,Monterrey,Carlos Medina,MON-003,Monitor 27 pulgadas 144Hz,Electrónica,7,5890,41230,11957
+2024-02,Guadalajara,Luis Ortega,SIL-004,Silla ergonómica malla,Mobiliario,10,3490,34900,13960
+2024-02,Monterrey,Ana Ruiz,LAM-006,Lámpara LED de escritorio,Accesorios,11,420,4620,2541
+2024-03,Guadalajara,Carlos Medina,TEC-001,Teclado mecánico RGB,Electrónica,13,1290,16770,6373
+2024-03,Monterrey,Luis Ortega,MON-003,Monitor 27 pulgadas 144Hz,Electrónica,9,5890,53010,15373
+2024-04,Guadalajara,Ana Ruiz,SIL-004,Silla ergonómica malla,Mobiliario,10,3490,34900,13960
+2024-04,Monterrey,Carlos Medina,LAM-006,Lámpara LED de escritorio,Accesorios,12,420,5040,2772
+2024-05,Guadalajara,Luis Ortega,TEC-001,Teclado mecánico RGB,Electrónica,12,1290,15480,5882
+2024-05,Monterrey,Ana Ruiz,MON-003,Monitor 27 pulgadas 144Hz,Electrónica,13,5890,76570,22205
+2024-06,Guadalajara,Carlos Medina,SIL-004,Silla ergonómica malla,Mobiliario,8,3490,27920,11168
+2024-06,Monterrey,Luis Ortega,LAM-006,Lámpara LED de escritorio,Accesorios,9,420,3780,2079
+2024-07,Guadalajara,Ana Ruiz,TEC-001,Teclado mecánico RGB,Electrónica,9,1290,11610,4412
+2024-07,Monterrey,Carlos Medina,MON-003,Monitor 27 pulgadas 144Hz,Electrónica,10,5890,58900,17081
+2024-08,Guadalajara,Luis Ortega,SIL-004,Silla ergonómica malla,Mobiliario,9,3490,31410,12564
+2024-08,Monterrey,Ana Ruiz,LAM-006,Lámpara LED de escritorio,Accesorios,6,420,2520,1386
+2024-09,Guadalajara,Carlos Medina,TEC-001,Teclado mecánico RGB,Electrónica,6,1290,7740,2941
+2024-09,Monterrey,Luis Ortega,MON-003,Monitor 27 pulgadas 144Hz,Electrónica,7,5890,41230,11957
+2024-10,Guadalajara,Ana Ruiz,SIL-004,Silla ergonómica malla,Mobiliario,7,3490,24430,9772
+2024-10,Monterrey,Carlos Medina,LAM-006,Lámpara LED de escritorio,Accesorios,8,420,3360,1848
+2024-11,Guadalajara,Luis Ortega,TEC-001,Teclado mecánico RGB,Electrónica,5,1290,6450,2451
+2024-11,Monterrey,Ana Ruiz,MON-003,Monitor 27 pulgadas 144Hz,Electrónica,6,5890,35340,10249
+2024-12,Guadalajara,Carlos Medina,SIL-004,Silla ergonómica malla,Mobiliario,11,3490,38390,15356
+2024-12,Monterrey,Luis Ortega,LAM-006,Lámpara LED de escritorio,Accesorios,12,420,5040,2772
+2025-01,Guadalajara,Ana Ruiz,TEC-001,Teclado mecánico RGB,Electrónica,11,1290,14190,5392
+2025-01,Monterrey,Carlos Medina,MON-003,Monitor 27 pulgadas 144Hz,Electrónica,7,5890,41230,11957
+2025-02,Guadalajara,Luis Ortega,SIL-004,Silla ergonómica malla,Mobiliario,11,3490,38390,15356
+2025-02,Monterrey,Ana Ruiz,LAM-006,Lámpara LED de escritorio,Accesorios,13,420,5460,3003
+2025-03,Guadalajara,Carlos Medina,TEC-001,Teclado mecánico RGB,Electrónica,15,1290,19350,7353
+2025-03,Monterrey,Luis Ortega,MON-003,Monitor 27 pulgadas 144Hz,Electrónica,16,5890,94240,27330
+2025-04,Guadalajara,Ana Ruiz,SIL-004,Silla ergonómica malla,Mobiliario,11,3490,38390,15356
+2025-04,Monterrey,Carlos Medina,LAM-006,Lámpara LED de escritorio,Accesorios,13,420,5460,3003
+2025-05,Guadalajara,Luis Ortega,TEC-001,Teclado mecánico RGB,Electrónica,14,1290,18060,6863
+2025-05,Monterrey,Ana Ruiz,MON-003,Monitor 27 pulgadas 144Hz,Electrónica,15,5890,88350,25622
+2025-06,Guadalajara,Carlos Medina,SIL-004,Silla ergonómica malla,Mobiliario,15,3490,52350,20940
+2025-06,Monterrey,Luis Ortega,LAM-006,Lámpara LED de escritorio,Accesorios,10,420,4200,2310
+2025-07,Guadalajara,Ana Ruiz,TEC-001,Teclado mecánico RGB,Electrónica,10,1290,12900,4902
+2025-07,Monterrey,Carlos Medina,MON-003,Monitor 27 pulgadas 144Hz,Electrónica,11,5890,64790,18789
+2025-08,Guadalajara,Luis Ortega,SIL-004,Silla ergonómica malla,Mobiliario,10,3490,34900,13960
+2025-08,Monterrey,Ana Ruiz,LAM-006,Lámpara LED de escritorio,Accesorios,11,420,4620,2541
+2025-09,Guadalajara,Carlos Medina,TEC-001,Teclado mecánico RGB,Electrónica,7,1290,9030,3431
+2025-09,Monterrey,Luis Ortega,MON-003,Monitor 27 pulgadas 144Hz,Electrónica,7,5890,41230,11957
+2025-10,Guadalajara,Ana Ruiz,SIL-004,Silla ergonómica malla,Mobiliario,8,3490,27920,11168
+2025-10,Monterrey,Carlos Medina,LAM-006,Lámpara LED de escritorio,Accesorios,9,420,3780,2079
+2025-11,Guadalajara,Luis Ortega,TEC-001,Teclado mecánico RGB,Electrónica,10,1290,12900,4902
+2025-11,Monterrey,Ana Ruiz,MON-003,Monitor 27 pulgadas 144Hz,Electrónica,7,5890,41230,11957
+2025-12,Guadalajara,Carlos Medina,SIL-004,Silla ergonómica malla,Mobiliario,12,3490,41880,16752
+2025-12,Monterrey,Luis Ortega,LAM-006,Lámpara LED de escritorio,Accesorios,13,420,5460,3003

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cfdi:Comprobante Version="4.0" Serie="F" Folio="1024" Fecha="2026-10-11T08:34:20" FormaPago="03" MetodoPago="PUE" Moneda="MXN" Exportacion="01" LugarExpedicion="44100" SubTotal="13960.00" Total="16193.60" TipoDeComprobante="I" xmlns:cfdi="http://www.sat.gob.mx/cfd/4" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sat.gob.mx/cfd/4 http://www.sat.gob.mx/sitio_internet/cfd/4/cfdv40.xsd">
+  <cfdi:Emisor Rfc="DJA240118H72" Nombre="Distribuidora Jalisco SA de CV" RegimenFiscal="601"/>
+  <cfdi:Receptor Rfc="CCH190903K31" Nombre="Coworking Chapultepec SA de CV" DomicilioFiscalReceptor="44100" RegimenFiscalReceptor="601" UsoCFDI="G01"/>
+  <cfdi:Conceptos>
+    <cfdi:Concepto ClaveProdServ="01010101" Cantidad="4" ClaveUnidad="E48" Unidad="Unidad de servicio" Descripcion="Silla ergonómica malla" ValorUnitario="3490.00" Importe="13960.00" ObjetoImp="02">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base="13960.00" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="2233.60"/>
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+  </cfdi:Conceptos>
+  <cfdi:Impuestos TotalImpuestosTrasladados="2233.60">
+    <cfdi:Traslados>
+      <cfdi:Traslado Base="13960.00" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="2233.60"/>
+    </cfdi:Traslados>
+  </cfdi:Impuestos>
+</cfdi:Comprobante>

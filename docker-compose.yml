@@ -1,0 +1,35 @@
+services:
+  mcp-suite:
+    build: .
+    image: mcp-suite-mx:0.1.0
+    container_name: mcp-suite-mx
+    restart: unless-stopped
+    ports:
+      - "8787:8787"
+    env_file:
+      - .env
+    environment:
+      MCP_TRANSPORT: http
+      HOST: 0.0.0.0
+      PORT: 8787
+      DATA_DIR: /app/data
+      AUTH_MODE: ${AUTH_MODE:-required}
+      RATE_LIMIT_RPM: ${RATE_LIMIT_RPM:-120}
+      LOG_LEVEL: info
+    volumes:
+      # Persistencia: suite.db (SQLite WAL), auditoría NDJSON y datasets.
+      - ./data:/app/data
+      # Repositorios autorizados para las herramientas de git (solo lectura).
+      # Descomenta y ajusta:
+      # - /home/sistemas/repos:/repos:ro
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8787/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # Crear claves dentro del contenedor ya en marcha:
+  #   docker compose exec mcp-suite node dist/cli.js keys create --nombre staff --scopes negocio,analisis
+  # Ver bitácora:
+  #   docker compose exec mcp-suite node dist/cli.js audit --limite 20

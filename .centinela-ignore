@@ -1,0 +1,6 @@
+# Exclusiones justificadas para el escaneo de la propia suite.
+# Las pruebas del motor de seguridad contienen credenciales FALSAS con forma de
+# verdaderas (AWS, Stripe, OpenAI, GitHub) para demostrar que la detección
+# funciona. No son reales, nunca estuvieron activas y viven solo en tests/.
+:tests/** # fixtures de prueba con credenciales ficticias
+:data/fixtures/** # proyectos de ejemplo con problemas deliberados (para demos y pruebas)

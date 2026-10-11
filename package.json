@@ -1,0 +1,61 @@
+{
+  "name": "mcp-suite-mx",
+  "version": "0.1.0",
+  "description": "Plataforma MCP modular: negocio, documentos, análisis de datos y DevOps. Transporte stdio (local) y HTTP (remoto).",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "mcp-suite-mx": "dist/index.js"
+  },
+  "scripts": {
+    "dev": "tsx watch src/index.ts --transport http",
+    "dev:stdio": "tsx src/index.ts --transport stdio",
+    "cli": "node dist/cli.js",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "start:http": "node dist/index.js --transport http",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.20.0",
+    "better-sqlite3": "^12.11.1",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^3.0.0"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/donovan-hue/donovan-hue.git"
+  },
+  "homepage": "https://github.com/donovan-hue/donovan-hue#readme",
+  "bugs": {
+    "url": "https://github.com/donovan-hue/donovan-hue/issues"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "cfdi",
+    "mexico",
+    "sqlite",
+    "agents",
+    "security",
+    "code-repair"
+  ],
+  "files": [
+    "dist",
+    "paginas",
+    "docs",
+    "README.md",
+    ".env.example"
+  ]
+}

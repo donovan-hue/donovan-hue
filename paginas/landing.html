@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Suite MCP MX — Panel de herramientas</title>
+<style>
+  :root {
+    --bg: #0b1020;
+    --bg2: #121936;
+    --card: #161f3d;
+    --card2: #1b2547;
+    --border: #273358;
+    --txt: #e8ecf8;
+    --muted: #9aa6c8;
+    --acento: #5b8cff;
+    --acento2: #22d3a7;
+    --warn: #ffb648;
+    --peligro: #ff7a7a;
+    --radio: 14px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: radial-gradient(1200px 600px at 20% -10%, #1b2a5e 0%, var(--bg) 55%) no-repeat, var(--bg);
+    color: var(--txt); font: 15px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    min-height: 100vh;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 34px 22px 60px; }
+  header.top { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 6px; }
+  .logo {
+    width: 46px; height: 46px; border-radius: 13px; flex: none;
+    background: linear-gradient(135deg, var(--acento), var(--acento2));
+    display: grid; place-items: center; font-weight: 800; font-size: 19px; color: #071026;
+  }
+  h1 { font-size: 25px; margin: 0; letter-spacing: -.4px; }
+  .sub { color: var(--muted); margin: 2px 0 22px; font-size: 14.5px; }
+  .badges { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 22px; }
+  .badge {
+    font-size: 12.5px; padding: 5px 11px; border-radius: 999px; border: 1px solid var(--border);
+    background: var(--card); color: var(--muted);
+  }
+  .badge b { color: var(--txt); font-weight: 600; }
+  .badge.ok { border-color: #1d5c47; color: #7ff0cd; }
+  .badge.warn { border-color: #6b521d; color: #ffd479; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 26px; }
+  .stat { background: linear-gradient(180deg, var(--card), var(--card2)); border: 1px solid var(--border); border-radius: var(--radio); padding: 15px 16px; }
+  .stat .n { font-size: 27px; font-weight: 700; letter-spacing: -.5px; }
+  .stat .l { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+  h2 { font-size: 17px; margin: 30px 0 12px; letter-spacing: -.2px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 14px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radio); padding: 16px 17px; }
+  .card h3 { margin: 0 0 3px; font-size: 15.5px; display: flex; align-items: center; gap: 8px; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+  .card .desc { color: var(--muted); font-size: 13px; margin: 0 0 11px; }
+  ul.tools { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
+  ul.tools li { display: flex; align-items: baseline; gap: 8px; font-size: 13px; flex-wrap: wrap; }
+  ul.tools code { color: #cfe0ff; background: #0d1530; border: 1px solid var(--border); border-radius: 6px; padding: 1px 6px; font-size: 12.2px; }
+  ul.tools span { color: var(--muted); font-size: 12.4px; }
+  .ro { color: #6fe3c0; font-size: 11px; border: 1px solid #1d5c47; border-radius: 5px; padding: 0 4px; }
+  .rw { color: #ffcf8a; font-size: 11px; border: 1px solid #6b521d; border-radius: 5px; padding: 0 4px; }
+  pre {
+    background: #0a1128; border: 1px solid var(--border); border-radius: 12px; padding: 14px 15px; overflow: auto;
+    font: 12.7px/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: #d7e3ff; margin: 8px 0 0;
+  }
+  .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 14px; }
+  .k { color: var(--acento2); } .s { color: #ffd479; } .c { color: #6d7c9e; }
+  footer { margin-top: 34px; color: #6d7c9e; font-size: 12.6px; border-top: 1px solid var(--border); padding-top: 16px; }
+  .btn { background:#1d4ed8; color:#fff; border:0; border-radius:8px; padding:6px 12px; font-weight:600; cursor:pointer; font-size:13px }
+  .btn.sec { background:#24324a; color:#dbe6ff }
+  .btn.no { background:#7f1d1d; color:#fee2e2 }
+  .apro { display:flex; gap:10px; align-items:flex-start; justify-content:space-between; padding:10px 0; border-top:1px solid #1b2740 }
+  .apro:first-child { border-top:0 }
+  .apro .meta { color:var(--muted); font-size:12.5px; margin-top:3px }
+  .apro code { font-size:12.5px }
+  .endpoint { font-family: ui-monospace, monospace; font-size: 12.6px; color: #cfe0ff; }
+  .sec-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; }
+  .sec-item { border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; background: #131b36; }
+  .sec-item .t { font-size: 12px; color: var(--muted); }
+  .sec-item .v { font-size: 14.5px; font-weight: 600; margin-top: 2px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="logo">M</div>
+    <div>
+      <h1>Suite MCP MX <span style="color:var(--muted); font-weight:400; font-size:15px">v0.1.0</span></h1>
+      <div style="color:var(--muted); font-size:13.5px">Plataforma MCP: negocio · documentos · análisis · devops · <a href="/taller" style="color:var(--accent,#4ec3e0); text-decoration:none; font-weight:600">mapa vivo del proyecto →</a></div>
+    </div>
+  </header>
+  <p class="sub">Servidor Model Context Protocol con transporte doble: <b>stdio</b> (local, Claude Desktop / Cursor / Claude Code) y <b>Streamable HTTP</b> (remoto, con API keys, límite de tasa, auditoría y métricas).</p>
+
+  <div class="badges" id="badges"></div>
+  <div class="stats" id="stats"></div>
+
+  <h2>Seguridad y operación</h2>
+  <div class="sec-grid" id="seguridad"></div>
+
+  <h2>Catálogo de herramientas</h2>
+  <div class="grid" id="modulos"></div>
+
+  <h2>Aprobaciones pendientes <span style="color:var(--muted); font-weight:400; font-size:14px">— parches, despliegues y cambios sensibles que esperan tu visto bueno</span></h2>
+  <div class="card" id="aprobaciones">
+    <p class="desc" id="aprobaciones-msg">Cargando…</p>
+    <div id="aprobaciones-clave" style="display:none; margin-bottom:10px">
+      <label style="font-size:13px; color:var(--muted)">Clave con permiso de escritura (se guarda solo en esta pestaña):&nbsp;</label>
+      <input id="aprobaciones-input" type="password" placeholder="mcp_…" style="background:#0b1220; border:1px solid #24324a; color:#e8eefc; border-radius:8px; padding:6px 10px; font-family:ui-monospace,monospace; width:320px" />
+      <button class="btn" id="aprobaciones-guardar" style="margin-left:8px">Guardar</button>
+    </div>
+    <div id="aprobaciones-lista"></div>
+  </div>
+
+  <h2>Parches propuestos</h2>
+  <div class="card" id="parches-demo">
+    <p class="desc" id="parches-msg">Cargando…</p>
+    <div id="parches-lista"></div>
+  </div>
+
+  <h2>Cómo conectarlo</h2>
+  <div class="cols">
+    <div class="card">
+      <h3><span class="dot" style="background:var(--acento)"></span> Claude Desktop / Cursor (stdio)</h3>
+      <p class="desc">Archivo de configuración local. Reinicia la app después de guardar.</p>
+      <pre id="cfg-stdio"></pre>
+    </div>
+    <div class="card">
+      <h3><span class="dot" style="background:var(--acento2)"></span> Cliente remoto con API key (HTTP)</h3>
+      <p class="desc">Un servidor para todo el equipo, con permisos por clave y límites de uso.</p>
+      <pre id="cfg-http"></pre>
+    </div>
+  </div>
+
+  <h2>Endpoints de este servidor</h2>
+  <div class="card">
+    <ul class="tools">
+      <li><code>POST /mcp</code><span>endpoint MCP (JSON-RPC 2.0 · Authorization: Bearer &lt;api key&gt;)</span><span class="rw">requiere clave</span></li>
+      <li><code>GET /health</code><span>estado y uptime</span></li>
+      <li><code>GET /metrics</code><span>métricas Prometheus</span></li>
+      <li><code>GET /api/catalogo</code><span>herramientas agrupadas por módulo</span></li>
+      <li><code>GET /api/claves</code><span>claves emitidas (sin hashes)</span></li>
+      <li><code>GET /api/auditoria</code><span>bitácora de eventos append-only</span></li>
+      <li><code>GET /api/aprobaciones</code><span>aprobaciones pendientes (parches, despliegues, cambios sensibles)</span><span class="rw">requiere clave</span></li>
+      <li><code>POST /api/aprobaciones/&lt;id&gt;</code><span>aprobar o rechazar desde el panel (<code>{"decision":"aprobar"}</code>)</span><span class="rw">requiere clave</span></li>
+      <li><code>GET /api/parches</code><span>historial de parches con huella, veredicto y respaldo</span><span class="rw">requiere clave</span></li>
+      <li><code>GET /panel</code><span>este panel</span></li>
+    </ul>
+  </div>
+
+  <footer>
+    Suite MCP MX · generado automáticamente a partir del catálogo y la configuración reales del servidor.
+    Datos en SQLite (<span class="endpoint">suite.db</span>) · auditoría en <span class="endpoint">runtime/auditoria.ndjson</span>.
+  </footer>
+</div>
+
+<script>
+  const CONFIG = <!--CONFIG_JSON-->;
+  const PANEL = <!--PANEL_JSON-->;
+  const MODULOS = PANEL.modulos;
+
+  const COLORES = { negocio: '#5b8cff', facturacion: '#4ec3e0', documentos: '#22d3a7', analisis: '#ffb648', devops: '#c17aff', taller: '#f2547d', centinela: '#ff6b9d', parche: '#f4a261', orquesta: '#7bd389', ruter: '#b388ff', core: '#8fa3c8' };
+  const DESCRIPCIONES = {
+    negocio: 'Inventario, pedidos y operación comercial con IVA y retenciones de México. Persistencia transaccional en SQLite.',
+    facturacion: 'CFDI 4.0: borrador y XML sin sellar, validación de datos fiscales, retenciones de honorarios y catálogos del SAT.',
+    documentos: 'Lectura de archivos, análisis de texto, extracción de datos fiscales y plantillas.',
+    analisis: 'CSV, estadística descriptiva, correlaciones, series de tiempo y pronósticos.',
+    devops: 'Git, resumen de proyectos, health checks HTTP y diagnóstico de logs.',
+    taller: 'Gemelo digital: mapa vivo del proyecto, impacto de cambios, rescate de proyectos abandonados y pendientes por impacto.',
+    centinela: 'Seguridad preventiva: secretos expuestos, configuraciones peligrosas, rutas sin protección y dependencias, con plan de corrección comprobable.',
+    parche: 'Reparar con red de seguridad: diagnóstico con evidencia, parche revisable, pruebas antes/después en copia aislada, aplicación con aprobación humana y reversión en un comando.',
+    orquesta: 'Flujos de dev con bitácora y aprobaciones: verificar despliegue, respaldo con rotación, auditoría de dependencias, preparar release y post-mortem automático.',
+    ruter: 'Elección de modelo por tarea con coste por resultado útil: mide si la tarea sirvió (pruebas verdes, parche vivo) en lugar de estimar por benchmark.',
+    core: 'Información del servidor y bitácora de auditoría.',
+  };
+  const TITULOS = { negocio: 'Negocio', facturacion: 'Facturación (CFDI)', documentos: 'Documentos', analisis: 'Análisis de datos', devops: 'DevOps', taller: 'Taller (gemelo digital)', centinela: 'Centinela (seguridad)', parche: 'Parche (reparar)', orquesta: 'Orquesta (flujos)', ruter: 'Rúter (modelos)', core: 'Núcleo' };
+  const ETIQUETAS = { negocio: 'Negocio', documentos: 'Documentos', analisis: 'Análisis', devops: 'DevOps', taller: 'Taller', centinela: 'Centinela', parche: 'Parche', orquesta: 'Orquesta', ruter: 'Rúter', core: 'Núcleo' };
+
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const totalHerramientas = MODULOS.reduce((a, m) => a + m.total, 0);
+  const totalModulos = MODULOS.filter((m) => m.modulo !== 'core').length;
+
+  const AUTH_TEXTO = { off: 'desactivada (solo desarrollo)', optional: 'opcional', required: 'obligatoria (API keys)' };
+  const AUTH_CLASE = { off: 'warn', optional: 'warn', required: 'ok' };
+
+  document.getElementById('badges').innerHTML = [
+    '<span class="badge ok">● servidor en línea</span>',
+    `<span class="badge ${AUTH_CLASE[PANEL.authMode] || 'warn'}">auth <b>${esc(AUTH_TEXTO[PANEL.authMode] || PANEL.authMode)}</b></span>`,
+    `<span class="badge">transporte <b>${esc(CONFIG.transporte)}</b></span>`,
+    `<span class="badge">puerto <b>${CONFIG.puerto}</b></span>`,
+    `<span class="badge">IVA <b>${CONFIG.iva_pct}%</b></span>`,
+    `<span class="badge">v<b>${esc(CONFIG.version)}</b></span>`,
+  ].join('');
+
+  document.getElementById('stats').innerHTML = [
+    [totalHerramientas, 'herramientas MCP'],
+    [totalModulos, 'módulos de negocio'],
+    [PANEL.authMode === 'required' ? 'API keys' : 'abierto', `autenticación · ${PANEL.clavesActivas} clave(s) activa(s)`],
+    [`${PANEL.rateLimitRpm}/min`, 'límite por cliente'],
+  ].map(([n, l]) => `<div class="stat"><div class="n">${esc(n)}</div><div class="l">${esc(l)}</div></div>`).join('');
+
+  document.getElementById('seguridad').innerHTML = [
+    ['Autenticación', AUTH_TEXTO[PANEL.authMode] || PANEL.authMode],
+    ['Claves emitidas activas', String(PANEL.clavesActivas)],
+    ['Límite de tasa', `${PANEL.rateLimitRpm} peticiones/min por cliente`],
+    ['Auditoría', 'append-only (NDJSON, inmutable)'],
+    ['Persistencia', 'SQLite en modo WAL'],
+    ['Métricas', 'formato Prometheus en /metrics'],
+    ['Respaldos', 'VACUUM INTO + manifiesto sha256 (cli backup)'],
+    ['TLS', 'TLS_CERT / TLS_KEY (HTTPS + HSTS)'],
+  ].map(([t, v]) => `<div class="sec-item"><div class="t">${esc(t)}</div><div class="v">${esc(v)}</div></div>`).join('');
+
+  document.getElementById('modulos').innerHTML = MODULOS.map((m) => `
+    <div class="card">
+      <h3><span class="dot" style="background:${COLORES[m.modulo] || '#888'}"></span>${esc(TITULOS[m.modulo] || m.modulo)}
+        <span style="color:var(--muted); font-weight:400; font-size:12.5px">(${m.total})</span></h3>
+      <p class="desc">${esc(DESCRIPCIONES[m.modulo] || '')}</p>
+      <ul class="tools">
+        ${m.herramientas.map((t) => `<li><code>${esc(t.name)}</code>${t.readOnly ? '<span class="ro">solo lectura</span>' : '<span class="rw">escribe</span>'}<span>${esc(t.title)}</span></li>`).join('')}
+      </ul>
+    </div>`).join('');
+
+  const rutaProyecto = '/ruta/a/mcp-suite-mx';
+  document.getElementById('cfg-stdio').innerHTML =
+    `<span class="c">// claude_desktop_config.json · mcp.json de Cursor es equivalente</span>
+{
+  <span class="k">"mcpServers"</span>: {
+    <span class="k">"suite-mx"</span>: {
+      <span class="k">"command"</span>: <span class="s">"node"</span>,
+      <span class="k">"args"</span>: [<span class="s">"${rutaProyecto}/dist/index.js"</span>, <span class="s">"--transport"</span>, <span class="s">"stdio"</span>],
+      <span class="k">"env"</span>: {
+        <span class="k">"DATA_DIR"</span>: <span class="s">"${rutaProyecto}/data"</span>,
+        <span class="k">"IVA_PCT"</span>: <span class="s">"16"</span>
+      }
+    }
+  }
+}`;
+
+  const host = location.host || `localhost:${CONFIG.puerto}`;
+  document.getElementById('cfg-http').innerHTML =
+    `<span class="c"># 1. Crea una clave con permisos concretos</span>
+node dist/cli.js keys create --nombre staff --scopes negocio,analisis
+
+<span class="c"># 2. Llama herramientas con esa clave</span>
+curl -s http://${host}/mcp \\
+  -H <span class="s">'Authorization: Bearer mcp_...'</span> \\
+  -H <span class="s">'content-type: application/json'</span> \\
+  -H <span class="s">'accept: application/json, text/event-stream'</span> \\
+  -d <span class="s">'{"jsonrpc":"2.0","id":1,"method":"tools/list"}'</span>
+
+<span class="c"># 3. Revisa la bitácora y las métricas</span>
+node dist/cli.js audit --limite 20
+curl -s http://${host}/metrics`;
+
+  // ── Aprobaciones y parches (en vivo, desde el servidor) ──────────────────
+  const CLAVE_GUARDADA = 'mcp_panel_clave';
+  const cabeceras = () => {
+    const k = sessionStorage.getItem(CLAVE_GUARDADA);
+    return k ? { Authorization: `Bearer ${k}` } : {};
+  };
+  const BTN = 'class="btn"';
+  const BTN_NO = 'class="btn no"';
+
+  function pedirClave(mensaje) {
+    const caja = document.getElementById('aprobaciones-clave');
+    caja.style.display = 'block';
+    document.getElementById('aprobaciones-msg').textContent = mensaje;
+  }
+
+  document.getElementById('aprobaciones-guardar').addEventListener('click', () => {
+    const valor = document.getElementById('aprobaciones-input').value.trim();
+    if (valor) sessionStorage.setItem(CLAVE_GUARDADA, valor);
+    cargarAprobaciones();
+    cargarParches();
+  });
+
+  async function resolver(id, decision) {
+    const motivo = decision === 'rechazar' ? (prompt('Motivo del rechazo (queda en la auditoría):') || 'sin motivo indicado') : undefined;
+    const r = await fetch(`/api/aprobaciones/${encodeURIComponent(id)}`, {
+      method: 'POST',
+      headers: { ...cabeceras(), 'content-type': 'application/json' },
+      body: JSON.stringify({ decision, motivo, por: 'panel' }),
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) { alert(d.error || `No se pudo ${decision}: HTTP ${r.status}`); return; }
+    cargarAprobaciones();
+  }
+
+  async function cargarAprobaciones() {
+    const msg = document.getElementById('aprobaciones-msg');
+    const cont = document.getElementById('aprobaciones-lista');
+    try {
+      const r = await fetch('/api/aprobaciones', { headers: cabeceras() });
+      if (r.status === 401 || r.status === 403) {
+        cont.innerHTML = '';
+        pedirClave('Este servidor pide clave (auth obligatoria). Pega una clave con permiso de escritura para ver y resolver aprobaciones — sin ella, nadie puede aprobar por accidente.');
+        return;
+      }
+      const d = await r.json();
+      const lista = d.aprobaciones || [];
+      msg.innerHTML = lista.length
+        ? `<b>${lista.length}</b> aprobación(es) pendiente(s). Aprobar aquí tiene el mismo efecto que <code>node dist/cli.js aprobar &lt;id&gt;</code> y queda en la auditoría.`
+        : 'No hay aprobaciones pendientes. Todo lo que requería visto bueno ya se resolvió.';
+      cont.innerHTML = lista.map((a) => `
+        <div class="apro">
+          <div>
+            <div><code>${esc(a.id)}</code> · <b>${esc(a.titulo)}</b> <span class="badge warn">${esc(a.tipo)}</span></div>
+            <div class="meta">pedida por ${esc(a.solicitada_por)} el ${esc(String(a.solicitada_en).replace('T', ' ').slice(0, 19))}${a.huella ? ` · huella <code>${esc(a.huella)}</code>` : ''}</div>
+            ${a.detalle ? `<div class="meta">${esc(String(a.detalle).slice(0, 220))}</div>` : ''}
+          </div>
+          <div style="white-space:nowrap">
+            <button ${BTN} data-id="${esc(a.id)}" data-dec="aprobar">Aprobar</button>
+            <button ${BTN_NO} data-id="${esc(a.id)}" data-dec="rechazar">Rechazar</button>
+          </div>
+        </div>`).join('');
+      cont.querySelectorAll('button[data-dec]').forEach((b) => {
+        b.addEventListener('click', () => resolver(b.dataset.id, b.dataset.dec === 'rechazar' ? 'rechazar' : 'aprobar'));
+      });
+    } catch (e) {
+      msg.textContent = `No se pudo consultar: ${e.message}`;
+    }
+  }
+
+  const ESTADOS_PARCHE = { propuesto: 'propuesto', probado: 'probado (veredicto listo)', aplicado: 'aplicado', revertido: 'revertido' };
+
+  async function cargarParches() {
+    const msg = document.getElementById('parches-msg');
+    const cont = document.getElementById('parches-lista');
+    try {
+      const r = await fetch('/api/parches?limite=10', { headers: cabeceras() });
+      if (!r.ok) { msg.textContent = 'Necesitas una clave de administración para ver el historial de parches.'; return; }
+      const d = await r.json();
+      const lista = d.parches || [];
+      msg.innerHTML = lista.length
+        ? `Los últimos <b>${lista.length}</b> parches de la suite: cada uno con su huella, su veredicto de pruebas y su respaldo.`
+        : 'Aún no hay parches. Pide uno con la herramienta MCP <code>parche_proponer</code>.';
+      cont.innerHTML = lista.map((p) => `
+        <div class="apro">
+          <div>
+            <div><code>${esc(p.id)}</code> · <b>${esc(p.titulo)}</b> <span class="badge ${p.estado === 'aplicado' ? 'ok' : 'warn'}">${esc(ESTADOS_PARCHE[p.estado] || p.estado)}</span>
+              ${p.veredicto ? `<span class="badge">pruebas: <b>${esc(p.veredicto)}</b></span>` : ''}</div>
+            <div class="meta">${esc((p.archivos || []).join(', '))} · huella <code>${esc(p.huella)}</code>${p.aplicado_en ? ` · aplicado ${esc(String(p.aplicado_en).replace('T', ' ').slice(0, 19))}` : ''}</div>
+          </div>
+        </div>`).join('');
+    } catch (e) {
+      msg.textContent = `No se pudo consultar: ${e.message}`;
+    }
+  }
+
+  cargarAprobaciones();
+  cargarParches();
+  document.title = `Suite MCP MX — ${totalHerramientas} herramientas MCP`;
+</script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+cliente,rfc,ciudad,giro,email,telefono,contacto,limite_credito,saldo_actual,estado
+Distribuidora Jalisco SA de CV,DJA240118H72,Guadalajara,Distribución,compras@dja.mx,+52 33 3812 4400,Alma Navarro,250000,84200,activo
+Coworking Chapultepec SA de CV,CCH190903K31,Guadalajara,Servicios,admin@coworkchapu.mx,+52 33 3615 7788,Raúl Ibarra,120000,16193,activo
+TecnoImport MX S. de R.L.,TIM170522B45,Monterrey,Importación,ventas@tecnoimport.mx,+52 81 8340 1122,Sofía Cantú,400000,0,activo
+Oficinas del Bajío SA de CV,OBA150711Q98,León,Mobiliario,contacto@oficinasbajio.mx,+52 477 712 3344,Jorge Rincón,180000,45300,activo
+AudioSur SA de CV,AUR200214M77,Mérida,Audio,pagos@audiosur.mx,+52 999 923 5566,Mariana Pech,90000,12750,activo
+Constructora Cárdenas e Hijos,CCI110428N12,Tlaquepaque,Construcción,obra@ccih.mx,+52 33 3658 9012,Pedro Cárdenas,300000,218000,con atraso
+Estudio Contable Zepeda,ECZ180330P56,Zapopan,Servicios profesionales,zepeda@contablezep.mx,+52 33 3122 8877,Verónica Zepeda,60000,8300,activo
+Hotel Ribera del Lago SA de CV,HRL160619R23,Chapala,Hotelería,compras@riberalago.mx,+52 376 765 4433,Iván Serrano,150000,0,activo
+MedicalForce MX S.A.P.I.,MMX210907T64,Guadalajara,Salud,adquisiciones@medicalforce.mx,+52 33 3846 2299,Daniela Robles,200000,94200,activo
+Restaurante El Fogón Tapatío,RFT120215F09,Guadalajara,Alimentos,elfogontapatio@gmail.com,+52 33 3820 6611,Hugo Trujillo,40000,36700,con atraso
+Universidad Tecnológica del Sur,UTS990301X88,Ocotlán,Educación,compras@uts.edu.mx,+52 392 925 1177,Elena Márquez,250000,0,activo
+Fábrica de Muebles Zamora,FMZ140812V31,Zamora,Manufactura,ventas@muebleszamora.mx,+52 351 512 4477,Ricardo Alfaro,95000,52100,inactivo

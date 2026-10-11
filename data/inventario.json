@@ -1,0 +1,101 @@
+{
+  "version": 1,
+  "items": [
+    {
+      "sku": "TEC-001",
+      "nombre": "Teclado mecánico RGB",
+      "categoria": "Electrónica",
+      "precio": 1290,
+      "costo": 780,
+      "stock": 24,
+      "stock_minimo": 5,
+      "unidad": "pieza",
+      "proveedor": "TecnoImport MX",
+      "actualizado_en": "2026-09-01T10:00:00.000Z"
+    },
+    {
+      "sku": "MOU-002",
+      "nombre": "Mouse inalámbrico ergonómico",
+      "categoria": "Electrónica",
+      "precio": 650,
+      "costo": 340,
+      "stock": 3,
+      "stock_minimo": 8,
+      "unidad": "pieza",
+      "proveedor": "TecnoImport MX",
+      "actualizado_en": "2026-09-01T10:00:00.000Z"
+    },
+    {
+      "sku": "MON-003",
+      "nombre": "Monitor 27 pulgadas 144Hz",
+      "categoria": "Electrónica",
+      "precio": 5890,
+      "costo": 4200,
+      "stock": 7,
+      "stock_minimo": 3,
+      "unidad": "pieza",
+      "proveedor": "DisplayPro",
+      "actualizado_en": "2026-09-01T10:00:00.000Z"
+    },
+    {
+      "sku": "SIL-004",
+      "nombre": "Silla ergonómica malla",
+      "categoria": "Mobiliario",
+      "precio": 3490,
+      "costo": 2100,
+      "stock": 12,
+      "stock_minimo": 4,
+      "unidad": "pieza",
+      "proveedor": "Oficinas del Bajío",
+      "actualizado_en": "2026-09-01T10:00:00.000Z"
+    },
+    {
+      "sku": "ESC-005",
+      "nombre": "Escritorio elevable 1.4m",
+      "categoria": "Mobiliario",
+      "precio": 4990,
+      "costo": 3100,
+      "stock": 5,
+      "stock_minimo": 2,
+      "unidad": "pieza",
+      "proveedor": "Oficinas del Bajío",
+      "actualizado_en": "2026-09-01T10:00:00.000Z"
+    },
+    {
+      "sku": "LAM-006",
+      "nombre": "Lámpara LED de escritorio",
+      "categoria": "Accesorios",
+      "precio": 420,
+      "costo": 190,
+      "stock": 40,
+      "stock_minimo": 10,
+      "unidad": "pieza",
+      "proveedor": "Ilumina GDL",
+      "actualizado_en": "2026-09-01T10:00:00.000Z"
+    },
+    {
+      "sku": "WEB-007",
+      "nombre": "Webcam Full HD con micrófono",
+      "categoria": "Electrónica",
+      "precio": 890,
+      "costo": 520,
+      "stock": 2,
+      "stock_minimo": 5,
+      "unidad": "pieza",
+      "proveedor": "TecnoImport MX",
+      "actualizado_en": "2026-09-01T10:00:00.000Z"
+    },
+    {
+      "sku": "DIA-008",
+      "nombre": "Diadema con cancelación de ruido",
+      "categoria": "Audio",
+      "precio": 1450,
+      "costo": 860,
+      "stock": 15,
+      "stock_minimo": 5,
+      "unidad": "pieza",
+      "proveedor": "AudioSur",
+      "actualizado_en": "2026-09-01T10:00:00.000Z"
+    }
+  ]
+}

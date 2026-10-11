@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="450" viewBox="0 0 880 450">
+<rect width="880" height="450" fill="#0d1420"/>
+<text x="40" y="32" fill="#e6edf3" font-family="ui-monospace,monospace" font-size="16">Mapa del proyecto — mcp-suite-mx (47 archivos)</text>
+<line x1="730" y1="108" x2="440" y2="108" stroke="#3d5a80" stroke-width="1.3333333333333333" opacity="0.55"/>
+<text x="585" y="104" fill="#7fa3c8" font-family="ui-monospace,monospace" font-size="11">1</text>
+<line x1="440" y1="108" x2="730" y2="108" stroke="#3d5a80" stroke-width="2.333333333333333" opacity="0.55"/>
+<text x="585" y="104" fill="#7fa3c8" font-family="ui-monospace,monospace" font-size="11">4</text>
+<line x1="440" y1="108" x2="440" y2="240" stroke="#3d5a80" stroke-width="3.6666666666666665" opacity="0.55"/>
+<text x="440" y="170" fill="#7fa3c8" font-family="ui-monospace,monospace" font-size="11">8</text>
+<line x1="440" y1="108" x2="150" y2="240" stroke="#3d5a80" stroke-width="2.666666666666667" opacity="0.55"/>
+<text x="295" y="170" fill="#7fa3c8" font-family="ui-monospace,monospace" font-size="11">5</text>
+<line x1="150" y1="240" x2="440" y2="108" stroke="#3d5a80" stroke-width="1.6666666666666665" opacity="0.55"/>
+<text x="295" y="170" fill="#7fa3c8" font-family="ui-monospace,monospace" font-size="11">2</text>
+<line x1="150" y1="240" x2="440" y2="240" stroke="#3d5a80" stroke-width="1.6666666666666665" opacity="0.55"/>
+<text x="295" y="236" fill="#7fa3c8" font-family="ui-monospace,monospace" font-size="11">2</text>
+<line x1="440" y1="240" x2="440" y2="108" stroke="#3d5a80" stroke-width="2.666666666666667" opacity="0.55"/>
+<text x="440" y="170" fill="#7fa3c8" font-family="ui-monospace,monospace" font-size="11">5</text>
+<line x1="440" y1="240" x2="730" y2="108" stroke="#3d5a80" stroke-width="1.3333333333333333" opacity="0.55"/>
+<text x="585" y="170" fill="#7fa3c8" font-family="ui-monospace,monospace" font-size="11">1</text>
+<line x1="440" y1="108" x2="730" y2="240" stroke="#3d5a80" stroke-width="3" opacity="0.55"/>
+<text x="585" y="170" fill="#7fa3c8" font-family="ui-monospace,monospace" font-size="11">6</text>
+<line x1="730" y1="240" x2="440" y2="108" stroke="#3d5a80" stroke-width="4.666666666666666" opacity="0.55"/>
+<text x="585" y="170" fill="#7fa3c8" font-family="ui-monospace,monospace" font-size="11">11</text>
+<line x1="730" y1="240" x2="440" y2="240" stroke="#3d5a80" stroke-width="5" opacity="0.55"/>
+<text x="585" y="236" fill="#7fa3c8" font-family="ui-monospace,monospace" font-size="11">16</text>
+<line x1="730" y1="240" x2="150" y2="240" stroke="#3d5a80" stroke-width="2" opacity="0.55"/>
+<text x="440" y="236" fill="#7fa3c8" font-family="ui-monospace,monospace" font-size="11">3</text>
+<line x1="150" y1="372" x2="440" y2="240" stroke="#3d5a80" stroke-width="5" opacity="0.55"/>
+<text x="295" y="302" fill="#7fa3c8" font-family="ui-monospace,monospace" font-size="11">12</text>
+<line x1="150" y1="372" x2="150" y2="240" stroke="#3d5a80" stroke-width="1.6666666666666665" opacity="0.55"/>
+<text x="150" y="302" fill="#7fa3c8" font-family="ui-monospace,monospace" font-size="11">2</text>
+<line x1="150" y1="372" x2="440" y2="108" stroke="#3d5a80" stroke-width="5" opacity="0.55"/>
+<text x="295" y="236" fill="#7fa3c8" font-family="ui-monospace,monospace" font-size="11">18</text>
+<line x1="150" y1="372" x2="730" y2="108" stroke="#3d5a80" stroke-width="2.666666666666667" opacity="0.55"/>
+<text x="440" y="236" fill="#7fa3c8" font-family="ui-monospace,monospace" font-size="11">5</text>
+<rect x="40" y="70" width="220" height="76" rx="10" fill="#152033" stroke="#4ec3e0" stroke-width="1.5"/>
+<text x="54" y="100" fill="#e6edf3" font-family="ui-monospace,monospace" font-size="14">scripts</text>
+<text x="54" y="122" fill="#7fa3c8" font-family="ui-monospace,monospace" font-size="11">2 archivos</text>
+<rect x="330" y="70" width="220" height="76" rx="10" fill="#152033" stroke="#4ec3e0" stroke-width="1.5"/>
+<text x="344" y="100" fill="#e6edf3" font-family="ui-monospace,monospace" font-size="14">src</text>
+<text x="344" y="122" fill="#7fa3c8" font-family="ui-monospace,monospace" font-size="11">10 archivos</text>
+<rect x="620" y="70" width="220" height="76" rx="10" fill="#152033" stroke="#4ec3e0" stroke-width="1.5"/>
+<text x="634" y="100" fill="#e6edf3" font-family="ui-monospace,monospace" font-size="14">src/auth</text>
+<text x="634" y="122" fill="#7fa3c8" font-family="ui-monospace,monospace" font-size="11">2 archivos</text>
+<rect x="40" y="202" width="220" height="76" rx="10" fill="#152033" stroke="#4ec3e0" stroke-width="1.5"/>
+<text x="54" y="232" fill="#e6edf3" font-family="ui-monospace,monospace" font-size="14">src/db</text>
+<text x="54" y="254" fill="#7fa3c8" font-family="ui-monospace,monospace" font-size="11">3 archivos</text>
+<rect x="330" y="202" width="220" height="76" rx="10" fill="#152033" stroke="#4ec3e0" stroke-width="1.5"/>
+<text x="344" y="232" fill="#e6edf3" font-family="ui-monospace,monospace" font-size="14">src/lib</text>
+<text x="344" y="254" fill="#7fa3c8" font-family="ui-monospace,monospace" font-size="11">13 archivos</text>
+<rect x="620" y="202" width="220" height="76" rx="10" fill="#152033" stroke="#4ec3e0" stroke-width="1.5"/>
+<text x="634" y="232" fill="#e6edf3" font-family="ui-monospace,monospace" font-size="14">src/tools</text>
+<text x="634" y="254" fill="#7fa3c8" font-family="ui-monospace,monospace" font-size="11">6 archivos</text>
+<rect x="40" y="334" width="220" height="76" rx="10" fill="#152033" stroke="#4ec3e0" stroke-width="1.5"/>
+<text x="54" y="364" fill="#e6edf3" font-family="ui-monospace,monospace" font-size="14">tests</text>
+<text x="54" y="386" fill="#7fa3c8" font-family="ui-monospace,monospace" font-size="11">11 archivos</text>
+</svg>

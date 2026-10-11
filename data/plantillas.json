@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "plantillas": [
+    {
+      "nombre": "recordatorio_pago",
+      "descripcion": "Correo de recordatorio de pago para clientes con facturas vencidas.",
+      "variables": [
+        "cliente",
+        "folio",
+        "monto",
+        "fecha_limite",
+        "dias_retraso",
+        "vendedor"
+      ],
+      "contenido": "Estimado(a) {{cliente}}:\n\nLe recordamos amablemente que la factura con folio {{folio}} por un monto de ${{monto}} MXN venció el {{fecha_limite}} ({{dias_retraso}} días de atraso).\n\nLe agradeceremos realizar el pago a la brevedad posible. Si ya lo realizó, por favor comparta su comprobante para actualizar el registro.\n\nQuedamos a sus órdenes.\n\nSaludos cordiales,\n{{vendedor}}\nÁrea de Cobranza",
+      "creado_en": "2026-09-15T12:00:00.000Z"
+    },
+    {
+      "nombre": "propuesta_servicios",
+      "descripcion": "Propuesta comercial básica para servicios profesionales.",
+      "variables": [
+        "cliente",
+        "proyecto",
+        "monto",
+        "duracion_semanas",
+        "fecha"
+      ],
+      "contenido": "PROPUESTA COMERCIAL\n\nCliente: {{cliente}}\nProyecto: {{proyecto}}\nFecha: {{fecha}}\n\nAlcance: implementación de {{proyecto}} con acompañamiento técnico durante {{duracion_semanas}} semanas.\nInversión: ${{monto}} MXN + IVA.\nVigencia de la propuesta: 30 días naturales.\n\nFirma de conformidad: ____________________",
+      "creado_en": "2026-09-15T12:05:00.000Z"
+    }
+  ]
+}

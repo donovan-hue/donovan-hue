@@ -1,0 +1,10 @@
+{
+  "tipos": {
+    "seguridad": {
+      "presupuesto_max": 0,
+      "solo_local": true,
+      "nota": "el código de seguridad nunca sale"
+    }
+  },
+  "actualizado": "2026-10-11T19:09:37.536Z"
+}

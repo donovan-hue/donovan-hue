@@ -1,0 +1,123 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  calidad:
+    name: Tipos, pruebas y build
+    runs-on: ubuntu-latest
+    env:
+      DATA_DIR: ${{ github.workspace }}/data-ci
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci --no-audit --no-fund
+
+      - name: Verificar tipos
+        run: npm run typecheck
+
+      - name: Pruebas unitarias y de integración
+        run: npm test
+
+      - name: Compilar
+        run: npm run build
+
+      - name: Humo del servidor compilado (stdio)
+        run: |
+          printf '%s\n' \
+            '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"ci","version":"1"}}}' \
+            '{"jsonrpc":"2.0","id":2,"method":"tools/list"}' \
+          | timeout 15 node dist/index.js --transport stdio | grep -q '"tools"'
+
+      - name: Humo del CLI de seguridad (crear y verificar claves)
+        run: |
+          mkdir -p "$DATA_DIR"
+          SALIDA=$(node dist/cli.js keys create --nombre ci --scopes negocio:ro)
+          echo "$SALIDA" | grep -q 'Clave creada'
+          CLAVE=$(echo "$SALIDA" | grep -Eo 'mcp_[0-9a-f]{8}_[A-Za-z0-9_-]+' | head -1)
+          test -n "$CLAVE"
+          node dist/cli.js keys list | grep -q 'ci'
+          node dist/cli.js check | grep -q '"auth_mode"'
+
+      - name: Humo del servidor HTTP con autenticación obligatoria
+        run: |
+          AUTH_MODE=required MCP_API_KEYS=clave-ci-123 PORT=8791 node dist/index.js --transport http &
+          SERVIDOR=$!
+          for i in $(seq 1 20); do curl -fsS http://127.0.0.1:8791/health && break || sleep 1; done
+          # Sin clave → 401
+          CODIGO=$(curl -s -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:8791/mcp \
+            -H 'content-type: application/json' -H 'accept: application/json, text/event-stream' \
+            -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}')
+          test "$CODIGO" = "401"
+          # Con clave → 200 y catálogo
+          curl -sf -X POST http://127.0.0.1:8791/mcp \
+            -H 'authorization: Bearer clave-ci-123' \
+            -H 'content-type: application/json' -H 'accept: application/json, text/event-stream' \
+            -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | grep -q 'mcp_suite_info'
+          # Métricas y auditoría disponibles
+          curl -sf http://127.0.0.1:8791/metrics | grep -q 'mcp_suite_http_peticiones_total'
+          curl -sf -H 'authorization: Bearer clave-ci-123' http://127.0.0.1:8791/api/auditoria | grep -q 'total'
+          # Herramientas de facturación (CFDI): retenciones de honorarios
+          curl -sf -X POST http://127.0.0.1:8791/mcp \
+            -H 'authorization: Bearer clave-ci-123' \
+            -H 'content-type: application/json' -H 'accept: application/json, text/event-stream' \
+            -d '{"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"cfdi_retenciones_calcular","arguments":{"monto":10000}}}' \
+            | grep -q '10408.33'
+          kill $SERVIDOR
+
+      - name: Humo de respaldos (copia consistente + rotación)
+        run: |
+          node dist/cli.js backup --conservar 2 | grep -q 'Respaldo creado'
+          node dist/cli.js backup --conservar 2 > /dev/null
+          node dist/cli.js backup list | grep -q 'respaldo'
+          node dist/cli.js check | grep -q '"respaldos"'
+
+      - name: Humo de HTTPS con certificado propio
+        run: |
+          mkdir -p data-ci/tls
+          openssl req -x509 -newkey rsa:2048 -nodes -days 2 \
+            -keyout data-ci/tls/key.pem -out data-ci/tls/cert.pem \
+            -subj '/CN=localhost' -addext 'subjectAltName=DNS:localhost,IP:127.0.0.1' 2>/dev/null
+          TLS_CERT=data-ci/tls/cert.pem TLS_KEY=data-ci/tls/key.pem PORT=8792 \
+            AUTH_MODE=required MCP_API_KEYS=clave-tls node dist/index.js --transport http &
+          SERVIDOR=$!
+          for i in $(seq 1 20); do curl -kfsS https://127.0.0.1:8792/health && break || sleep 1; done
+          curl -kfsS -o /dev/null -w '%{http_code}' https://127.0.0.1:8792/health | grep -q 200
+          curl -kfsS -D - -o /dev/null https://127.0.0.1:8792/health | grep -qi 'strict-transport-security'
+          kill $SERVIDOR
+
+  imagen:
+    name: Construir imagen Docker
+    runs-on: ubuntu-latest
+    needs: calidad
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: docker build -t mcp-suite-mx:ci .
+
+      - name: Humo del contenedor (health + auth obligatoria)
+        run: |
+          docker run -d --name mcp -p 8787:8787 -e MCP_API_KEYS=clave-docker mcp-suite-mx:ci
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8787/health; then ok=1; break; fi
+            sleep 2
+          done
+          [ "$ok" = "1" ] || (docker logs mcp; exit 1)
+          CODIGO=$(curl -s -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:8787/mcp \
+            -H 'content-type: application/json' -H 'accept: application/json, text/event-stream' \
+            -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}')
+          [ "$CODIGO" = "401" ] || (docker logs mcp; exit 1)
+          curl -sf -X POST http://127.0.0.1:8787/mcp \
+            -H 'authorization: Bearer clave-docker' \
+            -H 'content-type: application/json' -H 'accept: application/json, text/event-stream' \
+            -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | grep -q 'mcp_suite_info'
+          docker logs mcp | tail -5

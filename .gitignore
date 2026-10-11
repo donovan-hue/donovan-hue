@@ -1,0 +1,24 @@
+node_modules/
+dist/
+coverage/
+*.log
+.env
+.env.local
+
+# Estado en ejecución: SQLite (WAL), auditoría y artefactos de respaldo.
+# Los datasets, plantillas y JSON de la fase 1 sí se versionan.
+data/suite.db
+data/suite.db-wal
+data/suite.db-shm
+data/runtime/
+
+# Artefactos de las fases 4B/4C/4D (se recrean en uso; contienen datos de tu máquina).
+data/centinela/
+data/parche/
+data/orquesta/
+data/backups/
+data/tls/
+data/logs/
+
+# Proyectos de ejemplo (sin dependencias instaladas).
+data/fixtures/*/node_modules/
