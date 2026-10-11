@@ -1,6 +1,6 @@
 # Documento de alcance y dimensionamiento — Suite MCP MX
 
-**Proyecto:** `mcp-suite-mx` — plataforma MCP (Model Context Protocol) con 10 módulos de herramientas (incluye facturación CFDI 4.0, el taller de análisis de código, centinela de seguridad y el pack dev: parche, orquesta y rúter).
+**Proyecto:** `mcp-suite-mx` — plataforma MCP (Model Context Protocol) con 11 módulos de herramientas (incluye multi-empresa, facturación CFDI 4.0, el taller de análisis de código, centinela de seguridad y el pack dev: parche, orquesta y rúter).
 **Estado:** v0.1.0 · **Fase 1 entregada** (herramientas + doble transporte) · **Fase 2 entregada** (auth, rate limiting, auditoría, métricas, SQLite) · **Fase 3 entregada** (CFDI 4.0, HTTPS, respaldos).
 **Fecha:** 11 de octubre de 2026.
 
@@ -14,8 +14,8 @@
 | ¿Stack? | Sin preferencia → recomendación: **TypeScript / Node.js** | SDK oficial de MCP más maduro, un solo lenguaje para stdio y HTTP |
 | ¿Magnitud esperada? | **Producto completo** | Auth, despliegue remoto, CI/CD, pruebas y documentación |
 | ¿Dónde se usa? | **Local (stdio) + remoto (HTTP)** | Doble transporte obligatorio desde el día 1 |
-| ¿Dominio? | Los 10 dominios: negocio, facturación, documentos, análisis, DevOps, taller, centinela, parche, orquesta, rúter | 10 módulos independientes |
-| ¿Cantidad de herramientas? | "Más de 12" | **61 herramientas implementadas** |
+| ¿Dominio? | Los 11 dominios: empresas, negocio, facturación, documentos, análisis, DevOps, taller, centinela, parche, orquesta, rúter | 11 módulos independientes |
+| ¿Cantidad de herramientas? | "Más de 12" | **68 herramientas implementadas** |
 | ¿Autenticación? | Fase 1 sin auth → **Fase 2 con API keys** | Implementada: permisos por módulo + scopes de solo lectura |
 
 ## 2. Veredicto de magnitud
@@ -25,8 +25,8 @@
 | Indicador | Valor |
 |---|---|
 | Código fuente | ~5,240 líneas TS (33 archivos) + 260 líneas de panel HTML |
-| Pruebas | 169 pruebas (unitarias + integración MCP + HTTP con auth + HTTPS + CFDI + respaldos + taller/gemelo vivo + centinela/gate + parche + orquesta + rúter) |
-| Herramientas MCP | 59 en 10 módulos + 2 de núcleo |
+| Pruebas | 181 pruebas (unitarias + integración MCP + HTTP con auth + HTTPS + CFDI + respaldos + taller/gemelo vivo + centinela/gate + parche + orquesta + rúter + multi-empresa) |
+| Herramientas MCP | 66 en 11 módulos + 2 de núcleo |
 | Recursos y prompts MCP | 2 recursos + 2 prompts |
 | Superficie de despliegue | local (stdio), Docker + compose, CI/CD con humos de seguridad |
 | Dependencias de producción | 3 (SDK oficial de MCP, Zod, better-sqlite3) |
@@ -42,7 +42,8 @@
 | **Fase 4B** | Centinela: escaneo de seguridad local (secretos, configs, rutas, dependencias), plan de corrección comprobable, verificación contra línea base y gate de aprobación humana auditado | 6–9 días | ✅ Entregada |
 | **Fase 4C** | Parche: diagnóstico con evidencia, parche revisable, pruebas antes/después en copia aislada, aplicación con aprobación humana + respaldo y reversión en un comando; Centinela completo (permisos reales por ruta + npm audit con caché) | 12–18 días | ✅ Entregada |
 | **Fase 4D** | Orquesta (5 flujos de dev + flujos propios con actas y aprobaciones) y Rúter (cascada de modelos con coste por resultado útil) | 10–15 días | ✅ Entregada |
-| **Fase 4** | Multi-tenant, timbrado real vía PAC, OAuth 2.1, integración ERP/CRM, webhooks | 15–20 días | Pendiente |
+| **Fase 5A** | Multi-empresa: espacios aislados (inventario, pedidos, plantillas), importación de catálogo por CSV, claves de API atadas a una empresa, datos fiscales y series por empresa para CFDI, resumen y comparativa | 8–12 días | ✅ Entregada |
+| **Fase 5B** | Timbrado real vía PAC, OAuth 2.1, integración ERP/CRM, webhooks | 15–20 días | Pendiente |
 
 ## 3. Arquitectura
 
@@ -50,8 +51,8 @@
                     ┌──────────────────────────────────────────────────────┐
                     │                    mcp-suite-mx                      │
                     │                                                      │
- Claude Desktop ────┤ stdio ──► buildServer(ctx) ──► 61 herramientas       │
- Cursor / Claude    │            · negocio (9) · documentos (6)             │
+ Claude Desktop ────┤ stdio ──► buildServer(ctx) ──► 68 herramientas       │
+ Cursor / Claude    │         · empresas (6) · negocio (10) · documentos (6) │
  Code (local)       │            · análisis (7) · devops (6) · núcleo (2)  │
                     │            · recursos + prompts MCP                  │
  Clientes remotos ──┤ HTTP  ──► CAPAS TRANSVERSALES (fase 2)               │
@@ -134,6 +135,16 @@ Decisiones clave (fase 1 y 2):
 | `reparacion_revertir` | Restaura desde el respaldo en un comando (deshacer no requiere permiso) |
 | `reparaciones_listar` | Historial con estados, veredictos y guardarraíles activos |
 
+### Empresas — multi-empresa (6)
+| Herramienta | Para qué |
+|---|---|
+| `empresas_listar` | Espacios de trabajo con datos fiscales y cuál está activo |
+| `empresa_crear` | Espacio nuevo (RFC, régimen, CP, serie de folios) totalmente aislado |
+| `empresa_actual` | Ver o cambiar la empresa activa de la sesión (las claves atadas no cambian) |
+| `empresa_editar` | Corregir datos o archivar (oculta sin borrar; no permite archivar la activa) |
+| `empresa_resumen` | Inventario, ventas por estado, ticket promedio y riesgos de stock de una empresa |
+| `empresas_comparar` | Todas las empresas lado a lado, sin mezclar cifras |
+
 ### Orquesta — flujos con bitácora (5)
 | Herramienta | Para qué |
 |---|---|
@@ -188,7 +199,7 @@ Decisiones clave (fase 1 y 2):
 | Métricas | `GET /metrics` (Prometheus) |
 | Panel | `GET /panel` (público, sin datos de negocio) |
 | Docker | `docker compose up -d --build` (volumen `./data` persiste suite.db y auditoría) |
-| CI | GitHub Actions: tipos → 169 pruebas → build → humo stdio → humo de auth (401/200) → humos CFDI/respaldo/HTTPS → imagen Docker con auth |
+| CI | GitHub Actions: tipos → 181 pruebas → build → humo stdio → humo de auth (401/200) → humos CFDI/respaldo/HTTPS → imagen Docker con auth |
 
 ## 7. Lo que falta para producción plena (fase 4)
 
@@ -228,7 +239,16 @@ Decisiones clave (fase 1 y 2):
 - [x] Orquesta: 5 flujos de dev + flujos propios, actas por corrida, dry-run y solicitud de aprobación genérica
 - [x] Rúter: cascada de modelos por tarea, registro de resultados con evidencia y coste por resultado útil; política por tipo con «solo local»
 - [x] Centinela completo: permisos reales por ruta (`permisos_auditar`) y avisos de dependencias con caché (`dependencias_vulnerables`)
-- [x] 169 pruebas en verde (incluye 26 de centinela, 11 de parche, 10 de orquesta y 7 de rúter)
+- [x] 181 pruebas en verde (26 de centinela, 18 de taller, 17 del servidor MCP, 14 de HTTP con auth, 14 de CFDI, 14 de seguridad, 11 de multi-empresa, 11 de parche, 10 de orquesta y 7 de rúter)
+
+**Fase 5A**
+- [x] Espacios multi-empresa con inventario, pedidos y plantillas aislados (clave compuesta empresa+SKU/nombre)
+- [x] Migración automática de bases anteriores: todo lo existente pasa a la empresa por defecto sin perder datos
+- [x] `inventario_importar` (CSV con dry-run) para arrancar el catálogo de un cliente nuevo
+- [x] Claves de API atadas a una empresa (`keys create --empresa`) + `/api/empresas` con comparativa
+- [x] CFDI: emisor y serie de folios tomados de la empresa activa (sin CFDI_EMISOR_*)
+- [x] `empresa_resumen` y `empresas_comparar` (ventas, pedidos, inventario y riesgos por empresa)
+- [x] 11 pruebas de multi-empresa: mismo SKU y mismo folio en dos empresas (P-0001 cada una), aislamiento por clave atada, CFDI con emisor y serie propios, migración de una base vieja y datos intactos
 
 **Fase 3**
 - [x] Módulo de facturación CFDI 4.0 (5 herramientas) con validaciones del Anexo 20 y XML sin sellar

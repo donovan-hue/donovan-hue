@@ -13,6 +13,7 @@ import { log } from './logger.js';
 import { contarClavesActivas, listarClaves, verificarClave } from './auth/keys.js';
 import { listarAprobaciones, resolverAprobacion } from './lib/aprobaciones.js';
 import { listarParches } from './lib/parche.js';
+import { listarEmpresas, empresaActivaDetalle, compararEmpresas } from './lib/empresas.js';
 
 interface SesionAutenticada {
   ctx: ServerCtx;
@@ -92,6 +93,7 @@ async function autenticar(ctx: ServerCtx, req: http.IncomingMessage): Promise<{ 
     nombre: verificacion.key.nombre,
     scopes: verificacion.key.scopes,
     origen: 'api_key',
+    empresaId: verificacion.key.empresa_id ?? undefined,
   };
   return { ok: true, sesion: { ctx: { ...ctx, apiKey: identidad }, identidad } };
 }
@@ -288,7 +290,7 @@ export async function startHttp(ctx: ServerCtx): Promise<http.Server> {
       }
 
       // ── Administración (protegida si AUTH_MODE=required) ──────────────────
-      const rutasAdmin = ['/api/auditoria', '/api/claves', '/api/aprobaciones', '/api/parches'];
+      const rutasAdmin = ['/api/auditoria', '/api/claves', '/api/aprobaciones', '/api/parches', '/api/empresas'];
       if (rutasAdmin.includes(url.pathname)) {
         if (ctx.config.authMode === 'required') {
           const auth = await autenticar(ctx, req);
@@ -308,6 +310,22 @@ export async function startHttp(ctx: ServerCtx): Promise<http.Server> {
             limite: Number.isFinite(limite) ? Math.min(Math.max(limite, 1), 500) : 50,
           });
           json(res, 200, { total: eventos.length, resumen: await ctx.audit.resumen(), eventos: [...eventos].reverse() });
+          return;
+        }
+        if (url.pathname === '/api/empresas') {
+          const activa = empresaActivaDetalle(ctx);
+          json(res, 200, {
+            activa: { id: activa.id, nombre: activa.nombre },
+            total: listarEmpresas(ctx).length,
+            empresas: listarEmpresas(ctx).map((e) => ({ id: e.id, nombre: e.nombre, rfc: e.rfc, series: e.series, color: e.color })),
+            comparativa: url.searchParams.get('comparar') === '1' ? compararEmpresas(ctx).empresas.map((r) => ({
+              empresa: r.empresa.nombre,
+              productos: r.inventario.productos,
+              ventas: r.pedidos.ventas_totales,
+              pedidos: r.pedidos.total,
+              bajo_minimo: r.inventario.bajo_minimo,
+            })) : undefined,
+          });
           return;
         }
         if (url.pathname === '/api/parches') {
@@ -379,7 +397,7 @@ export async function startHttp(ctx: ServerCtx): Promise<http.Server> {
 
       json(res, 404, {
         error: 'Ruta no encontrada',
-        rutas: ['/', '/panel', '/taller', '/health', '/metrics', '/api/config', '/api/catalogo', '/api/herramientas', '/api/claves', '/api/auditoria', '/api/aprobaciones', 'POST /api/aprobaciones/<id>', '/api/parches', '/api/taller/mapa', 'POST /mcp'],
+        rutas: ['/', '/panel', '/taller', '/health', '/metrics', '/api/config', '/api/catalogo', '/api/herramientas', '/api/claves', '/api/auditoria', '/api/aprobaciones', 'POST /api/aprobaciones/<id>', '/api/parches', '/api/empresas', '/api/taller/mapa', 'POST /mcp'],
       });
     } catch (err: any) {
       log.error('http_error', { path: url.pathname, error: err?.message ?? String(err) });

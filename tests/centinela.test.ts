@@ -207,13 +207,18 @@ afterAll(async () => {
 });
 
 describe('CENTINELA — catálogo', () => {
-  it('expone las cuatro herramientas del módulo y el catálogo completo', async () => {
+  it('expone las herramientas del módulo y el catálogo completo', async () => {
     const { tools } = await client.listTools();
     const nombres = tools.map((t) => t.name);
-    for (const esperada of ['seguridad_escanear', 'seguridad_plan', 'seguridad_verificar', 'dependencias_revisar', 'aprobaciones_pendientes', 'permisos_auditar', 'dependencias_vulnerables']) {
+    for (const esperada of [
+      'seguridad_escanear', 'seguridad_plan', 'seguridad_verificar', 'dependencias_revisar',
+      'aprobaciones_pendientes', 'permisos_auditar', 'dependencias_vulnerables',
+      'empresas_listar', 'empresa_crear', 'empresa_actual', 'empresa_editar', 'empresa_resumen', 'empresas_comparar',
+      'inventario_importar',
+    ]) {
       expect(nombres).toContain(esperada);
     }
-    expect(tools.length).toBe(61);
+    expect(tools.length).toBe(68);
   });
 });
 

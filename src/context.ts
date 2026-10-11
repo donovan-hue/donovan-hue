@@ -10,6 +10,8 @@ export interface IdentidadCliente {
   nombre: string;
   scopes: string[];
   origen: 'api_key' | 'bootstrap';
+  /** Si la clave está atada a una empresa, solo ve los datos de esa empresa. */
+  empresaId?: string;
 }
 
 /** Contexto compartido que reciben todos los módulos de herramientas. */

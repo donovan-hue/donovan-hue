@@ -1,7 +1,8 @@
 {
   "name": "mcp-suite-mx",
-  "version": "0.1.0",
-  "description": "Plataforma MCP modular: negocio, documentos, análisis de datos y DevOps. Transporte stdio (local) y HTTP (remoto).",
+  "mcpName": "io.github.donovan-hue/mcp-suite-mx",
+  "version": "0.2.0",
+  "description": "Plataforma MCP para empresas mexicanas: multi-empresa, negocio con IVA/retenciones, CFDI 4.0, documentos, análisis, DevOps, taller, centinela, parche, orquesta y rúter. stdio (local) y HTTP (remoto).",
   "type": "module",
   "engines": {
     "node": ">=20"

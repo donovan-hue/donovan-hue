@@ -1,0 +1,41 @@
+DEMO MULTI-EMPRESA (fase 5A) — servidor recién instalado, sin datos previos
+   · clave «demo-5a» (scopes *)
+
+1) Ferretería El Tornillo: una empresa nueva, con sus datos fiscales y su serie
+   EMP-36ed7f · Ferretería El Tornillo · RFC FER950101AB1 · serie FERR
+   La empresa activa es ahora «Ferretería El Tornillo». Inventario, pedidos y plantillas que consultes serán los suyos.
+   dry-run: Simulación: 3 producto(s) se cargarían en «Ferretería El Tornillo». Nada se escribió.
+   3 producto(s) cargados en «Ferretería El Tornillo». El inventario de esa empresa tiene ahora 3 artículo(s).
+
+2) Pedido P-0001 de la ferretería y su factura (emisor y serie propios)
+   Pedido P-0001 creado en «Ferretería El Tornillo» y stock descontado. · subtotal $610.00 + IVA = $707.60
+   CFDI FERR0001 · emisor FER950101AB1 Ferretería El Tornillo · listo para timbrar: True
+
+3) Panadería La Espiga: otra empresa, su propio catálogo y SU P-0001
+   2 producto(s) cargados en «Panadería La Espiga». El inventario de esa empresa tiene ahora 2 artículo(s).
+   (su TOR-001 es una concha, no un tornillo: el mismo SKU, dos negocios)
+   Pedido P-0001 creado en «Panadería La Espiga» y stock descontado. · folio P-0001 · total $162.40
+
+4) Mi negocio (la empresa original): intacta y sin ver lo ajeno
+   sus productos: 8 (los de siempre) · folio propio: P-0003
+
+5) Comparativa de los tres negocios, sin mezclar cifras
+   · Ferretería El Tornillo   productos   3 · pedidos  1 · ventas $   707.60
+   · Mi negocio               productos   8 · pedidos  3 · ventas $42,583.60
+   · Panadería La Espiga      productos   2 · pedidos  1 · ventas $   162.40
+   mejor en: {'ventas_totales': 'Mi negocio', 'pedidos': 'Mi negocio', 'valor_inventario': 'Mi negocio'}
+
+6) Clave atada: el cliente de la ferretería solo ve su empresa
+   · clave «cliente-ferreteria» (scopes negocio,facturacion, atada a EMP-36ed7f)
+   ve: Ferretería El Tornillo → ['PIN-001', 'TOR-001', 'TOR-002'] (3 productos)
+   su catálogo no incluye nada de la panadería: correcto
+
+7) Resumen ejecutivo de una empresa
+   inventario: {'productos': 3, 'valor_a_precio': 8890, 'valor_a_costo': 5200, 'bajo_minimo': 0}
+   pedidos:    {'total': 1, 'por_estado': {'borrador': 1}, 'ventas_totales': 707.6, 'ticket_promedio': 707.6, 'ultimo_pedido': '2026-10-11T19:57:05.521Z'}
+
+8) Editar datos fiscales y archivar sin borrar
+   Empresa «Panadería La Espiga» actualizada.
+   «Panadería La Espiga» quedó archivada: deja de aparecer, pero sus datos siguen aquí.
+   visibles ahora: ['Ferretería El Tornillo', 'Mi negocio']
+   con archivadas: ['Ferretería El Tornillo', 'Mi negocio', 'Panadería La Espiga']

@@ -2,17 +2,17 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.donovan-hue/mcp-suite-mx",
   "title": "Suite MCP MX",
-  "description": "Plataforma MCP para la operación de empresas mexicanas: negocio e inventario con IVA/retenciones, CFDI 4.0 (borrador y XML sin sellar), documentos, análisis de datos, DevOps, taller digital del proyecto, centinela de seguridad con plan comprobable, parche con pruebas y reversión, orquesta de flujos y rúter de modelos por coste por resultado útil. 61 herramientas, local-first, SQLite, en español.",
+  "description": "Plataforma MCP para la operación de empresas mexicanas: multi-empresa (un despacho, varios clientes: inventario, pedidos y plantillas aislados, con datos fiscales y series propias para CFDI), negocio con IVA/retenciones, CFDI 4.0 (borrador y XML sin sellar), documentos, análisis de datos, DevOps, taller digital del proyecto, centinela de seguridad con plan comprobable, parche con pruebas y reversión, orquesta de flujos y rúter de modelos por coste por resultado útil. 68 herramientas, local-first, SQLite, en español.",
   "repository": {
     "url": "https://github.com/donovan-hue/donovan-hue",
     "source": "github"
   },
-  "version": "0.1.0",
+  "version": "0.2.0",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "mcp-suite-mx",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "transport": {
         "type": "stdio"
       },
@@ -32,6 +32,12 @@
         {
           "name": "ALLOWED_GIT_ROOTS",
           "description": "Rutas separadas por ':' donde las herramientas de proyecto pueden leer y escribir (taller, centinela, parche, orquesta).",
+          "isRequired": false,
+          "format": "string"
+        },
+        {
+          "name": "EMPRESA_DEFAULT",
+          "description": "Empresa activa al arrancar (id EMP-xxxxxx o nombre). Las claves de API atadas a una empresa tienen prioridad.",
           "isRequired": false,
           "format": "string"
         }

@@ -3,13 +3,14 @@ import type { ServerCtx } from '../context.js';
 import type { ToolDef } from '../lib/result.js';
 import { readTextFile, resolveAllowedPath } from '../lib/store.js';
 import { PlantillasRepo } from '../db/plantillas.js';
+import { empresaActiva } from '../lib/empresas.js';
 import { renderPlantilla, extraerDatos, resumirTexto } from '../lib/text.js';
 import path from 'node:path';
 import { log } from '../logger.js';
 
 export function documentosToolDefs(defs: ToolDef[], ctx: ServerCtx): void {
   const push = (d: ToolDef) => void defs.push(d);
-  const plantillas = () => new PlantillasRepo(ctx.db);
+  const plantillas = () => new PlantillasRepo(ctx.db, empresaActiva(ctx));
 
   push({
     module: 'documentos',

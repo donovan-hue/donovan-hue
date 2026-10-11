@@ -84,7 +84,7 @@
   <header class="top">
     <div class="logo">M</div>
     <div>
-      <h1>Suite MCP MX <span style="color:var(--muted); font-weight:400; font-size:15px">v0.1.0</span></h1>
+      <h1>Suite MCP MX <span style="color:var(--muted); font-weight:400; font-size:15px">v0.2.0</span></h1>
       <div style="color:var(--muted); font-size:13.5px">Plataforma MCP: negocio · documentos · análisis · devops · <a href="/taller" style="color:var(--accent,#4ec3e0); text-decoration:none; font-weight:600">mapa vivo del proyecto →</a></div>
     </div>
   </header>
@@ -142,6 +142,7 @@
       <li><code>GET /api/aprobaciones</code><span>aprobaciones pendientes (parches, despliegues, cambios sensibles)</span><span class="rw">requiere clave</span></li>
       <li><code>POST /api/aprobaciones/&lt;id&gt;</code><span>aprobar o rechazar desde el panel (<code>{"decision":"aprobar"}</code>)</span><span class="rw">requiere clave</span></li>
       <li><code>GET /api/parches</code><span>historial de parches con huella, veredicto y respaldo</span><span class="rw">requiere clave</span></li>
+      <li><code>GET /api/empresas</code><span>espacios multi-empresa y, con <code>?comparar=1</code>, sus cifras lado a lado</span><span class="rw">requiere clave</span></li>
       <li><code>GET /panel</code><span>este panel</span></li>
     </ul>
   </div>
@@ -169,10 +170,11 @@
     parche: 'Reparar con red de seguridad: diagnóstico con evidencia, parche revisable, pruebas antes/después en copia aislada, aplicación con aprobación humana y reversión en un comando.',
     orquesta: 'Flujos de dev con bitácora y aprobaciones: verificar despliegue, respaldo con rotación, auditoría de dependencias, preparar release y post-mortem automático.',
     ruter: 'Elección de modelo por tarea con coste por resultado útil: mide si la tarea sirvió (pruebas verdes, parche vivo) en lugar de estimar por benchmark.',
+    empresas: 'Multi-empresa: un servidor para varios negocios (el despacho contable y sus clientes). Inventario, pedidos y plantillas aislados por empresa, datos fiscales propios para CFDI, claves de API atadas a una empresa y comparativa entre todas sin mezclar cifras.',
     core: 'Información del servidor y bitácora de auditoría.',
   };
-  const TITULOS = { negocio: 'Negocio', facturacion: 'Facturación (CFDI)', documentos: 'Documentos', analisis: 'Análisis de datos', devops: 'DevOps', taller: 'Taller (gemelo digital)', centinela: 'Centinela (seguridad)', parche: 'Parche (reparar)', orquesta: 'Orquesta (flujos)', ruter: 'Rúter (modelos)', core: 'Núcleo' };
-  const ETIQUETAS = { negocio: 'Negocio', documentos: 'Documentos', analisis: 'Análisis', devops: 'DevOps', taller: 'Taller', centinela: 'Centinela', parche: 'Parche', orquesta: 'Orquesta', ruter: 'Rúter', core: 'Núcleo' };
+  const TITULOS = { negocio: 'Negocio', facturacion: 'Facturación (CFDI)', documentos: 'Documentos', analisis: 'Análisis de datos', devops: 'DevOps', taller: 'Taller (gemelo digital)', centinela: 'Centinela (seguridad)', parche: 'Parche (reparar)', orquesta: 'Orquesta (flujos)', ruter: 'Rúter (modelos)', empresas: 'Empresas', core: 'Núcleo' };
+  const ETIQUETAS = { negocio: 'Negocio', documentos: 'Documentos', analisis: 'Análisis', devops: 'DevOps', taller: 'Taller', centinela: 'Centinela', parche: 'Parche', orquesta: 'Orquesta', ruter: 'Rúter', empresas: 'Empresas', core: 'Núcleo' };
 
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const totalHerramientas = MODULOS.reduce((a, m) => a + m.total, 0);

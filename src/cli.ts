@@ -9,6 +9,7 @@
  *   node dist/cli.js check
  */
 import { loadConfig } from './config.js';
+import { VERSION } from './version.js';
 import path from 'node:path';
 import { setLogLevel } from './logger.js';
 import { crearContexto } from './index.js';
@@ -19,6 +20,7 @@ import { escanear, planDeCorreccion, planMarkdown } from './lib/centinela.js';
 import { listarParches, obtenerParche, deshacerParche } from './lib/parche.js';
 import { FLUJOS_PREDEFINIDOS, leerFlujosPropios, ultimasCorridas } from './lib/orquesta.js';
 import { leerCatalogo, compararCostes } from './lib/ruter.js';
+import { listarEmpresas, crearEmpresa, compararEmpresas, empresaActivaDetalle } from './lib/empresas.js';
 
 function flag(nombre: string): string | undefined {
   const prefix = `--${nombre}=`;
@@ -34,6 +36,44 @@ function bool(nombre: string): boolean {
 
 const [comando, subcomando] = process.argv.slice(2).filter((a) => !a.startsWith('--'));
 
+async function cmdEmpresas(): Promise<void> {
+  const ctx = await crearContexto(loadConfig());
+  if (subcomando === 'crear') {
+    const nombre = flag('nombre');
+    if (!nombre) throw new Error('Uso: node dist/cli.js empresas crear --nombre "Ferretería El Tornillo" [--rfc XAXX010101000] [--regimen 601] [--cp 44100] [--series A]');
+    const empresa = crearEmpresa(ctx, {
+      nombre,
+      rfc: flag('rfc'),
+      regimen: flag('regimen'),
+      cp: flag('cp'),
+      series: flag('series'),
+      color: flag('color'),
+    });
+    console.log(`✅ Empresa creada: ${empresa.id} · «${empresa.nombre}»`);
+    if (!empresa.rfc) console.log('   (sin RFC: sus borradores CFDI pedirán emisor hasta que lo completes)');
+    return;
+  }
+
+  const activa = empresaActivaDetalle(ctx);
+  const empresas = listarEmpresas(ctx, { incluirArchivadas: bool('todas') });
+  console.log(`Empresa activa: ${activa.id} · «${activa.nombre}»\n`);
+  for (const e of empresas) {
+    const marca = e.id === activa.id ? '▶' : ' ';
+    const fiscal = e.rfc ? `${e.rfc} · régimen ${e.regimen || '—'} · CP ${e.cp || '—'}` : 'sin datos fiscales (los CFDI pedirán emisor)';
+    console.log(`  ${marca} ${e.id}  ${e.nombre.padEnd(28)} serie ${e.series}  ${fiscal}`);
+  }
+  if (bool('comparar') && empresas.length > 1) {
+    const c = compararEmpresas(ctx);
+    console.log('\nComparativa:');
+    for (const r of c.empresas) {
+      console.log(`  · ${r.empresa.nombre.padEnd(28)} productos ${String(r.inventario.productos).padStart(3)} · pedidos ${String(r.pedidos.total).padStart(3)} · ventas $${r.pedidos.ventas_totales.toLocaleString('es-MX')} · bajo mínimo ${r.inventario.bajo_minimo}`);
+    }
+    if (Object.keys(c.mejor_en).length) console.log('  ' + Object.entries(c.mejor_en).map(([k, v]) => `mejor en ${k}: ${v}`).join(' · '));
+  }
+  console.log('\n  crear:   node dist/cli.js empresas crear --nombre "…" [--rfc …] [--regimen …] [--cp …]');
+  console.log('  comparar: node dist/cli.js empresas --comparar');
+}
+
 async function cmdKeysCreate(): Promise<void> {
   const nombre = flag('nombre');
   const scopesRaw = flag('scopes') ?? '*';
@@ -47,12 +87,14 @@ async function cmdKeysCreate(): Promise<void> {
     nombre,
     scopes: scopesRaw.split(',').map((s) => s.trim()).filter(Boolean),
     expiraDias: expiraDiasRaw ? Number(expiraDiasRaw) : undefined,
+    empresaId: flag('empresa'),
   });
   console.log('Clave creada correctamente.');
   console.log('');
   console.log(`  id:      ${key.id}`);
   console.log(`  nombre:  ${key.nombre}`);
   console.log(`  scopes:  ${key.scopes.join(', ')}`);
+  console.log(`  empresa: ${key.empresa_id ? `${key.empresa_id} (atada: solo ve esa empresa)` : 'todas (ve la empresa activa del servidor)'}`);
   console.log(`  expira:  ${key.expira ?? 'nunca'}`);
   console.log('');
   console.log('  CLAVE (cópiala ahora, no se vuelve a mostrar):');
@@ -73,7 +115,7 @@ async function cmdKeysList(): Promise<void> {
   }
   console.log(`${claves.length} clave(s) · scopes válidos: ${SCOPES_VALIDOS.join(', ')}\n`);
   for (const k of claves) {
-    console.log(`  ${k.activa ? '●' : '○'} ${k.id}  ${k.nombre.padEnd(20)} scopes=${k.scopes.join(',')}`);
+    console.log(`  ${k.activa ? '●' : '○'} ${k.id}  ${k.nombre.padEnd(20)} scopes=${k.scopes.join(',')}${k.empresa_id ? `  empresa=${k.empresa_id}` : ''}`);
     console.log(`      creada=${k.creada.slice(0, 10)}  expira=${k.expira?.slice(0, 10) ?? 'nunca'}  usos=${k.usos}  último=${k.ultimo_uso?.slice(0, 16) ?? '—'}`);
   }
 }
@@ -198,7 +240,7 @@ async function cmdCheck(): Promise<void> {
   const ctx = await crearContexto(config);
   const respaldos = await listarBackups(ctx);
   console.log(JSON.stringify({
-    version: '0.1.0',
+    version: VERSION,
     transporte: config.transport,
     tls: config.tlsCert && config.tlsKey ? { certificado: config.tlsCert, llave: config.tlsKey } : 'deshabilitado',
     directorio_datos: config.dataDir,
@@ -315,6 +357,8 @@ async function main(): Promise<void> {
       return cmdFlujos();
     case 'modelos':
       return cmdModelos();
+    case 'empresas':
+      return cmdEmpresas();
     case 'seguridad':
       return cmdSeguridad();
     case 'check':
@@ -324,7 +368,7 @@ async function main(): Promise<void> {
         [
           'Suite MCP MX — CLI de administración',
           '',
-          '  keys create --nombre <n> [--scopes negocio,analisis] [--expira-dias 30]',
+          '  keys create --nombre <n> [--scopes negocio,analisis] [--expira-dias 30] [--empresa EMP-xxxxxx]',
           '  keys list',
           '  keys revoke --id <id> | --nombre <n>',
           '  audit [--tipo tool_destructiva] [--herramienta inventario_actualizar] [--limite 20]',
@@ -337,6 +381,7 @@ async function main(): Promise<void> {
           '  revertir <PR-id>',
           '  flujos',
           '  modelos [--tipo refactor]',
+          '  empresas [--todas] [--comparar] | empresas crear --nombre "…" [--rfc …] [--regimen …] [--cp …]',
           '  seguridad [--directorio <dir>] [--minimo 80] [--plan]',
           '  check',
           '',

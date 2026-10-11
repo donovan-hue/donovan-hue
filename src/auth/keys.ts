@@ -4,6 +4,8 @@ import type { ServerCtx } from '../context.js';
 export interface ApiKey {
   id: string;
   nombre: string;
+  /** Empresa a la que está atada la clave (null = ve la empresa activa del servidor). */
+  empresa_id: string | null;
   /** sha256 de la clave completa; el secreto jamás se guarda en claro. */
   hash: string;
   scopes: string[];
@@ -49,11 +51,14 @@ export const SCOPES_VALIDOS = [
   'orquesta:ro',
   'ruter',
   'ruter:ro',
+  'empresas',
+  'empresas:ro',
 ];
 
 interface FilaClave {
   id: string;
   nombre: string;
+  empresa_id: string | null;
   hash: string;
   scopes: string;
   creada: string;
@@ -88,7 +93,7 @@ export function validarScopes(scopes: string[]): void {
 /** Crea una clave nueva. Devuelve el secreto en claro una única vez. */
 export async function crearClave(
   ctx: ServerCtx,
-  opciones: { nombre: string; scopes: string[]; expiraDias?: number },
+  opciones: { nombre: string; scopes: string[]; expiraDias?: number; empresaId?: string },
 ): Promise<ResultadoCreacion> {
   const nombre = opciones.nombre.trim();
   if (nombre.length < 3) throw new Error('El nombre de la clave debe tener al menos 3 caracteres.');
@@ -97,12 +102,25 @@ export async function crearClave(
     throw new Error('expiraDias debe ser un número mayor que cero.');
   }
 
+  let empresaId: string | null = null;
+  if (opciones.empresaId) {
+    const empresa = ctx.db
+      .prepare(`SELECT id, nombre FROM empresas WHERE id = ? OR LOWER(nombre) = LOWER(?)`)
+      .get(opciones.empresaId, opciones.empresaId) as { id: string; nombre: string } | undefined;
+    if (!empresa) throw new Error(`No existe la empresa "${opciones.empresaId}" (créala o revisa el id).`);
+    if (opciones.scopes.includes('*')) {
+      throw new Error('Una clave atada a una empresa no puede tener scope "*": usa scopes por módulo (p. ej. negocio,facturacion).');
+    }
+    empresaId = empresa.id;
+  }
+
   const id = crypto.randomBytes(4).toString('hex'); // 8 hex chars
   const secreto = crypto.randomBytes(24).toString('base64url');
   const clave = `mcp_${id}_${secreto}`;
   const registro: ApiKey = {
     id,
     nombre,
+    empresa_id: empresaId,
     hash: hashear(clave),
     scopes: opciones.scopes,
     creada: new Date().toISOString(),
@@ -117,8 +135,8 @@ export async function crearClave(
 
   ctx.db
     .prepare(
-      `INSERT INTO api_keys (id, nombre, hash, scopes, creada, expira, activa, ultimo_uso, usos)
-       VALUES (@id, @nombre, @hash, @scopes, @creada, @expira, 1, NULL, 0)`,
+      `INSERT INTO api_keys (id, nombre, empresa_id, hash, scopes, creada, expira, activa, ultimo_uso, usos)
+       VALUES (@id, @nombre, @empresa_id, @hash, @scopes, @creada, @expira, 1, NULL, 0)`,
     )
     .run({ ...registro, scopes: JSON.stringify(registro.scopes), expira: registro.expira });
 

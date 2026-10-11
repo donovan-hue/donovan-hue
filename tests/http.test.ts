@@ -202,6 +202,18 @@ describe('transporte HTTP con AUTH_MODE=required', () => {
     expect(mio.archivos).toContain('saludo.js');
   });
 
+  it('/api/empresas lista los espacios y su comparativa, y exige clave', async () => {
+    expect((await fetch(`${base}/api/empresas`)).status).toBe(401);
+    const { crearEmpresa } = await import('../src/lib/empresas');
+    const nueva = crearEmpresa(ctx, { nombre: 'Empresa HTTP', rfc: 'ABC010101AB1', regimen: '601', cp: '44100', series: 'H' });
+    const r = await fetch(`${base}/api/empresas?comparar=1`, { headers: { authorization: `Bearer ${CLAVE_BOOTSTRAP}` } });
+    const cuerpo = await r.json();
+    expect(cuerpo.total).toBeGreaterThanOrEqual(2);
+    expect(cuerpo.activa.id).toBeDefined();
+    expect(cuerpo.empresas.some((e: any) => e.id === nueva.id && e.series === 'H')).toBe(true);
+    expect(Array.isArray(cuerpo.comparativa)).toBe(true);
+  });
+
   it('/api/claves lista claves emitidas sin hashes', async () => {
     const r = await fetch(`${base}/api/claves`, { headers: { authorization: `Bearer ${CLAVE_BOOTSTRAP}` } });
     const cuerpo = await r.json();

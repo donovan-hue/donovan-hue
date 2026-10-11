@@ -2,7 +2,10 @@ import { z } from 'zod';
 import type { ServerCtx } from '../context.js';
 import type { ToolDef } from '../lib/result.js';
 import { InventarioRepo, PedidosRepo } from '../db/negocio.js';
+import { empresaActiva, empresaActivaDetalle } from '../lib/empresas.js';
 import { calcularCotizacion, calcularImpuestos, calcularMargen, puntoEquilibrio } from '../lib/finance.js';
+import { csvToRecords, guessNumber } from '../lib/csv.js';
+import { readTextFile } from '../lib/store.js';
 import type { EstadoPedido } from '../lib/finance.js';
 import { log } from '../logger.js';
 
@@ -10,8 +13,9 @@ const round2 = (n: number) => Number(n.toFixed(2));
 
 export function negocioToolDefs(defs: ToolDef[], ctx: ServerCtx): void {
   const push = (d: ToolDef) => void defs.push(d);
-  const inventario = () => new InventarioRepo(ctx.db);
-  const pedidos = () => new PedidosRepo(ctx.db);
+  const inventario = () => new InventarioRepo(ctx.db, empresaActiva(ctx));
+  const pedidos = () => new PedidosRepo(ctx.db, empresaActiva(ctx));
+  const empresa = () => empresaActivaDetalle(ctx);
 
   push({
     module: 'negocio',
@@ -32,6 +36,7 @@ export function negocioToolDefs(defs: ToolDef[], ctx: ServerCtx): void {
       if (args.sku && items.length === 0) throw new Error(`No existe un producto con SKU "${args.sku}".`);
 
       return {
+        empresa: { id: empresa().id, nombre: empresa().nombre },
         total_resultados: items.length,
         total_inventario: repo.total(),
         resultados: items.map((i) => ({
@@ -80,6 +85,126 @@ export function negocioToolDefs(defs: ToolDef[], ctx: ServerCtx): void {
 
   push({
     module: 'negocio',
+    name: 'inventario_importar',
+    title: 'Importar catálogo (CSV)',
+    description:
+      'Carga el catálogo de productos de la empresa activa desde un CSV con encabezados (sku, nombre, precio, stock y opcionalmente categoria, costo, stock_minimo, unidad, proveedor). Sirve para arrancar el espacio de un cliente nuevo sin capturar producto por producto. Con dry_run=true te dice qué haría sin tocar nada; modo "agregar" respeta los SKU existentes y modo "reemplazar" los sobrescribe.',
+    destructive: true,
+    inputSchema: {
+      contenido_csv: z.string().optional().describe('Contenido del CSV (texto). Usa esto o ruta_csv.'),
+      ruta_csv: z.string().optional().describe('Ruta a un archivo CSV dentro del área permitida (data dir o repositorios autorizados).'),
+      delimitador: z.string().optional().describe('Delimitador explícito (por defecto se detecta: coma, punto y coma, tabulador o barra).'),
+      modo: z.enum(['agregar', 'reemplazar']).optional().describe('agregar (por defecto) = solo altas nuevas; reemplazar = sobrescribe los SKU que ya existan.'),
+      dry_run: z.boolean().optional().describe('true = valida y reporta sin escribir nada.'),
+    },
+    handler: async (args: { contenido_csv?: string; ruta_csv?: string; delimitador?: string; modo?: 'agregar' | 'reemplazar'; dry_run?: boolean }) => {
+      if (!args.contenido_csv && !args.ruta_csv) throw new Error('Pasa "contenido_csv" (texto) o "ruta_csv" (archivo).');
+      const csv = args.contenido_csv ?? (await readTextFile(args.ruta_csv!));
+      const tabla = csvToRecords(csv, args.delimitador);
+      if (tabla.headers.length === 0) throw new Error('El CSV está vacío o no tiene encabezados.');
+
+      const col = (nombres: string[]) => nombres.find((n) => tabla.headers.some((h) => h.toLowerCase() === n));
+      const cSku = col(['sku']);
+      const cNombre = col(['nombre', 'name', 'descripcion', 'producto']);
+      if (!cSku || !cNombre) {
+        throw new Error(`Faltan columnas obligatorias (sku, nombre). Encontré: ${tabla.headers.join(', ')}.`);
+      }
+      const cCategoria = col(['categoria', 'category']);
+      const cPrecio = col(['precio', 'price', 'precio_unitario']);
+      const cCosto = col(['costo', 'cost']);
+      const cStock = col(['stock', 'existencia', 'cantidad']);
+      const cMinimo = col(['stock_minimo', 'minimo', 'min']);
+      const cUnidad = col(['unidad', 'unit']);
+      const cProveedor = col(['proveedor', 'provider']);
+
+      const problemas: { fila: number; motivo: string }[] = [];
+      const normalizados: {
+        sku: string; nombre: string; categoria: string; precio: number; costo: number;
+        stock: number; stock_minimo: number; unidad: string; proveedor: string;
+      }[] = [];
+      const vistos = new Set<string>();
+      tabla.rows.forEach((fila, i) => {
+        const num = i + 2; // 1 es el encabezado
+        const sku = (fila[cSku] ?? '').trim();
+        const nombre = (fila[cNombre] ?? '').trim();
+        if (!sku) return void problemas.push({ fila: num, motivo: 'sin SKU' });
+        if (!nombre) return void problemas.push({ fila: num, motivo: `SKU ${sku}: sin nombre` });
+        if (vistos.has(sku.toUpperCase())) return void problemas.push({ fila: num, motivo: `SKU ${sku} repetido en el archivo` });
+        vistos.add(sku.toUpperCase());
+        const precio = cPrecio ? (guessNumber(fila[cPrecio] ?? '') ?? 0) : 0;
+        const stock = cStock ? Math.trunc(guessNumber(fila[cStock] ?? '') ?? 0) : 0;
+        if (precio < 0 || stock < 0) return void problemas.push({ fila: num, motivo: `SKU ${sku}: precio o stock negativos` });
+        normalizados.push({
+          sku,
+          nombre,
+          categoria: (cCategoria ? fila[cCategoria] : '') ?? '',
+          precio,
+          costo: cCosto ? (guessNumber(fila[cCosto] ?? '') ?? 0) : 0,
+          stock,
+          stock_minimo: cMinimo ? Math.trunc(guessNumber(fila[cMinimo] ?? '') ?? 0) : 0,
+          unidad: ((cUnidad ? fila[cUnidad] : '') || 'pieza') as string,
+          proveedor: (cProveedor ? fila[cProveedor] : '') ?? '',
+        });
+      });
+
+      const emp = empresaActivaDetalle(ctx);
+      const modo = args.modo ?? 'agregar';
+      const existentes = new Set(
+        (ctx.db.prepare(`SELECT UPPER(sku) AS sku FROM inventario WHERE empresa_id = ?`).all(emp.id) as { sku: string }[]).map((f) => f.sku),
+      );
+      const nuevos = normalizados.filter((n) => !existentes.has(n.sku.toUpperCase()));
+      const yaEstaban = normalizados.length - nuevos.length;
+      const aEscribir = modo === 'reemplazar' ? normalizados : nuevos;
+
+      if (args.dry_run) {
+        return {
+          empresa: { id: emp.id, nombre: emp.nombre },
+          modo,
+          dry_run: true,
+          total_filas: tabla.rows.length,
+          listos: normalizados.length,
+          nuevos: nuevos.length,
+          ya_existentes: yaEstaban,
+          se_escribirian: aEscribir.length,
+          problemas,
+          ejemplo: aEscribir.slice(0, 3),
+          mensaje: `Simulación: ${aEscribir.length} producto(s) se cargarían en «${emp.nombre}». Nada se escribió.`,
+        };
+      }
+
+      if (problemas.length && aEscribir.length === 0) {
+        throw new Error(`El CSV no tiene filas válidas (${problemas.length} problema(s)). Revisa el detalle en el reporte de dry_run.`);
+      }
+      const ahora = new Date().toISOString();
+      const upsert = ctx.db.prepare(
+        `INSERT INTO inventario (empresa_id, sku, nombre, categoria, precio, costo, stock, stock_minimo, unidad, proveedor, actualizado_en)
+         VALUES (@empresa_id, @sku, @nombre, @categoria, @precio, @costo, @stock, @stock_minimo, @unidad, @proveedor, @actualizado_en)
+         ON CONFLICT(empresa_id, sku) DO UPDATE SET
+           nombre = excluded.nombre, categoria = excluded.categoria, precio = excluded.precio, costo = excluded.costo,
+           stock = excluded.stock, stock_minimo = excluded.stock_minimo, unidad = excluded.unidad,
+           proveedor = excluded.proveedor, actualizado_en = excluded.actualizado_en`,
+      );
+      const cargar = ctx.db.transaction(() => {
+        for (const n of aEscribir) upsert.run({ ...n, empresa_id: emp.id, actualizado_en: ahora });
+      });
+      cargar();
+      log.info('inventario_importado', { empresa: emp.id, modo, cargados: aEscribir.length, empresa_nombre: emp.nombre });
+
+      return {
+        empresa: { id: emp.id, nombre: emp.nombre },
+        modo,
+        total_filas: tabla.rows.length,
+        cargados: aEscribir.length,
+        omitidos_por_ya_existir: modo === 'agregar' ? yaEstaban : 0,
+        problemas,
+        total_inventario: inventario().total(),
+        mensaje: `${aEscribir.length} producto(s) cargados en «${emp.nombre}». El inventario de esa empresa tiene ahora ${inventario().total()} artículo(s).`,
+      };
+    },
+  });
+
+  push({
+    module: 'negocio',
     name: 'pedido_crear',
     title: 'Crear pedido',
     description:
@@ -95,8 +220,12 @@ export function negocioToolDefs(defs: ToolDef[], ctx: ServerCtx): void {
     },
     handler: async (args: { cliente: string; items: { sku: string; cantidad: number }[]; notas?: string }) => {
       const pedido = pedidos().crear({ ...args, ivaPct: ctx.config.ivaPct });
-      log.info('pedido_creado', { folio: pedido.folio, cliente: pedido.cliente, total: pedido.total });
-      return { ...pedido, mensaje: `Pedido ${pedido.folio} creado y stock descontado.` };
+      log.info('pedido_creado', { folio: pedido.folio, cliente: pedido.cliente, total: pedido.total, empresa: empresaActiva(ctx) });
+      return {
+        ...pedido,
+        empresa: { id: empresa().id, nombre: empresa().nombre },
+        mensaje: `Pedido ${pedido.folio} creado en «${empresa().nombre}» y stock descontado.`,
+      };
     },
   });
 
@@ -118,6 +247,7 @@ export function negocioToolDefs(defs: ToolDef[], ctx: ServerCtx): void {
       if (args.folio && lista.length === 0) throw new Error(`No existe el pedido "${args.folio}".`);
 
       return {
+        empresa: { id: empresa().id, nombre: empresa().nombre },
         total: lista.length,
         pedidos: lista.map((p) => ({
           folio: p.folio,

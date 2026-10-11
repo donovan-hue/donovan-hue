@@ -34,6 +34,8 @@ export interface Config {
   cfdiEmisorNombre?: string;
   cfdiEmisorRegimen?: string;
   cfdiEmisorCp?: string;
+  /** Empresa activa por defecto en instalaciones nuevas (multi-empresa). */
+  empresaDefault?: string;
 }
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -91,6 +93,7 @@ export function loadConfig(overrides: Partial<Config> = {}): Config {
     ivaPct: numero(process.env.IVA_PCT, 16, 'IVA_PCT', 0, 100),
     allowedGitRoots: gitRoots.length > 0 ? gitRoots : [projectRoot],
     tallerPublico: (process.env.TALLER_PUBLICO ?? '1') !== '0',
+    empresaDefault: process.env.EMPRESA_DEFAULT?.trim() || undefined,
     httpCheckAllowPrivate: process.env.HTTP_CHECK_ALLOW_PRIVATE === '1',
     corsOrigin: process.env.CORS_ORIGIN ?? '*',
     logLevel: (process.env.LOG_LEVEL as LogLevelName) ?? 'info',

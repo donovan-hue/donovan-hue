@@ -77,7 +77,7 @@ describe('servidor MCP (extremo a extremo en memoria)', () => {
 
   it('mcp_suite_info describe el propio servidor', async () => {
     const info = (await llamar('mcp_suite_info', { detallado: false })).json();
-    expect(info.version).toBe('0.1.0');
+    expect(info.version).toBe(JSON.parse(await (await import('node:fs/promises')).readFile(new URL('../package.json', import.meta.url), 'utf8')).version);
     expect(info.modulos).toEqual(expect.arrayContaining(['negocio', 'facturacion', 'documentos', 'analisis', 'devops']));
     expect(info.total_herramientas_disponibles).toBeGreaterThanOrEqual(35);
     expect(info.cliente).toBeNull();

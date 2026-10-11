@@ -4,6 +4,7 @@ import path from 'node:path';
 import type { ServerCtx } from '../context.js';
 import type { ToolDef } from '../lib/result.js';
 import { PedidosRepo } from '../db/negocio.js';
+import { empresaActiva, empresaActivaDetalle } from '../lib/empresas.js';
 import {
   CATALOGO_EXPORTACION,
   CATALOGO_FORMAS_PAGO,
@@ -67,16 +68,20 @@ export function facturacionToolDefs(defs: ToolDef[], ctx: ServerCtx): void {
       return { rfc: entrada.rfc, nombre: entrada.nombre, regimenFiscal: entrada.regimen_fiscal, codigoPostal: entrada.codigo_postal };
     }
     const conf = emisorConfigurado();
-    if (!conf) {
-      throw new Error(
-        'Falta el emisor: pásalo en el parámetro "emisor" o configura CFDI_EMISOR_RFC, CFDI_EMISOR_NOMBRE, CFDI_EMISOR_REGIMEN y CFDI_EMISOR_CP.',
-      );
+    if (conf) return conf;
+    // Multi-empresa: si la empresa activa tiene datos fiscales, son el emisor.
+    const emp = empresaActivaDetalle(ctx);
+    if (emp.rfc && emp.nombre && emp.regimen && emp.cp) {
+      return { rfc: emp.rfc, nombre: emp.nombre, regimenFiscal: emp.regimen, codigoPostal: emp.cp };
     }
-    return conf;
+    throw new Error(
+      `Falta el emisor: completa los datos fiscales de la empresa "${emp.nombre}" (\`empresa_editar\` con rfc, regimen y cp), pásalo en el parámetro "emisor", o configura CFDI_EMISOR_RFC, CFDI_EMISOR_NOMBRE, CFDI_EMISOR_REGIMEN y CFDI_EMISOR_CP.`,
+    );
   };
 
   const aOpciones = (args: Record<string, any>): OpcionesCfdi => ({
-    serie: args.serie,
+    // La serie por defecto es la de la empresa activa (cada empresa folia lo suyo).
+    serie: args.serie ?? empresaActivaDetalle(ctx).series,
     folio: args.folio,
     formaPago: args.forma_pago,
     metodoPago: args.metodo_pago,
@@ -195,7 +200,7 @@ export function facturacionToolDefs(defs: ToolDef[], ctx: ServerCtx): void {
       guardar_xml: z.boolean().optional().describe('Guardar el XML en datos/facturacion/ (por defecto false).'),
     },
     handler: async (args: any) => {
-      const pedido = new PedidosRepo(ctx.db).listar({ folio: args.folio_pedido })[0];
+      const pedido = new PedidosRepo(ctx.db, empresaActiva(ctx)).listar({ folio: args.folio_pedido })[0];
       if (!pedido) throw new Error(`No existe el pedido "${args.folio_pedido}".`);
       if (pedido.estado === 'cancelado') throw new Error(`El pedido ${pedido.folio} está cancelado; no se puede facturar.`);
 

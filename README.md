@@ -1,6 +1,6 @@
 # Suite MCP MX
 
-Plataforma **[MCP](https://modelcontextprotocol.io)** (Model Context Protocol) con **61 herramientas** en 10 módulos: **negocio, facturación (CFDI 4.0), documentos, análisis de datos, DevOps, Taller (gemelo digital), Centinela (seguridad), Parche (reparar con red de seguridad), Orquesta (flujos) y Rúter (modelos)**, adaptada a la operación de empresas mexicanas (IVA 16%, retenciones ISR/IVA, RFC/CURP, CFDI 4.0).
+Plataforma **[MCP](https://modelcontextprotocol.io)** (Model Context Protocol) con **68 herramientas** en 11 módulos: **Empresas (multi-empresa), negocio, facturación (CFDI 4.0), documentos, análisis de datos, DevOps, Taller (gemelo digital), Centinela (seguridad), Parche (reparar con red de seguridad), Orquesta (flujos) y Rúter (modelos)**, adaptada a la operación de empresas mexicanas (IVA 16%, retenciones ISR/IVA, RFC/CURP, CFDI 4.0).
 
 - **Local** vía `stdio`: Claude Desktop, Claude Code, Cursor, VS Code.
 - **Remoto** vía **Streamable HTTP** con **API keys, permisos por módulo, límite de tasa, auditoría y métricas Prometheus**.
@@ -194,6 +194,25 @@ Los 5 predefinidos: **verificar despliegue** (health checks + estado del repo), 
 
 La diferencia con los enrutadores del mercado: ellos estiman calidad por benchmark; aquí se **mide si la tarea sirvió** con los hechos del propio taller (¿las pruebas quedaron verdes?, ¿el parche sobrevivió?) y se calcula **coste por resultado útil**. El catálogo de modelos es local y editable (`data/ruter/modelos.json`), con costes en unidades relativas para que pongas tus precios reales. Nunca degrada una tarea crítica por ahorrar: en criticidad alta arranca el modelo fuerte.
 
+## Empresas — un servidor, varios negocios (fase 5A)
+
+El caso que pidió el canal: **un despacho contable con varios clientes, o un dueño con dos giros**. Cada empresa tiene su inventario, sus pedidos y sus plantillas; nada se mezcla. La misma clave de código puede existir en dos empresas (dos `TOR-001` distintos) y cada pedido descuenta stock en el negocio correcto.
+
+```bash
+# empresas_listar    → espacios (con datos fiscales) y cuál está activo
+# empresa_crear      → espacio nuevo, con su RFC/régimen/CP/serie de folios
+# empresa_actual     → ver o cambiar la empresa activa de esta sesión
+# empresa_editar     → corregir datos o archivar (archivar oculta, no borra)
+# empresa_resumen    → foto ejecutiva del negocio: inventario, ventas, riesgos de stock
+# empresas_comparar  → todos los clientes lado a lado, sin mezclar cifras
+# inventario_importar→ cargar el catálogo de cada empresa desde CSV (con dry_run)
+```
+
+- **Aislamiento de verdad**: `inventario`, `pedidos` y `plantillas` llevan `empresa_id`; los repositorios filtran por la empresa activa en cada consulta. Una base anterior se migra sola (todo lo que ya existía pasa a la empresa por defecto, sin perder nada).
+- **Claves atadas a una empresa**: `node dist/cli.js keys create --nombre cliente-x --scopes negocio,facturacion --empresa EMP-xxxxxx` — esa clave solo ve los datos de su empresa y no puede cambiar de espacio ni comparar.
+- **CFDI por empresa**: el borrador toma el emisor (RFC, razón social, régimen, CP) y la serie de folios de la empresa activa; ya no hay que configurar `CFDI_EMISOR_*` si cada empresa tiene sus datos.
+- **CLI**: `node dist/cli.js empresas [--todas] [--comparar]` y `empresas crear --nombre "…" [--rfc …] [--regimen …] [--cp …]`.
+
 ## Datos
 
 ```
@@ -234,7 +253,7 @@ Variables de entorno principales (ver `.env.example`):
 | `HTTP_CHECK_ALLOW_PRIVATE` | `1` permite health checks a IPs privadas | `0` |
 | `CORS_ORIGIN` | Origen permitido para CORS | `*` |
 
-## Herramientas (61)
+## Herramientas (68)
 
 | Módulo | Herramientas |
 |---|---|
@@ -258,7 +277,7 @@ Además: 2 **recursos MCP** (`mcp-suite-mx://config/actual`, `mcp-suite-mx://cat
 npm run dev:stdio   # recarga en vivo, transporte stdio
 npm run dev         # recarga en vivo, HTTP en :8787
 npm run typecheck   # tsc sin emitir
-npm test            # 169 pruebas (unitarias + integración MCP + HTTP con auth + TLS + CFDI + taller + centinela + parche + orquesta + rúter)
+npm test            # 181 pruebas (unitarias + integración MCP + HTTP con auth + TLS + CFDI + taller + centinela + parche + orquesta + rúter + multi-empresa)
 npm run build       # compila a dist/
 node dist/cli.js    # ayuda del CLI de administración
 ```
@@ -270,15 +289,16 @@ src/
 ├── index.ts        # arranque, contexto (BD, métricas, auditoría, limiter)
 ├── server.ts       # registro de módulos + filtrado por permisos + recursos/prompts
 ├── http.ts         # HTTP/panel: auth, rate headers, /metrics, /api/*
-├── cli.ts          # keys create|list|revoke · audit · backup · aprobaciones|aprobar|rechazar · parches|revertir · flujos · modelos · seguridad · check
+├── cli.ts          # keys create|list|revoke · audit · backup · aprobaciones|aprobar|rechazar · parches|revertir · flujos · modelos · empresas · seguridad · check
 ├── config.ts       # configuración (flags CLI + variables de entorno)
 ├── auth/           # keys.ts (SQLite, sha256, timing-safe) · politica.ts (scopes)
 ├── db/             # esquema, migración desde JSON, siembra, repositorios
 ├── lib/            # csv, stats, finance, cfdi, text, store, audit, metrics, rate-limit, backup, grafo, rescate,
 │                   # taller-vivo, centinela (reglas + plan + verificación), aprobaciones (gate),
-│                   # parche (diagnóstico/diff/copias), orquesta (flujos/actas), ruter (cascada/costes)
-└── tools/          # un archivo por módulo (negocio, facturacion, documentos, analisis, devops, taller,
-                    # centinela, parche, orquesta, ruter)
+│                   # parche (diagnóstico/diff/copias), orquesta (flujos/actas), ruter (cascada/costes),
+│                   # empresas (multi-empresa: espacios, resúmenes y comparativa)
+└── tools/          # un archivo por módulo (empresas, negocio, facturacion, documentos, analisis, devops,
+                    # taller, centinela, parche, orquesta, ruter)
 ```
 
 ## Endpoints HTTP
@@ -294,4 +314,5 @@ src/
 | `GET /api/aprobaciones` | Cola de aprobaciones (pendientes por defecto, `?todas=1` para el histórico). Protegido. |
 | `POST /api/aprobaciones/<id>` | Resolver desde el panel: `{"decision":"aprobar"\|"rechazar","motivo":"…"}`. Protegido y auditado. |
 | `GET /api/parches` | Historial de parches con huella, veredicto de pruebas y respaldo. Protegido. |
+| `GET /api/empresas` | Espacios multi-empresa; con `?comparar=1`, sus cifras lado a lado. Protegido. |
 | `GET /panel` | Panel HTML autogenerado, con la cola de aprobaciones y el historial de parches en vivo (botones Aprobar/Rechazar). |
