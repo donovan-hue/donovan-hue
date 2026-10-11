@@ -25,7 +25,7 @@
 | Indicador | Valor |
 |---|---|
 | Código fuente | ~5,240 líneas TS (33 archivos) + 260 líneas de panel HTML |
-| Pruebas | 181 pruebas (unitarias + integración MCP + HTTP con auth + HTTPS + CFDI + respaldos + taller/gemelo vivo + centinela/gate + parche + orquesta + rúter + multi-empresa) |
+| Pruebas | 184 pruebas (unitarias + integración MCP + HTTP con auth + HTTPS + CFDI + respaldos + taller/gemelo vivo + centinela/gate + parche + orquesta + rúter + multi-empresa + paquete instalado) |
 | Herramientas MCP | 66 en 11 módulos + 2 de núcleo |
 | Recursos y prompts MCP | 2 recursos + 2 prompts |
 | Superficie de despliegue | local (stdio), Docker + compose, CI/CD con humos de seguridad |
@@ -199,7 +199,7 @@ Decisiones clave (fase 1 y 2):
 | Métricas | `GET /metrics` (Prometheus) |
 | Panel | `GET /panel` (público, sin datos de negocio) |
 | Docker | `docker compose up -d --build` (volumen `./data` persiste suite.db y auditoría) |
-| CI | GitHub Actions: tipos → 181 pruebas → build → humo stdio → humo de auth (401/200) → humos CFDI/respaldo/HTTPS → imagen Docker con auth |
+| CI | GitHub Actions: tipos → 184 pruebas → build → humo stdio → humo de auth (401/200) → humos CFDI/respaldo/HTTPS → imagen Docker con auth |
 
 ## 7. Lo que falta para producción plena (fase 4)
 
@@ -239,7 +239,7 @@ Decisiones clave (fase 1 y 2):
 - [x] Orquesta: 5 flujos de dev + flujos propios, actas por corrida, dry-run y solicitud de aprobación genérica
 - [x] Rúter: cascada de modelos por tarea, registro de resultados con evidencia y coste por resultado útil; política por tipo con «solo local»
 - [x] Centinela completo: permisos reales por ruta (`permisos_auditar`) y avisos de dependencias con caché (`dependencias_vulnerables`)
-- [x] 181 pruebas en verde (26 de centinela, 18 de taller, 17 del servidor MCP, 14 de HTTP con auth, 14 de CFDI, 14 de seguridad, 11 de multi-empresa, 11 de parche, 10 de orquesta y 7 de rúter)
+- [x] 184 pruebas en verde (26 de centinela, 18 de taller, 17 del servidor MCP, 14 de HTTP con auth, 14 de CFDI, 14 de seguridad, 11 de multi-empresa, 11 de parche, 10 de orquesta, 7 de rúter y 3 del paquete tal como lo instala npm)
 
 **Fase 5A**
 - [x] Espacios multi-empresa con inventario, pedidos y plantillas aislados (clave compuesta empresa+SKU/nombre)

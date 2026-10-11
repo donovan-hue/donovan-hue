@@ -12,6 +12,16 @@ Plataforma **[MCP](https://modelcontextprotocol.io)** (Model Context Protocol) c
 
 ## Inicio rápido
 
+### 0. Desde npm (sin clonar nada)
+
+```bash
+npx mcp-suite-mx --version        # servidor MCP (stdio por defecto; --transport http para el servidor web)
+npx mcp-suite-mx-cli keys create --nombre equipo --scopes negocio,facturacion
+npx mcp-suite-mx-cli empresas --comparar
+```
+
+Los dos comandos los instala el paquete: `mcp-suite-mx` (servidor) y `mcp-suite-mx-cli` (administración). Con `--help` sale el resumen de uso y variables.
+
 ### 1. Local (stdio, 2 minutos)
 
 ```bash
@@ -150,6 +160,7 @@ Encuentra los riesgos que de verdad se cuelan a producción y **demuestra** cuá
 - **Demostración, no suposición**: `seguridad_escanear` con `guardar_linea_base=true` fija la foto inicial; `seguridad_verificar` re-escanea y responde *resueltos / permanecen / nuevos*, con el cambio de puntaje. Un arreglo de seguridad sin verificación es una promesa, no un hecho.
 - **Gate de aprobación humana**: toda operación destructiva (aplicar un plan, desplegar) pasa por una **aprobación registrada**. El modelo puede *solicitarla* (`seguridad_plan` con `solicitar_aplicacion=true`) y *consultar* si sigue válida, pero **solo una persona la resuelve** por CLI (`aprobar AP-xxxx` / `rechazar AP-xxxx --motivo "…"`) o panel: un agente no puede autorizarse a sí mismo. Cada aprobación lleva una **huella** del contenido: si el plan cambia, la autorización deja de valer. Las solicitudes vencen solas (`APROBACION_VIGENCIA_MIN`, 120 min por defecto) y todo queda en la auditoría inmutable.
 - **Permisos de las rutas, sin adivinar**: `permisos_auditar` lee cómo se declaran tus rutas (Express, Fastify, Koa, Hono, NestJS) y dice cuál está protegida por *middleware en la línea*, cuál por un *guard global* y cuál quedó al aire; además separa las que «probablemente son públicas» (webhooks, health, login) para que no ensucies el informe con falsos positivos.
+- **Auditoría de la propia suite**: `npm audit` en este repositorio da **0 vulnerabilidades** (el aviso de `tinypool`/`@vitest/mocker` de la cadena de pruebas se cerró subiendo a vitest 4.1.11, y `dependencias_vulnerables` lo comprueba cuando quieras).
 - **Dependencias reales**: `dependencias_vulnerables` consulta `npm audit --json` (con caché de 24 h por hash de `package.json` + lockfile en `data/centinela/audit-cache.json`) y, si no hay red o no hay lockfile, cae a la tabla local de avisos frecuentes **diciendo con franqueza de dónde salió cada dato** — nunca presenta un «0 vulnerabilidades» falso.
 - **Vía CLI y CI**: `node dist/cli.js seguridad --directorio <proyecto> [--minimo 80] [--plan]` imprime el escaneo en JSON (o el plan en Markdown) y **sale con código 1 si el puntaje baja del mínimo** — listo para un pipeline. `node dist/cli.js aprobaciones` muestra la cola; `parches`, `flujos` y `modelos` cubren el resto del pack.
 
@@ -277,7 +288,7 @@ Además: 2 **recursos MCP** (`mcp-suite-mx://config/actual`, `mcp-suite-mx://cat
 npm run dev:stdio   # recarga en vivo, transporte stdio
 npm run dev         # recarga en vivo, HTTP en :8787
 npm run typecheck   # tsc sin emitir
-npm test            # 181 pruebas (unitarias + integración MCP + HTTP con auth + TLS + CFDI + taller + centinela + parche + orquesta + rúter + multi-empresa)
+npm test            # 184 pruebas (unitarias + integración MCP + HTTP con auth + TLS + CFDI + taller + centinela + parche + orquesta + rúter + multi-empresa)
 npm run build       # compila a dist/
 node dist/cli.js    # ayuda del CLI de administración
 ```

@@ -1,5 +1,8 @@
+#!/usr/bin/env node
 import fs from 'node:fs/promises';
+import fsSync from 'node:fs';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { loadConfig, type Config } from './config.js';
 import { setLogLevel, log } from './logger.js';
@@ -80,9 +83,54 @@ export async function run(opts: { transport?: Config['transport'] } = {}): Promi
   };
 }
 
-const esEjecucionDirecta = process.argv[1] && import.meta.url === new URL(`file://${process.argv[1]}`).href;
+/**
+ * ¿Nos están ejecutando de verdad? Ojo: npm instala los binarios como enlaces
+ * (node_modules/.bin/mcp-suite-mx), así que hay que comparar la ruta REAL del
+ * archivo, no la del enlace; si no, el servidor instalado no arranca.
+ */
+function esEjecucionDirecta(): boolean {
+  const entrada = process.argv[1];
+  if (!entrada) return false;
+  try {
+    const real = fsSync.realpathSync(entrada);
+    return import.meta.url === pathToFileURL(real).href;
+  } catch {
+    return false;
+  }
+}
 
-if ((esEjecucionDirecta && !process.argv[1]?.endsWith('cli.js')) || process.env.MCP_SUITE_AUTOSTART === '1') {
+/** Aviso corto de uso para `mcp-suite-mx --help` (y `npx mcp-suite-mx --version`). */
+function ayudaBasica(): string {
+  return [
+    `${SERVER_NAME} ${VERSION} — plataforma MCP para empresas mexicanas.`,
+    '',
+    'Uso:',
+    '  mcp-suite-mx                    Servidor MCP por stdio (Claude Desktop, Cursor, …)',
+    '  mcp-suite-mx --transport http   Servidor MCP por HTTP (panel web en /panel)',
+    '  mcp-suite-mx-cli <comando>      Administración: keys, audit, backup, empresas, parches, flujos, modelos, seguridad',
+    '',
+    'Variables: DATA_DIR (por defecto ./data), PORT (8787), AUTH_MODE (off|optional|required),',
+    '           ALLOWED_GIT_ROOTS (rutas autorizadas para herramientas de proyecto), EMPRESA_DEFAULT.',
+    '',
+    'Ayuda de administración:  mcp-suite-mx-cli   (sin argumentos)',
+  ].join('\n');
+}
+
+const ejecucionDirecta = esEjecucionDirecta();
+
+if (ejecucionDirecta) {
+  const args = process.argv.slice(2);
+  if (args.includes('--version') || args.includes('-v')) {
+    process.stdout.write(`${VERSION}\n`);
+    process.exit(0);
+  }
+  if (args.includes('--help') || args.includes('-h')) {
+    process.stdout.write(`${ayudaBasica()}\n`);
+    process.exit(0);
+  }
+}
+
+if ((ejecucionDirecta && !process.argv[1]?.endsWith('cli.js')) || process.env.MCP_SUITE_AUTOSTART === '1') {
   run()
     .then((shutdown) => {
       const cerrar = async (signal: string) => {
