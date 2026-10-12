@@ -164,3 +164,45 @@ comprobar que el escáner de seguridad de la suite detecta lo que debe
 detectar: no se instala, no se ejecuta y no entra en el paquete publicado.
 Se dictaminaron las 15 como riesgo tolerable con esa explicación y el
 repositorio queda en 0 alertas abiertas.
+
+## 9. Las fallas de MongoDB, una por una
+
+**Lo que fallaba.** El flujo `Kronos E2E (MongoDB real)` fallaba en tres pasos:
+dos pruebas de las suites y, en cascada, el paso de medición con índices.
+Reproducido en main (`9e2a8b0`) antes de tocar nada: 92 pruebas, 90 en verde,
+2 en rojo.
+
+**Causa de las dos pruebas.** Desde que existe el control de acceso a
+multimedia, `/uploads` exige la cookie `kronos_media_token`. Las pruebas
+subían el archivo y luego lo pedían sin esa cookie, así que recibían 404.
+El registro ya emite la cookie: ahora se guarda y se manda al leer.
+
+**Causa de la tercera.** No era un fallo aparte: al fallar las pruebas, el
+paso que siembra la base de ensayo quedaba saltado, la base quedaba vacía y
+la medición de índices no tenía nada que medir (25 consultas «sin datos»).
+
+**De dónde salieron los arreglos.** De las ramas `fix/e2e-atlas-isolation` y
+`fix/e2e-feedsignal-fixture`, que llevaban semanas sin llegar a main. Se
+tomaron sólo los dos archivos de prueba afectados, no el resto de aquellas
+ramas.
+
+**Verificado aquí antes de subirlo.** Con un MongoDB 7.0.14 local, igual al
+del CI, y el mismo comando del flujo: 92 pruebas, 92 en verde. La cadena de
+base de datos que dependía de eso también pasa: siembra 135.800 documentos,
+la auditoría de índices baja de 24 recorridos completos a 0 y la comparación
+antes/después baja el p95 de 156 ms a 39 ms con 99,8 % menos documentos
+examinados.
+
+**En GitHub.** El trabajo «E2E contra MongoDB real (mongo:7)» quedó en verde
+en la corrida `38218416136`.
+
+**Lo que sigue en rojo y por qué.** El trabajo «E2E contra Atlas» no puede
+pasar desde aquí: el usuario de Atlas del secreto `KRONOS_E2E_MONGODB_URI`
+no tiene permiso para enumerar colecciones de la base `test`, y el E2E lo
+necesita para saber qué documentos ya existían y borrar sólo los suyos.
+Sin ese permiso no hay forma de limpiar sin riesgo en una base compartida,
+así que la suite se detiene en seco en lugar de improvisar. Se arregla en
+Atlas, no en el código: Database Access, el usuario E2E, rol `readWrite`
+sobre la base `test`. Para que quien lo lea no tenga que adivinarlo, el
+error crudo del driver se tradujo a esa instrucción
+(`E2E_ATLAS_SIN_PERMISO`), verificado contra un usuario restringido real.
