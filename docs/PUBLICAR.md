@@ -21,7 +21,7 @@ npm publish        # publica mcp-suite-mx@0.2.0
 Antes de publicar (esto ya está hecho y se puede repetir):
 
 ```bash
-npm run build && npm test      # 184 pruebas
+npm run build && npm test      # 186 pruebas
 npm pack --dry-run             # 108 archivos, ~254 kB: dist/, paginas/, docs/, README, LICENSE, .env.example
 npm audit                      # 0 vulnerabilidades
 ```

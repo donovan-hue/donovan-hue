@@ -10,7 +10,7 @@
 | Parte | Grado | Detalle |
 |---|---|---|
 | Construcción (fases 1 a 5A) | 100% | Todo lo acordado está construido y probado |
-| Pruebas | 184 de 184 en verde | 17 archivos de prueba |
+| Pruebas | 186 de 186 en verde | 17 archivos de prueba |
 | Seguridad de dependencias | 0 vulnerabilidades | `npm audit` limpio |
 | Paquete listo para instalar | 100% | Probado instalando el archivo .tgz en una carpeta limpia |
 | CI de GitHub | Listo | Los 9 bloques pasan, simulados en local |
@@ -217,7 +217,7 @@ Tema: elegir modelo de IA y medir coste por resultado.
 
 ## 6. Cómo se comprobó
 
-- [x] **184 pruebas** automáticas en 17 archivos, todas en verde.
+- [x] **186 pruebas** automáticas en 17 archivos, todas en verde.
 - [x] **CI completa simulada en local:** tipos, auditoría de dependencias, pruebas, compilación, paquete instalado desde cero, arranque por stdio, CLI, servidor HTTP con y sin clave, respaldos y HTTPS. Los 9 bloques pasan.
 - [x] **Paquete instalado de verdad:** se empaquetó y se instaló en una carpeta limpia; responde `--version`, arranca, emite claves y lista las 68 herramientas.
 - [x] **Centinela sobre el propio proyecto:** puntaje 100 con cero hallazgos.
