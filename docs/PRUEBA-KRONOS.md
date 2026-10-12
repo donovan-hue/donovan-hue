@@ -145,3 +145,22 @@ Un dato aparte que salió en esta pasada: en el proyecto demo
 `/home/user/demos/tienda-api` hay un token de GitHub escrito en
 `src/config.js`. Se probó y ya está revocado (401), así que no sirve, pero
 conviene borrar esa línea.
+
+## 8. Resultado en GitHub
+
+**Kronos-space.com.** Los dos commits están en `main`: `add9715` (el 404) y
+`9e2a8b0` (sistema visual y limpieza). La corrida de CI de `9e2a8b0`
+terminó en verde: trabajo `validate` con 17 pasos correctos (el restante se
+salta por condición del flujo). La corrida roja que originó todo esto
+(`38170632997`) es del commit anterior, `cc00009`, donde el fallo era real.
+
+**Suite.** La corrida de CI de `43bb84c` también en verde.
+
+**Alertas de dependencias.** Dependabot marcaba 15 alertas abiertas
+(1 crítica, 5 altas, 8 medias, 1 baja) sobre
+`data/fixtures/proyecto-vulnerable/package.json`. Ese archivo es un
+proyecto deliberadamente vulnerable que `tests/centinela.test.ts` usa para
+comprobar que el escáner de seguridad de la suite detecta lo que debe
+detectar: no se instala, no se ejecuta y no entra en el paquete publicado.
+Se dictaminaron las 15 como riesgo tolerable con esa explicación y el
+repositorio queda en 0 alertas abiertas.
