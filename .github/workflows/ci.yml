@@ -28,11 +28,11 @@ jobs:
       - name: Auditoría de dependencias
         run: npm audit --audit-level=high
 
-      - name: Pruebas unitarias y de integración
-        run: npm test
-
       - name: Compilar
         run: npm run build
+
+      - name: Pruebas unitarias y de integración
+        run: npm test
 
       - name: Humo del paquete tal como lo instala npm
         run: |

@@ -2,6 +2,8 @@ node_modules/
 dist/
 coverage/
 *.log
+# Excepción: log de ejemplo que usan las pruebas y la demo de log_analizar.
+!data/logs/api_produccion.log
 .env
 .env.local
 
