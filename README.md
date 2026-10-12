@@ -10,6 +10,8 @@ Plataforma **[MCP](https://modelcontextprotocol.io)** (Model Context Protocol) c
 
 > Alcance, arquitectura, seguridad y estimaciones: [`docs/ALCANCE.md`](docs/ALCANCE.md).
 
+> Diseño: la norma visual del proyecto (paleta fucsia, tipografía y piezas) está en [`docs/DISENO.md`](docs/DISENO.md). El panel vive en `/panel`, el catálogo de las 68 herramientas y su proceso en `/herramientas`, y el mapa vivo 3D en `/taller`.
+
 ## Inicio rápido
 
 ### 0. Desde npm (sin clonar nada)
@@ -327,3 +329,4 @@ src/
 | `GET /api/parches` | Historial de parches con huella, veredicto de pruebas y respaldo. Protegido. |
 | `GET /api/empresas` | Espacios multi-empresa; con `?comparar=1`, sus cifras lado a lado. Protegido. |
 | `GET /panel` | Panel HTML autogenerado, con la cola de aprobaciones y el historial de parches en vivo (botones Aprobar/Rechazar). |
+| `GET /herramientas` | Catálogo visual de las 68 herramientas y el proceso completo, de la orden a la respuesta. |
