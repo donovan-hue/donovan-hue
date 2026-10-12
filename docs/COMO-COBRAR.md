@@ -119,3 +119,79 @@ se cobra es el servicio. Para eso falta, en orden:
   Precio fijo y predecible.
 - Cobrar antes de que el sistema funcione sin mí. Hoy la suite funciona sola,
   pero la venta todavía soy yo.
+
+---
+
+## 8. Topes por plan: cuántos usuarios y cuánto uso
+
+**La decisión de fondo: no cobrar por usuario.** Cobrar por persona castiga al
+despacho por crecer y convierte cada contratación en una negociación. La
+competencia lo hace de las dos formas: Contalink cobra por usuario (alrededor de
+590) y Alegra no cobra por usuario. Se cobra por negocio, que es lo que de
+verdad se administra, y los usuarios van incluidos con holgura.
+
+### Topes propuestos
+
+| Tope | Negocio suelto (199-399) | Despacho (690) | Despacho sin límite (990) |
+| --- | --- | --- | --- |
+| Negocios | 1 | hasta 10 | aviso a los 50, sin corte |
+| Usuarios incluidos | 2 | 5 | 15 |
+| Usuario extra | 49 | 79 | 79 |
+| Usuarios por negocio (portal del cliente) | 2 | 2 | 2 |
+| Llamadas incluidas al mes | 2 000 | 8 000 | 20 000 |
+| Bloque extra de llamadas | 100 por 5 000 | 100 por 5 000 | 100 por 5 000 |
+| Almacenamiento de datos | 2 GB | 10 GB | 25 GB |
+| Respaldos diarios conservados | 7 | 30 | 30, más uno mensual por 12 meses |
+| Auditoría en línea | 12 meses | 12 meses | 12 meses |
+| Sesiones a la vez por usuario | 3 | 5 | 5 |
+| Llamadas por minuto por cuenta | 60 | 120 | 120 |
+
+La prueba gratis: 15 días, 1 negocio, 3 usuarios, 1 000 llamadas y 1 GB.
+Alcanza para evaluar de verdad y no para operar un mes gratis.
+
+### Por qué esos números
+
+- **5 usuarios incluidos** cubren al despacho típico (el dueño y dos a cuatro
+  auxiliares) sin que nadie tenga que pedir permiso para entrar. El usuario
+  extra a 79 es más barato que cualquier competidor: la idea es que nadie se
+  sienta robado por dar de alta a alguien.
+- **800 llamadas por negocio al mes** son unas 27 al día: sobra para un negocio
+  real y protege el margen de un agente en bucle que haga mil por descuido.
+- **El almacenamiento casi no se toca**: los datos son texto y ocupan poco; lo
+  que pesa son los documentos y los archivos exportados.
+- **No hay tope duro de usuarios.** Arriba de 100 usuarios en una sola cuenta
+  se avisa y se conversa: a esa altura no es un despacho chico, y suele ser
+  reventa de acceso, que conviene ordenar, no prohibir.
+
+### Las cuatro reglas que importan más que los números
+
+1. **Aviso al 80 %, tope al 100 %.** Al llegar al tope se pausan las acciones
+   nuevas; las consultas, los datos y la exportación siguen abiertos. Nunca un
+   corte seco ni un cobro sorpresa.
+2. **Nunca cortar la salida.** Aunque haya tope o una mensualidad vencida, el
+   cliente puede exportar todo y llevárselo. Su contabilidad es suya, y en
+   México hay que conservarla cinco años: el sistema no borra nada solo. Si el
+   almacenamiento llega a su tope, se avisa y se ofrece archivar negocios o
+   subir de plan; jamás se borra por cuenta propia.
+3. **Los topes viven en el servidor.** Se comprueban ahí, no en la página de
+   precios. Un tope que solo está escrito no es un tope.
+4. **Subir un tope es decisión de minutos**, sin recotizar ni cambiar de plan.
+
+### Y técnicamente, ¿aguanta?
+
+El límite real no son los usuarios, son las llamadas a la vez y por minuto. El
+limitador ya existe y hoy está en 120 por minuto con ráfaga de 30: eso aguanta
+cientos de usuarios con holgura. Los topes de la tabla son comerciales y de
+protección, no de capacidad.
+
+### Cómo se aplica en el código
+
+- Una tabla o archivo de límites por cuenta (plan, negocios, usuarios,
+  llamadas, almacenamiento) en la misma base.
+- Una comprobación en el servidor antes de cada herramienta: si está dentro,
+  pasa; si llegó al 80 %, se deja pasar y se registra el aviso; si llegó al
+  100 %, se responde con el mensaje que explica cómo subir y cómo exportar.
+- Dos eventos nuevos en la auditoría: `limite_aviso` y `limite_tope`, para poder
+  enseñarle al cliente por qué se detuvo y cuándo.
+- El mismo archivo de límites sirve para la prueba gratis: al día 15 se
+  convierte en el plan de pago sin migrar nada.
