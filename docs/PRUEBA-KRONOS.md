@@ -93,3 +93,55 @@ Estado: **propuesto y probado**, sin aplicar. Para aplicarlo hace falta la aprob
 
 - **Decisión tuya:** ¿se aplica el parche `PR-b2c31d` al repositorio de Kronos y se sube una rama (o un PR) con el arreglo? La suite ya dio el visto bueno con pruebas.
 - Opcional: `.centinela-ignore` en Kronos para que el escaneo no se ensucie con las credenciales de prueba.
+
+## 7. Segunda pasada: aplicación del parche y sistema visual
+
+**El parche se aplicó.** Ya no está sólo propuesto: vive en
+`server/src/middleware/mediaAcl.js` del clon, en el commit `add9715`.
+
+- `deny(req, res)` respondía `res.status(404).end()`: sin cuerpo y sin
+  tipo de contenido. Por eso las tres rutas del bucle de la prueba sí
+  llegaban al 404 JSON de `server.js` y `/uploads` no.
+- Ahora responde el mismo `{error, code, path}` que el resto del servicio.
+- Verificación: `http-errors.contract.test.js` 14/14 (antes 13/14) y la
+  suite completa del servidor en 492 pruebas, 0 fallas.
+
+**El sistema visual de Kronos-space-react entró al cliente.** Lo que en
+un principio eran aproximaciones sueltas dentro de
+`kronos-html-theme.css` pasó a ser el sistema portado tal cual:
+
+- `client/src/styles/kronos-system/`, con los once archivos del port y su
+  orden de carga respetado (la cascada depende de ese orden).
+- Dos adaptaciones nada más, señaladas en el archivo: `--ring` se llama
+  `--ks-ring` porque Tailwind ya usa `--ring` para los anillos de foco, y
+  el `height:100%` de `html`/`body` pasó a `min-height` para no convertir
+  el body en contenedor de scroll.
+- El puente `kronos-html-theme.css` dejó de pelear con el sistema: sus
+  tokens son alias y sus clases propias usan los valores exactos. Bajó de
+  851 a 700 líneas y de 213 a unos 150 `!important`.
+- Marca: componente `KronosBrand`, el sello cromado de cuatro capas, en la
+  navegación, la barra superior y el panel.
+
+**Limpieza de código.**
+
+- Fuera `client/src/styles/chrome-minimal.css`: 1512 líneas (35 KB) que no
+  cargaba ningún archivo. Se comprobó comparando la compilación antes y
+  después: idéntica byte por byte, o sea que era código muerto de verdad.
+- Fuera las reglas del tema cuyas clases no usaba nadie.
+- Trece cierres de bloque `}}` normalizados en `styles.css`,
+  `design-system.css` y `fan-nav.css`.
+
+**Pruebas nuevas y resultados.** Se agregó `test-ui/kronos-system-parity.spec.jsx`
+(8 casos) que vigila el orden de carga del sistema, que los tokens del
+puente sean alias y no copias, que las clases del sistema no vuelvan a
+definirse en el puente y que la marca dibuje sus cuatro capas. La prueba
+de `ux-audit` dejó de vigilar el archivo muerto y ahora revisa todo el CSS
+que `main.jsx` carga de verdad.
+
+- Cliente: lint limpio, 38 pruebas de `node --test` y 261 de vitest.
+- Servidor: 492 pruebas, 0 fallas.
+
+Un dato aparte que salió en esta pasada: en el proyecto demo
+`/home/user/demos/tienda-api` hay un token de GitHub escrito en
+`src/config.js`. Se probó y ya está revocado (401), así que no sirve, pero
+conviene borrar esa línea.
