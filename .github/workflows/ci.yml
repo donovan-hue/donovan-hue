@@ -64,32 +64,34 @@ jobs:
         run: |
           AUTH_MODE=required MCP_API_KEYS=clave-ci-123 PORT=8791 node dist/index.js --transport http &
           SERVIDOR=$!
-          for i in $(seq 1 20); do curl -fsS http://127.0.0.1:8791/health && break || sleep 1; done
-          # Sin clave → 401
-          CODIGO=$(curl -s -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:8791/mcp \
+          for i in $(seq 1 20); do curl -fsS -m 5 http://127.0.0.1:8791/health && break || sleep 1; done
+          # Cada verificación se anuncia y, si falla, imprime la respuesta recibida.
+          comprobar() {
+            patron="$1"; descripcion="$2"; cuerpo=$(cat)
+            if printf '%s' "$cuerpo" | grep -q "$patron"; then echo "OK: $descripcion"; else
+              echo "FALLO: $descripcion (no aparece <<$patron>>)"; printf '%s\n' "$cuerpo" | head -25
+              kill $SERVIDOR 2>/dev/null; exit 1
+            fi
+          }
+          CODIGO=$(curl -s -m 10 -o /tmp/respuesta-401.json -w '%{http_code}' -X POST http://127.0.0.1:8791/mcp \
             -H 'content-type: application/json' -H 'accept: application/json, text/event-stream' \
             -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}')
+          echo "sin clave -> código $CODIGO"; cat /tmp/respuesta-401.json; echo
           test "$CODIGO" = "401"
-          # Con clave → 200 y catálogo
-          curl -sf -X POST http://127.0.0.1:8791/mcp \
+          curl -sf -m 10 -X POST http://127.0.0.1:8791/mcp \
             -H 'authorization: Bearer clave-ci-123' \
             -H 'content-type: application/json' -H 'accept: application/json, text/event-stream' \
-            -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | grep -q 'mcp_suite_info'
-          # Métricas y auditoría disponibles
-          curl -sf http://127.0.0.1:8791/metrics | grep -q 'mcp_suite_http_peticiones_total'
-          curl -sf -H 'authorization: Bearer clave-ci-123' http://127.0.0.1:8791/api/auditoria | grep -q 'total'
-          # Módulo nuevo de multi-empresa: la empresa por defecto ya existe
-          curl -sf -X POST http://127.0.0.1:8791/mcp \
+            -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | comprobar 'mcp_suite_info' 'catálogo de herramientas'
+          curl -sf -m 10 http://127.0.0.1:8791/metrics | comprobar 'mcp_suite_http_peticiones_total' 'métricas'
+          curl -sf -m 10 -H 'authorization: Bearer clave-ci-123' http://127.0.0.1:8791/api/auditoria | comprobar '"total"' 'auditoría'
+          curl -sf -m 10 -X POST http://127.0.0.1:8791/mcp \
             -H 'authorization: Bearer clave-ci-123' \
             -H 'content-type: application/json' -H 'accept: application/json, text/event-stream' \
-            -d '{\"jsonrpc\":\"2.0\",\"id\":4,\"method\":\"tools/call\",\"params\":{\"name\":\"empresas_listar\",\"arguments\":{}}}' \
-            | grep -q 'EMP-principal'
-          # Herramientas de facturación (CFDI): retenciones de honorarios
-          curl -sf -X POST http://127.0.0.1:8791/mcp \
+            -d '{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"empresas_listar","arguments":{}}}' | comprobar 'EMP-principal' 'empresas'
+          curl -sf -m 10 -X POST http://127.0.0.1:8791/mcp \
             -H 'authorization: Bearer clave-ci-123' \
             -H 'content-type: application/json' -H 'accept: application/json, text/event-stream' \
-            -d '{"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"cfdi_retenciones_calcular","arguments":{"monto":10000}}}' \
-            | grep -q '10408.33'
+            -d '{"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"cfdi_retenciones_calcular","arguments":{"monto":10000}}}' | comprobar '10408.33' 'retenciones'
           kill $SERVIDOR
 
       - name: Humo de respaldos (copia consistente + rotación)
