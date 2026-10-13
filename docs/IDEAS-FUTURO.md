@@ -1,6 +1,6 @@
 # Ideas para lo que sigue — herramientas nuevas para la suite
 
-**Fecha:** 12 de octubre de 2026 · **Versión base:** 0.2.0 (68 herramientas, 11 módulos).
+**Fecha:** 12 de octubre de 2026 · **Versión base:** 0.2.0 (76 herramientas, 12 módulos).
 
 **Cómo leer esta lista:** cada idea trae el formato de siempre — qué hace la herramienta típica del mercado y qué haría la nuestra — más las herramientas concretas que se agregarían, el esfuerzo y para quién es. Nada de la lista necesita contratar servicios externos ni crear cuentas: todo corre local, como el resto de la suite. Marca con una "x" lo que quieras que se construya.
 

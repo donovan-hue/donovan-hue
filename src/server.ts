@@ -14,6 +14,7 @@ import { parcheToolDefs } from './tools/parche.js';
 import { orquestaToolDefs } from './tools/orquesta.js';
 import { ruterToolDefs } from './tools/ruter.js';
 import { empresasToolDefs } from './tools/empresas.js';
+import { disenoToolDefs } from './tools/diseno.js';
 import { SERVER_NAME, SERVER_TITLE, VERSION } from './version.js';
 import { describirScopes } from './auth/politica.js';
 
@@ -35,7 +36,8 @@ export function toolDefsDeTodosLosModulos(ctx: ServerCtx): { modulo: string; def
   const parche: ToolDef[] = [];
   const orquesta: ToolDef[] = [];
   const ruter: ToolDef[] = [];
-  const empresas: ToolDef[] = [];
+    const empresas: ToolDef[] = [];
+    const diseno: ToolDef[] = [];
   negocioToolDefs(negocio, ctx);
   facturacionToolDefs(facturacion, ctx);
   documentosToolDefs(documentos, ctx);
@@ -47,6 +49,7 @@ export function toolDefsDeTodosLosModulos(ctx: ServerCtx): { modulo: string; def
   orquestaToolDefs(orquesta, ctx);
   ruterToolDefs(ruter, ctx);
   empresasToolDefs(empresas, ctx);
+    disenoToolDefs(diseno, ctx);
   return [
     { modulo: 'negocio', defs: negocio },
     { modulo: 'facturacion', defs: facturacion },
@@ -58,7 +61,8 @@ export function toolDefsDeTodosLosModulos(ctx: ServerCtx): { modulo: string; def
     { modulo: 'parche', defs: parche },
     { modulo: 'orquesta', defs: orquesta },
     { modulo: 'ruter', defs: ruter },
-    { modulo: 'empresas', defs: empresas },
+      { modulo: 'empresas', defs: empresas },
+      { modulo: 'diseno', defs: diseno },
   ];
 }
 
@@ -74,7 +78,7 @@ export function buildServer(ctx: ServerCtx): ServerSuite {
     { name: SERVER_NAME, version: VERSION, title: SERVER_TITLE },
     {
       instructions: [
-        `${SERVER_TITLE} (${SERVER_NAME}) expone 11 módulos de herramientas:`,
+        `${SERVER_TITLE} (${SERVER_NAME}) expone 12 módulos de herramientas:`,
         '- negocio: inventario, pedidos y cotizaciones con IVA/retenciones de México.',
         '- facturacion: CFDI 4.0 (borrador + XML sin sellar), validación de datos fiscales, catálogos del SAT y cálculo de retenciones.',
         '- documentos: lectura de archivos, resumen de texto, extracción de datos (RFC, correo, montos) y plantillas.',
@@ -85,7 +89,8 @@ export function buildServer(ctx: ServerCtx): ServerSuite {
         '- parche: reparar con red de seguridad (diagnóstico con evidencia, parche revisable, pruebas antes/después en copia aislada, aplicación con aprobación humana y reversión en un comando).',
         '- orquesta: flujos de dev con bitácora (verificar despliegue, respaldo con rotación, auditoría de dependencias y seguridad, preparar release, post-mortem), más flujos propios, con dry-run y aprobaciones.',
         '- ruter: elección de modelo por tarea con coste por resultado útil medido en tu propio taller (pruebas verdes, parches vivos).',
-        '- empresas: espacios multi-empresa (un despacho, varios clientes): inventario, pedidos y plantillas aislados por empresa, con datos fiscales propios para CFDI.',
+          '- empresas: espacios multi-empresa (un despacho, varios clientes): inventario, pedidos y plantillas aislados por empresa, con datos fiscales propios para CFDI.',
+          '- diseno: color de última generación en OKLCH, contraste WCAG 2.2 y APCA, paletas con roles, tipografía fluida, tokens (CSS y formato de diseño DTCG), componentes en CSS moderno y auditoría de accesibilidad de HTML y CSS.',
         identidad
           ? `Cliente autenticado: "${identidad.nombre}". Permisos: ${scopesTexto}. Solo verás las herramientas permitidas por tus scopes.`
           : 'Sin autenticación (uso local o AUTH_MODE=off).',

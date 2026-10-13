@@ -1,6 +1,6 @@
 # Documento de alcance y dimensionamiento — Suite MCP MX
 
-**Proyecto:** `mcp-suite-mx` — plataforma MCP (Model Context Protocol) con 11 módulos de herramientas (incluye multi-empresa, facturación CFDI 4.0, el taller de análisis de código, centinela de seguridad y el pack dev: parche, orquesta y rúter).
+**Proyecto:** `mcp-suite-mx` — plataforma MCP (Model Context Protocol) con 12 módulos de herramientas (incluye multi-empresa, facturación CFDI 4.0, el taller de análisis de código, centinela de seguridad y el pack dev: parche, orquesta y rúter).
 **Estado:** v0.2.0 · **Fases 1–4 entregadas** (herramientas y doble transporte · auth, tasa, auditoría, métricas y SQLite · CFDI 4.0, HTTPS y respaldos · pack dev: taller, centinela, parche, orquesta y rúter) · **Fase 5A entregada** (multi-empresa).
 **Fecha:** 11 de octubre de 2026.
 
@@ -14,8 +14,8 @@
 | ¿Stack? | Sin preferencia → recomendación: **TypeScript / Node.js** | SDK oficial de MCP más maduro, un solo lenguaje para stdio y HTTP |
 | ¿Magnitud esperada? | **Producto completo** | Auth, despliegue remoto, CI/CD, pruebas y documentación |
 | ¿Dónde se usa? | **Local (stdio) + remoto (HTTP)** | Doble transporte obligatorio desde el día 1 |
-| ¿Dominio? | Los 11 dominios: empresas, negocio, facturación, documentos, análisis, DevOps, taller, centinela, parche, orquesta, rúter | 11 módulos independientes |
-| ¿Cantidad de herramientas? | "Más de 12" | **68 herramientas implementadas** |
+| ¿Dominio? | Los 12 dominios: empresas, negocio, facturación, documentos, análisis, DevOps, taller, centinela, parche, orquesta, rúter, diseño | 12 módulos independientes |
+| ¿Cantidad de herramientas? | "Más de 12" | **76 herramientas implementadas** |
 | ¿Autenticación? | Fase 1 sin auth → **Fase 2 con API keys** | Implementada: permisos por módulo + scopes de solo lectura |
 
 ## 2. Veredicto de magnitud
@@ -26,7 +26,7 @@
 |---|---|
 | Código fuente | ~5,240 líneas TS (33 archivos) + 260 líneas de panel HTML |
 | Pruebas | 186 pruebas (unitarias + integración MCP + HTTP con auth + HTTPS + CFDI + respaldos + taller/gemelo vivo + centinela/gate + parche + orquesta + rúter + multi-empresa + paquete instalado) |
-| Herramientas MCP | 66 en 11 módulos + 2 de núcleo |
+| Herramientas MCP | 74 en 12 módulos + 2 de núcleo |
 | Recursos y prompts MCP | 2 recursos + 2 prompts |
 | Superficie de despliegue | local (stdio), Docker + compose, CI/CD con humos de seguridad |
 | Dependencias de producción | 3 (SDK oficial de MCP, Zod, better-sqlite3) |
@@ -51,7 +51,7 @@
                     ┌──────────────────────────────────────────────────────┐
                     │                    mcp-suite-mx                      │
                     │                                                      │
- Claude Desktop ────┤ stdio ──► buildServer(ctx) ──► 68 herramientas       │
+ Claude Desktop ────┤ stdio ──► buildServer(ctx) ──► 76 herramientas       │
  Cursor / Claude    │         · empresas (6) · negocio (10) · documentos (6) │
  Code (local)       │            · análisis (7) · devops (6) · núcleo (2)  │
                     │            · recursos + prompts MCP                  │

@@ -1,6 +1,6 @@
 # Suite MCP MX
 
-Plataforma **[MCP](https://modelcontextprotocol.io)** (Model Context Protocol) con **68 herramientas** en 11 módulos: **Empresas (multi-empresa), negocio, facturación (CFDI 4.0), documentos, análisis de datos, DevOps, Taller (gemelo digital), Centinela (seguridad), Parche (reparar con red de seguridad), Orquesta (flujos) y Rúter (modelos)**, adaptada a la operación de empresas mexicanas (IVA 16%, retenciones ISR/IVA, RFC/CURP, CFDI 4.0).
+Plataforma **[MCP](https://modelcontextprotocol.io)** (Model Context Protocol) con **76 herramientas** en 12 módulos: **Empresas (multi-empresa), negocio, facturación (CFDI 4.0), documentos, análisis de datos, DevOps, Taller (gemelo digital), Centinela (seguridad), Parche (reparar con red de seguridad), Orquesta (flujos), Rúter (modelos) y Diseño (color, contraste, tokens y componentes)**, adaptada a la operación de empresas mexicanas (IVA 16%, retenciones ISR/IVA, RFC/CURP, CFDI 4.0).
 
 - **Local** vía `stdio`: Claude Desktop, Claude Code, Cursor, VS Code.
 - **Remoto** vía **Streamable HTTP** con **API keys, permisos por módulo, límite de tasa, auditoría y métricas Prometheus**.
@@ -10,7 +10,7 @@ Plataforma **[MCP](https://modelcontextprotocol.io)** (Model Context Protocol) c
 
 > Alcance, arquitectura, seguridad y estimaciones: [`docs/ALCANCE.md`](docs/ALCANCE.md).
 
-> Diseño: la norma visual del proyecto (paleta fucsia, tipografía y piezas) está en [`docs/DISENO.md`](docs/DISENO.md). El panel vive en `/panel`, el catálogo de las 68 herramientas y su proceso en `/herramientas`, y el mapa vivo 3D en `/taller`.
+> Diseño: la norma visual del proyecto (paleta fucsia, tipografía y piezas) está en [`docs/DISENO.md`](docs/DISENO.md). El panel vive en `/panel`, el catálogo de las 76 herramientas y su proceso en `/herramientas`, y el mapa vivo 3D en `/taller`.
 
 ## Inicio rápido
 
@@ -266,7 +266,7 @@ Variables de entorno principales (ver `.env.example`):
 | `HTTP_CHECK_ALLOW_PRIVATE` | `1` permite health checks a IPs privadas | `0` |
 | `CORS_ORIGIN` | Origen permitido para CORS | `*` |
 
-## Herramientas (68)
+## Herramientas (76)
 
 | Módulo | Herramientas |
 |---|---|
@@ -280,9 +280,34 @@ Variables de entorno principales (ver `.env.example`):
 | **parche** (6) | `falla_diagnosticar` · `parche_proponer` · `parche_probar` · `parche_aplicar` · `reparacion_revertir` · `reparaciones_listar` |
 | **orquesta** (5) | `flujo_listar` · `flujo_ejecutar` · `flujo_estado` · `flujo_definir` · `aprobacion_solicitar` |
 | **rúter** (4) | `modelo_elegir` · `modelo_resultado` · `coste_comparar` · `politica_modelos` |
+| **diseño** (8) | `color_convertir` · `contraste_verificar` · `paleta_generar` · `tipografia_escala` · `tokens_generar` · `componente_generar` · `accesibilidad_auditar` · `estilo_revisar` |
 | **núcleo** (2) | `mcp_suite_info` · `auditoria_consultar` |
 
 Además: 2 **recursos MCP** (`mcp-suite-mx://config/actual`, `mcp-suite-mx://catalogo/tools`) y 2 **prompts** (`resumen_semanal_negocio`, `diagnostico_produccion`).
+
+### Módulo diseño (color de última generación)
+
+Ocho herramientas para vestir un producto sin salir del servidor: color en
+**OKLCH** (el espacio que ya usan los navegadores, donde la luminosidad es la que
+percibe el ojo), contraste obligatorio **WCAG 2.2** con segunda opinión **APCA**,
+paletas con roles legibles, tipografía fluida, tokens en **CSS con capas** y en el
+formato del grupo de diseño (**DTCG**), componentes en CSS moderno (anidado,
+`color-mix()`, `@container`, `:focus-visible`, objetivo táctil de 44 px) y dos
+auditorías: una de HTML y otra de CSS. Todo se calcula aquí; nada sale a internet.
+
+```bash
+# Marca → paleta, tokens y un componente, sin abrir un editor de diseño
+paleta_generar      { "base": "#ff3df0", "modo": "oscuro" }
+tokens_generar      { "base": "#ff3df0", "prefijo": "ks", "archivo": "tokens" }
+componente_generar  { "tipo": "boton", "prefijo": "ks" }
+
+# ¿Cumple el texto que ya tienes?
+contraste_verificar { "pares": [{ "texto": "#a9a4bb", "fondo": "#07070a" }] }
+accesibilidad_auditar { "ruta": "paginas/landing.html" }
+estilo_revisar      { "ruta": "paginas/panel.css", "detalle": "solo_alto" }
+```
+
+El estilo con el que nace todo esto es el de [`docs/DISENO.md`](docs/DISENO.md).
 
 ## Desarrollo
 
@@ -290,7 +315,7 @@ Además: 2 **recursos MCP** (`mcp-suite-mx://config/actual`, `mcp-suite-mx://cat
 npm run dev:stdio   # recarga en vivo, transporte stdio
 npm run dev         # recarga en vivo, HTTP en :8787
 npm run typecheck   # tsc sin emitir
-npm test            # 186 pruebas (unitarias + integración MCP + HTTP con auth + TLS + CFDI + taller + centinela + parche + orquesta + rúter + multi-empresa)
+npm test            # 209 pruebas (unitarias + integración MCP + HTTP con auth + TLS + CFDI + taller + centinela + parche + orquesta + rúter + multi-empresa + diseño)
 npm run build       # compila a dist/
 node dist/cli.js    # ayuda del CLI de administración
 ```
@@ -329,4 +354,4 @@ src/
 | `GET /api/parches` | Historial de parches con huella, veredicto de pruebas y respaldo. Protegido. |
 | `GET /api/empresas` | Espacios multi-empresa; con `?comparar=1`, sus cifras lado a lado. Protegido. |
 | `GET /panel` | Panel HTML autogenerado, con la cola de aprobaciones y el historial de parches en vivo (botones Aprobar/Rechazar). |
-| `GET /herramientas` | Catálogo visual de las 68 herramientas y el proceso completo, de la orden a la respuesta. |
+| `GET /herramientas` | Catálogo visual de las 76 herramientas y el proceso completo, de la orden a la respuesta. |

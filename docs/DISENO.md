@@ -72,8 +72,25 @@ porque está bien; si es rojo, porque hay peligro.
 
 ## Cómo se comprueba
 
-Las pruebas ya cubren el panel y el taller (`tests/http.test.ts`,
-`tests/tls.test.ts`, `tests/taller.test.ts`). Al tocar el estilo se corre
-`npm run typecheck`, `npm run build` y `npm test`: 186 pruebas en verde.
-Después se levanta el servidor y se revisan las rutas `/panel`, `/herramientas`
-y `/taller`.
+Al tocar el estilo se corre `npm run typecheck`, `npm run build` y `npm test`
+(209 pruebas en verde). Después se levanta el servidor y se revisan las rutas
+`/panel`, `/herramientas` y `/taller`.
+
+Y para eso mismo el servidor trae ocho herramientas del módulo **diseño**, que
+son las que usan los demás módulos cuando hay que vestir algo:
+
+| Herramienta | Para qué sirve |
+|---|---|
+| `color_convertir` | Llevar un color entre hex, rgb, hsl y oklch, con la luminosidad percibida. |
+| `contraste_verificar` | Medir WCAG 2.2 (el que obliga) y APCA (segunda opinión), con el arreglo exacto cuando no alcanza. |
+| `paleta_generar` | Sacar la escala de 50 a 950 y los roles (primario, éxito, aviso, peligro, info, neutro) desde un color de marca. |
+| `tipografia_escala` | Escala de tamaños modular y fluida (clamp), con interlineado y medida de línea. |
+| `tokens_generar` | Los tokens en CSS con capas y en el formato del grupo de diseño (DTCG), para pegar o guardar. |
+| `componente_generar` | Botón, tarjeta, campo, insignia, aviso e interruptor en CSS moderno, con foco visible y objetivo táctil de 44 px. |
+| `accesibilidad_auditar` | Revisar un HTML: idioma, alt, etiquetas, nombres, saltos de encabezado, foco, contraste y zoom. |
+| `estilo_revisar` | Revisar un CSS: colores sueltos, tokens sin declarar, contraste, movimiento y qué modernizar. |
+
+La paleta de esta norma se puede volver a generar desde su color de marca:
+`paleta_generar` con `#ff3df0` devuelve los tonos de la tabla de arriba. Si un
+día cambia la marca, se cambia ese color y se vuelven a generar los tokens; lo
+demás no se retoca a mano.
