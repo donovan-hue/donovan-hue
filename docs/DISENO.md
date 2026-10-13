@@ -73,7 +73,7 @@ porque está bien; si es rojo, porque hay peligro.
 ## Cómo se comprueba
 
 Al tocar el estilo se corre `npm run typecheck`, `npm run build` y `npm test`
-(209 pruebas en verde). Después se levanta el servidor y se revisan las rutas
+(215 pruebas en verde). Después se levanta el servidor y se revisan las rutas
 `/panel`, `/herramientas` y `/taller`.
 
 Y para eso mismo el servidor trae ocho herramientas del módulo **diseño**, que

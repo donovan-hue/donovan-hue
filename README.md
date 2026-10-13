@@ -315,7 +315,7 @@ El estilo con el que nace todo esto es el de [`docs/DISENO.md`](docs/DISENO.md).
 npm run dev:stdio   # recarga en vivo, transporte stdio
 npm run dev         # recarga en vivo, HTTP en :8787
 npm run typecheck   # tsc sin emitir
-npm test            # 209 pruebas (unitarias + integración MCP + HTTP con auth + TLS + CFDI + taller + centinela + parche + orquesta + rúter + multi-empresa + diseño)
+npm test            # 215 pruebas (unitarias + integración MCP + HTTP con auth + TLS + CFDI + taller + centinela + parche + orquesta + rúter + multi-empresa + diseño)
 npm run build       # compila a dist/
 node dist/cli.js    # ayuda del CLI de administración
 ```
