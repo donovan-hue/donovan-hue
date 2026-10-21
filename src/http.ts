@@ -131,6 +131,12 @@ export async function startHttp(ctx: ServerCtx): Promise<http.Server> {
     .readFile(path.join(projectRoot, 'paginas', 'taller.html'), 'utf8')
     .catch(() => '<!doctype html><html><body><h1>Taller</h1><p>Página del mapa vivo no encontrada.</p></body></html>');
 
+    // Página del catálogo visual: las herramientas y el proceso completo.
+    // Es estática (no lleva datos del servidor) y se sirve tal cual.
+    const catalogoVisual = await fs
+      .readFile(path.join(projectRoot, 'paginas', 'orquesta-visual.html'), 'utf8')
+      .catch(() => null);
+
   const manejador = async (req: http.IncomingMessage, res: http.ServerResponse): Promise<void> => {
     const t0 = performance.now();
     const url = new URL(req.url ?? '/', `http://${req.headers.host ?? 'localhost'}`);
@@ -251,6 +257,17 @@ export async function startHttp(ctx: ServerCtx): Promise<http.Server> {
           .replace('<!--PANEL_JSON-->', JSON.stringify(datosPanel));
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
         res.end(html);
+        return;
+      }
+
+      // ── Catálogo visual: cómo trabajan las herramientas (público) ────────
+      if (url.pathname === '/herramientas' || url.pathname === '/orquesta-visual') {
+        if (!catalogoVisual) {
+          json(res, 404, { error: 'La página del catálogo visual no está disponible.' });
+          return;
+        }
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.end(catalogoVisual);
         return;
       }
 
@@ -397,7 +414,7 @@ export async function startHttp(ctx: ServerCtx): Promise<http.Server> {
 
       json(res, 404, {
         error: 'Ruta no encontrada',
-        rutas: ['/', '/panel', '/taller', '/health', '/metrics', '/api/config', '/api/catalogo', '/api/herramientas', '/api/claves', '/api/auditoria', '/api/aprobaciones', 'POST /api/aprobaciones/<id>', '/api/parches', '/api/empresas', '/api/taller/mapa', 'POST /mcp'],
+        rutas: ['/', '/panel', '/taller', '/herramientas', '/health', '/metrics', '/api/config', '/api/catalogo', '/api/herramientas', '/api/claves', '/api/auditoria', '/api/aprobaciones', 'POST /api/aprobaciones/<id>', '/api/parches', '/api/empresas', '/api/taller/mapa', 'POST /mcp'],
       });
     } catch (err: any) {
       log.error('http_error', { path: url.pathname, error: err?.message ?? String(err) });

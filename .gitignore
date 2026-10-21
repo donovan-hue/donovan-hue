@@ -24,3 +24,9 @@ data/logs/
 
 # Proyectos de ejemplo (sin dependencias instaladas).
 data/fixtures/*/node_modules/
+
+# Tokens y componentes que genera el módulo diseño (se recrean cuando se piden).
+data/diseno/
+
+# Estado de las vistas previas locales (DATA_DIR de prueba).
+data-panel/

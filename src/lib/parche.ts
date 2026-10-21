@@ -57,6 +57,10 @@ const RE_MODULO_FALTANTE = /Cannot find module '([^']+)'/;
 const RE_ENOENT = /ENOENT[^']*'([^']+)'/;
 const RE_EXPECTATIVA = /expected\s+(.+?)\s+to\s+(?:be|equal|deeply equal|contain|match)\s+(.+?)(?:$|\n)/i;
 const RE_PRUEBA_FALLIDA = /(?:FAIL|✗|×|●)\s+([^\s>›]+)(?:\s*[>›]\s*(.+))?/;
+/** Runner de pruebas de Node (formato TAP): "not ok 287 - nombre de la prueba". */
+const RE_TAP_FALLIDA = /^\s*not ok\s+\d+\s*-\s*(.+)$/m;
+/** Aserción que recibe null donde esperaba texto (assert.match / assert.equal). */
+const RE_ASERCION_NULA = /must be of type string\. Received type object \(null\)|Received type object \(null\)|ERR_ASSERTION/;
 const RE_ECONN = /ECONNREFUSED|ETIMEDOUT|socket hang up|EAI_AGAIN/;
 
 /** Recorta la entrada a un tamaño razonable para analizar (logs pueden ser enormes). */
@@ -78,16 +82,57 @@ function extraerReferencias(entrada: string): Referencia[] {
   return salida.slice(0, 12);
 }
 
+/**
+ * Resuelve el archivo de una referencia: primero tal cual y, si no está,
+ * buscando por terminación de ruta dentro del proyecto. Hace falta porque la
+ * ruta del error suele venir recortada (p. ej. `test/x.test.js` cuando el
+ * archivo real es `server/test/x.test.js` en un monorepo).
+ */
+async function resolverArchivo(raiz: string, rel: string): Promise<string | null> {
+  if (await existe(raiz, rel)) return rel;
+  const ignorar = new Set(['node_modules', '.git', 'dist', 'coverage', '.next', 'build', 'vendor', '.venv', '__pycache__']);
+  const partes = rel.split('/').filter(Boolean);
+  const encontrados: string[] = [];
+  async function caminar(dir: string, profundidad: number): Promise<void> {
+    if (profundidad > 6 || encontrados.length > 4) return;
+    let entradas: import('node:fs').Dirent[];
+    try {
+      entradas = await fs.readdir(path.join(raiz, dir), { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const e of entradas) {
+      if (ignorar.has(e.name)) continue;
+      const relHijo = dir ? `${dir}/${e.name}` : e.name;
+      if (e.isDirectory()) await caminar(relHijo, profundidad + 1);
+      else if (e.isFile() && relHijo.split('/').slice(-partes.length).join('/') === rel) encontrados.push(relHijo);
+    }
+  }
+  await caminar('', 0);
+  encontrados.sort((a, b) => a.length - b.length);
+  return encontrados[0] ?? null;
+}
+
 async function leerContexto(raiz: string, ref: Referencia, margen = 2): Promise<string[]> {
+  const encontrado = await resolverArchivo(raiz, ref.archivo);
+  if (!encontrado) return [`(no se pudo leer ${ref.archivo} dentro del proyecto)`];
   try {
-    const contenido = await fs.readFile(path.join(raiz, ref.archivo), 'utf8');
+    const contenido = await fs.readFile(path.join(raiz, encontrado), 'utf8');
     const lineas = contenido.split('\n');
+    const salida: string[] = [];
+    // La línea referida puede no existir ya (código editado después del volcado):
+    // en ese caso se muestran las últimas líneas y se dice explícitamente.
+    if (ref.linea > lineas.length) {
+      const desdeFinal = Math.max(0, lineas.length - 2 * margen - 1);
+      for (let i = desdeFinal; i < lineas.length; i++) salida.push(`  ${encontrado}:${i + 1}: ${lineas[i]!.trim().slice(0, 160)}`);
+      salida.push(`(la línea ${ref.linea} referida no existe en este archivo; se muestran las últimas ${salida.length} líneas)`);
+      return salida;
+    }
     const desde = Math.max(0, ref.linea - 1 - margen);
     const hasta = Math.min(lineas.length, ref.linea + margen);
-    const salida: string[] = [];
     for (let i = desde; i < hasta; i++) {
       const marca = i === ref.linea - 1 ? '→' : ' ';
-      salida.push(`${marca} ${ref.archivo}:${i + 1}: ${lineas[i]!.trim().slice(0, 160)}`);
+      salida.push(`${marca} ${encontrado}:${i + 1}: ${lineas[i]!.trim().slice(0, 160)}`);
     }
     return salida;
   } catch {
@@ -114,13 +159,15 @@ export async function diagnosticar(raiz: string, entradaCruda: string): Promise<
   const enoent = RE_ENOENT.exec(entrada);
   const expectativa = RE_EXPECTATIVA.exec(entrada);
   const pruebaFallida = RE_PRUEBA_FALLIDA.exec(entrada);
+  const pruebaFallidaTap = RE_TAP_FALLIDA.exec(entrada);
   const problemaRed = RE_ECONN.test(entrada);
 
-  const esPrueba = Boolean(pruebaFallida) || /Tests?\s+\d+\s+failed|FAIL\b/.test(entrada);
+  const esPrueba = Boolean(pruebaFallida) || Boolean(pruebaFallidaTap) || /Tests?\s+\d+\s+failed|FAIL\b/.test(entrada);
   const tipo: Diagnostico['tipo'] = esPrueba ? 'prueba' : tipoError ? 'excepcion' : /^\s*\{?"?t"?\s*:/m.test(entrada) ? 'log' : 'desconocido';
 
   if (tipoError) sintomas.push(`Error reportado: ${tipoError[1]}${tipoError[2] ? ` — ${tipoError[2].slice(0, 140)}` : ''}`);
   if (pruebaFallida) sintomas.push(`Prueba fallida: ${pruebaFallida[1]}${pruebaFallida[2] ? ` › ${pruebaFallida[2].slice(0, 100)}` : ''}`);
+  if (!pruebaFallida && pruebaFallidaTap) sintomas.push(`Prueba fallida (runner de Node): ${pruebaFallidaTap[1]!.slice(0, 120)}`);
   if (expectativa) sintomas.push(`Expectativa incumplida: esperaba ${expectativa[1]!.trim().slice(0, 60)} · obtuvo ${expectativa[2]!.trim().slice(0, 60)}`);
   if (referencias.length) sintomas.push(`Referencias de código: ${referencias.slice(0, 4).map((r) => `${r.archivo}:${r.linea}`).join(', ')}`);
 
@@ -221,6 +268,23 @@ export async function diagnosticar(raiz: string, entradaCruda: string): Promise<
       evidencia: ref ? await leerContexto(raiz, ref, 3) : [entrada.split('\n')[0] ?? ''],
       archivos: referencias.map((r) => r.archivo),
       sugerencia: 'Revisa la línea indicada: llave/paréntesis sin cerrar, coma sobrante o una edición a medias.',
+    });
+  }
+
+  // ── Causa: una comparación recibió null donde esperaba texto ──
+  if (RE_ASERCION_NULA.test(entrada)) {
+    const ref = referencias[0];
+    causas.push({
+      causa: ref
+        ? `Una comparación recibió null donde esperaba texto (aserción señalada en ${ref.archivo}:${ref.linea})`
+        : 'Una comparación recibió null donde esperaba texto (aserción de Node)',
+      confianza: ref ? 'alta' : 'media',
+      evidencia: [
+        ...(ref ? await leerContexto(raiz, ref) : []),
+        'La aserción falló porque el valor comparado es null, no porque el texto sea distinto.',
+      ],
+      archivos: referencias.map((r) => r.archivo),
+      sugerencia: 'Averigua quién produce ese valor: si viene de una respuesta HTTP, revisa el handler de esa ruta (¿responde sin cuerpo o sin content-type?); si es un campo, valida antes de comparar. Corrige la causa, no la comparación.',
     });
   }
 

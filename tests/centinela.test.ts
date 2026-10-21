@@ -214,11 +214,13 @@ describe('CENTINELA — catálogo', () => {
       'seguridad_escanear', 'seguridad_plan', 'seguridad_verificar', 'dependencias_revisar',
       'aprobaciones_pendientes', 'permisos_auditar', 'dependencias_vulnerables',
       'empresas_listar', 'empresa_crear', 'empresa_actual', 'empresa_editar', 'empresa_resumen', 'empresas_comparar',
-      'inventario_importar',
-    ]) {
-      expect(nombres).toContain(esperada);
-    }
-    expect(tools.length).toBe(68);
+        'inventario_importar',
+        'color_convertir', 'contraste_verificar', 'paleta_generar', 'tipografia_escala',
+        'tokens_generar', 'componente_generar', 'accesibilidad_auditar', 'estilo_revisar',
+      ]) {
+        expect(nombres).toContain(esperada);
+      }
+      expect(tools.length).toBe(76);
   });
 });
 

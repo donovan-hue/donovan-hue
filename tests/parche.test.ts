@@ -135,7 +135,44 @@ describe('PARCHE — diagnóstico con evidencia', () => {
     expect(json().tipo).toBe('prueba');
     expect(json().causas.some((c: { causa: string }) => /expectativa|no coincide|difiere/i.test(c.causa))).toBe(true);
   });
+  it('encuentra el archivo aunque la ruta del error venga sin el prefijo del monorepo', async () => {
+    await escribir(reparable, 'server/test/http-errors.contract.test.js', [
+      "const assert = require('node:assert/strict');",
+      'function prueba() {',
+      '  const contentType = null;',
+      "  assert.match(contentType, /application\\/json/);",
+      '}',
+      'prueba();',
+      '',
+    ].join('\n'));
+    const error = [
+      'not ok 287 - ruta desconocida /uploads/no-existe.jpg responde 404 JSON',
+      "  error: 'The \"string\" argument must be of type string. Received type object (null)'",
+      "  stack: TestContext.<anonymous> (server/test/http-errors.contract.test.js:4:3)",
+    ].join('\n');
+    const { json } = await llamar('falla_diagnosticar', { directorio: reparable, error });
+    const causa = json().causas.find((c: { causa: string }) => /null/i.test(c.causa));
+    expect(causa.evidencia.join('\n')).toContain('server/test/http-errors.contract.test.js:4');
+  });
+
+  it('reconoce un fallo del runner de Node con una aserción que recibió null', async () => {
+    const error = [
+      'not ok 287 - ruta desconocida /uploads/no-existe.jpg responde 404 JSON',
+      "  error: 'The \"string\" argument must be of type string. Received type object (null)'",
+      "  code: 'ERR_ASSERTION'",
+      "  operator: 'match'",
+      '    at TestContext.<anonymous> (server/test/http-errors.contract.test.js:4:3)',
+    ].join('\n');
+    const { json } = await llamar('falla_diagnosticar', { directorio: reparable, error });
+    const d = json();
+    expect(d.tipo).toBe('prueba');
+    expect(d.sintomas.join('\n')).toContain('ruta desconocida /uploads/no-existe.jpg');
+    const causa = d.causas.find((c: { causa: string }) => /null/i.test(c.causa));
+    expect(causa).toBeTruthy();
+    expect(causa.sugerencia).toMatch(/handler|valida/);
+  });
 });
+
 
 describe('PARCHE — proponer, probar, aplicar y revertir', () => {
   it('rechaza un parche cuyo bloque «antes» no existe (parche obsoleto)', async () => {

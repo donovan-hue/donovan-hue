@@ -6,9 +6,9 @@
 <title>Mapa vivo 3D — Taller · mcp-suite-mx</title>
 <style>
   :root {
-    --fondo: #0a0f1a; --panel: #131c2c; --panel2: #182334; --borde: #24344e;
-    --texto: #e6edf3; --suave: #8fa3c8; --acento: #4ec3e0;
-    --ok: #22d3a7; --mal: #f2547d; --aviso: #ffb648; --info: #5b8cff;
+    --fondo: #07070a; --panel: #0d0d12; --panel2: #12121a; --borde: #2a2a3a;
+    --texto: #eceaf2; --suave: #a9a4bb; --acento: #ff3df0;
+    --ok: #7ff0cd; --mal: #ff5c8a; --aviso: #ffb648; --info: #4ec3e0;
   }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--fondo); color: var(--texto);
@@ -46,45 +46,45 @@
   .tarjeta > h2 .acciones button { padding: 4px 9px; font-size: 12px; }
 
   /* ── Escena 3D ── */
-  #escena3d { position: relative; height: 540px; background: #060a12; }
+  #escena3d { position: relative; height: 540px; background: #05050a; }
   #lienzo3d { width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
   #lienzo3d.arrastrando { cursor: grabbing; }
-  .hud { position: absolute; left: 12px; bottom: 10px; color: #6d86a8; font-size: 11.5px;
-    background: rgba(6,10,18,.66); border: 1px solid rgba(36,52,78,.7); border-radius: 9px; padding: 6px 10px; backdrop-filter: blur(3px); }
+  .hud { position: absolute; left: 12px; bottom: 10px; color: #7b7690; font-size: 11.5px;
+    background: rgba(5,5,10,.7); border: 1px solid rgba(42,42,58,.75); border-radius: 9px; padding: 6px 10px; backdrop-filter: blur(3px); }
   .leyenda { position: absolute; right: 12px; top: 10px; display: flex; flex-direction: column; gap: 4px;
-    background: rgba(6,10,18,.66); border: 1px solid rgba(36,52,78,.7); border-radius: 9px; padding: 8px 11px; backdrop-filter: blur(3px); }
+    background: rgba(5,5,10,.7); border: 1px solid rgba(42,42,58,.75); border-radius: 9px; padding: 8px 11px; backdrop-filter: blur(3px); }
   .leyenda div { display: flex; align-items: center; gap: 7px; font-size: 11.5px; color: var(--suave); }
   .leyenda i { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
-  .insignia { position: absolute; right: 12px; bottom: 10px; font-size: 11px; color: #6d86a8;
-    background: rgba(6,10,18,.66); border: 1px solid rgba(36,52,78,.7); border-radius: 9px; padding: 5px 9px; }
+  .insignia { position: absolute; right: 12px; bottom: 10px; font-size: 11px; color: #7b7690;
+    background: rgba(5,5,10,.7); border: 1px solid rgba(42,42,58,.75); border-radius: 9px; padding: 5px 9px; }
   .insignia b { color: var(--acento); }
 
   /* ── Mapa 2D (vista alternativa) ── */
   #lienzo { position: relative; height: 540px; overflow: auto; background:
-    radial-gradient(circle at 26% 18%, rgba(78,195,224,.07), transparent 42%); display: none; }
+    radial-gradient(circle at 26% 18%, rgba(255,61,240,.09), transparent 42%); display: none; }
   .caja { position: absolute; border: 1.5px solid var(--borde); border-radius: 12px; background: var(--panel2);
     padding: 10px 12px; cursor: pointer; transition: border-color .15s, transform .15s, box-shadow .15s; }
   .caja:hover { border-color: var(--acento); transform: translateY(-1px); }
-  .caja.sel { border-color: var(--acento); box-shadow: 0 0 0 3px rgba(78,195,224,.18); }
+  .caja.sel { border-color: var(--acento); box-shadow: 0 0 0 3px rgba(255,61,240,.18), 0 0 22px rgba(255,61,240,.22); }
   .caja .nombre { font-weight: 650; font-size: 13px; }
   .caja .meta { color: var(--suave); font-size: 11.5px; margin-top: 3px; }
   .caja .alertas { margin-top: 5px; display: flex; gap: 5px; flex-wrap: wrap; }
   .mini { font-size: 10.5px; border-radius: 999px; padding: 1px 7px; border: 1px solid; }
-  .mini.rojo { color: var(--mal); border-color: rgba(242,84,125,.45); }
+  .mini.rojo { color: var(--mal); border-color: rgba(255,92,138,.45); }
   .mini.naranja { color: var(--aviso); border-color: rgba(255,182,72,.45); }
-  .mini.verde { color: var(--ok); border-color: rgba(34,211,167,.45); }
+  .mini.verde { color: var(--ok); border-color: rgba(127,240,205,.45); }
   #flechas { position: absolute; inset: 0; pointer-events: none; }
 
   .lista { max-height: 470px; overflow: auto; }
-  .fila { display: flex; gap: 10px; align-items: baseline; padding: 8px 16px; border-bottom: 1px solid rgba(36,52,78,.55); cursor: pointer; }
+  .fila { display: flex; gap: 10px; align-items: baseline; padding: 8px 16px; border-bottom: 1px solid rgba(42,42,58,.6); cursor: pointer; }
   .fila:hover { background: var(--panel2); }
-  .fila.sel { background: rgba(78,195,224,.1); }
+  .fila.sel { background: rgba(255,61,240,.1); }
   .fila .ruta { font-family: ui-monospace, monospace; font-size: 12.5px; word-break: break-all; }
   .fila .der { margin-left: auto; color: var(--suave); font-size: 11.5px; white-space: nowrap; }
   .fila .ico { width: 8px; height: 8px; border-radius: 50%; flex: none; margin-top: 5px; }
   .ico.entrada { background: var(--ok); } .ico.prueba { background: var(--info); }
   .ico.huerfano { background: var(--mal); } .ico.dup { background: var(--aviso); }
-  .ico.normal { background: #3d5a80; }
+  .ico.normal { background: #4a4560; }
   .detalle { padding: 14px 16px; }
   .detalle h3 { margin: 0 0 4px; font-size: 14px; font-family: ui-monospace, monospace; word-break: break-all; }
   .detalle .sub { color: var(--suave); font-size: 12px; margin-bottom: 10px; }
@@ -92,15 +92,15 @@
   .bloque h4 { margin: 0 0 5px; font-size: 11.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--suave); }
   .pill { display: inline-block; font-family: ui-monospace, monospace; font-size: 11.5px; background: var(--panel2);
     border: 1px solid var(--borde); border-radius: 7px; padding: 2px 8px; margin: 2px 4px 2px 0; cursor: pointer; }
-  .pill.rojo { color: var(--mal); border-color: rgba(242,84,125,.4); }
+  .pill.rojo { color: var(--mal); border-color: rgba(255,92,138,.4); }
   .pill.naranja { color: var(--aviso); border-color: rgba(255,182,72,.4); }
-  .pill.verde { color: var(--ok); border-color: rgba(34,211,167,.4); }
-  .marca { padding: 6px 0; border-bottom: 1px dashed rgba(36,52,78,.6); font-size: 12px; }
+  .pill.verde { color: var(--ok); border-color: rgba(127,240,205,.4); }
+  .marca { padding: 6px 0; border-bottom: 1px dashed rgba(42,42,58,.65); font-size: 12px; }
   .marca b { color: var(--aviso); font-family: ui-monospace, monospace; }
-  #bitacora .evento { display: flex; gap: 9px; padding: 7px 16px; border-bottom: 1px solid rgba(36,52,78,.5); font-size: 12.5px; align-items: baseline; }
+  #bitacora .evento { display: flex; gap: 9px; padding: 7px 16px; border-bottom: 1px solid rgba(42,42,58,.55); font-size: 12.5px; align-items: baseline; }
   #bitacora .evento .hora { color: var(--suave); font-family: ui-monospace, monospace; font-size: 11px; white-space: nowrap; }
   #bitacora .evento.nuevo { animation: entra .5s ease; }
-  @keyframes entra { from { background: rgba(78,195,224,.16); } to { background: transparent; } }
+  @keyframes entra { from { background: rgba(255,61,240,.18); } to { background: transparent; } }
   .vacio { padding: 18px 16px; color: var(--suave); font-size: 13px; }
   .error { margin: 0 22px 14px; padding: 10px 14px; border: 1px solid rgba(242,84,125,.5); border-radius: 10px;
     color: var(--mal); background: rgba(242,84,125,.07); font-size: 13px; display: none; }
@@ -175,7 +175,7 @@
   let ultimaVez = Date.now();
   let bitacora = [];
 
-  const COLORES = ['#5b8cff', '#4ec3e0', '#22d3a7', '#ffb648', '#c17aff', '#f2547d', '#8fa3c8', '#ff8a5c', '#7de0b3', '#b8c4ff'];
+  const COLORES = ['#ff3df0', '#c026d3', '#9d4edd', '#ff78f0', '#d946ef', '#ff5c8a', '#b06ab3', '#ffa8f5', '#e879f9', '#c084fc'];
   const colorModulo = {};
   const COLOR = (a) => a.huerfano ? 'huerfano' : a.duplicado ? 'dup' : a.es_entrada ? 'entrada' : a.es_prueba ? 'prueba' : 'normal';
 
@@ -366,7 +366,7 @@
         const toca = (sel && (e.a.ruta === sel || e.b.ruta === sel)) || (moduloSel && e.a.modulo === moduloSel && e.b.modulo === moduloSel);
         if (sel || moduloSel) alfa *= toca ? 2.6 : 0.16;
         if (alfa <= 0.015) continue;
-        const col = toca ? [126, 214, 238] : mezclar(hex2rgb(colorModulo[e.a.modulo] || '#3d5a80'), FONDO, neblina ? prof * 0.85 : 0.25);
+        const col = toca ? [255, 130, 244] : mezclar(hex2rgb(colorModulo[e.a.modulo] || '#5c3a63'), FONDO, neblina ? prof * 0.85 : 0.25);
         cv.strokeStyle = `rgba(${col[0]},${col[1]},${col[2]},${clamp(alfa, 0, 0.92)})`;
         cv.lineWidth = clamp(1.15 * Math.min(A.p.s, B.p.s) * 1.15, 0.35, 2.6);
         cv.beginPath(); cv.moveTo(A.p.x, A.p.y); cv.lineTo(B.p.x, B.p.y); cv.stroke();
@@ -376,7 +376,7 @@
       for (const l of lista) {
         const { n, p, r } = l;
         const prof = clamp((p.z + 700) / 1700, 0, 1);
-        const base = hex2rgb(colorModulo[n.modulo] || '#5b8cff');
+        const base = hex2rgb(colorModulo[n.modulo] || '#c026d3');
         const atenuado = mezclar(base, FONDO, neblina ? prof * 0.72 : 0.2);
         const alfa = (neblina ? 1 - prof * 0.45 : 1) * l.fade;
         const estadoR = resalta(n);
@@ -668,7 +668,7 @@
       const resalta = moduloSel && (a.desde === moduloSel || a.hacia === moduloSel);
       const l = document.createElementNS('http://www.w3.org/2000/svg', 'line');
       Object.entries({ x1, y1, x2, y2 }).forEach(([k, v]) => l.setAttribute(k, v));
-      l.setAttribute('stroke', resalta ? '#4ec3e0' : '#3d5a80');
+      l.setAttribute('stroke', resalta ? '#ff3df0' : '#4a4560');
       l.setAttribute('stroke-width', resalta ? Math.min(1.2 + a.peso / 2, 5) : Math.min(0.8 + a.peso / 4, 3.5));
       l.setAttribute('opacity', moduloSel && !resalta ? 0.22 : 0.62);
       svg.appendChild(l);

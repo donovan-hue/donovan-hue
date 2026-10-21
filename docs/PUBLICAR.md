@@ -21,7 +21,7 @@ npm publish        # publica mcp-suite-mx@0.2.0
 Antes de publicar (esto ya está hecho y se puede repetir):
 
 ```bash
-npm run build && npm test      # 184 pruebas
+npm run build && npm test      # 186 pruebas
 npm pack --dry-run             # 108 archivos, ~254 kB: dist/, paginas/, docs/, README, LICENSE, .env.example
 npm audit                      # 0 vulnerabilidades
 ```
@@ -67,7 +67,7 @@ Ojo: el registro exige que el paquete **ya esté publicado en npm** y que el rep
 | Instalación en proyecto limpio (`npm install <tgz>`) | OK, 131 paquetes, sin errores |
 | `mcp-suite-mx --version` / `--help` | `0.2.0` / ayuda con variables y binarios |
 | Servidor HTTP instalado (`/health`) | `{"ok":true,"version":"0.2.0"}` |
-| `tools/list` del paquete instalado | 68 herramientas, módulo `empresas` incluido |
+| `tools/list` del paquete instalado | 76 herramientas, módulos `empresas` y `diseno` incluidos |
 | Servidor stdio instalado (initialize por stdin) | responde `serverInfo` correcto |
 | `mcp-suite-mx-cli keys create` | emite clave y la lista después |
 | CI de GitHub, paso a paso en local | los 8 pasos pasan (tipos, auditoría, pruebas, build, paquete instalado, stdio, CLI, HTTP, respaldos, HTTPS) |
